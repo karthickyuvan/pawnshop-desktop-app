@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Add these lines for Camera Access -->
+    <key>NSCameraUsageDescription</key>
+    <string>This app requires camera access to capture photos of pledged items and customers.</string>
+    
+    <!-- Optional: If you plan to add audio later -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app requires microphone access for video recording.</string>
+</dict>
+</plist> 

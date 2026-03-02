@@ -1,0 +1,713 @@
+/* .single-pledge-page {
+    padding: 24px;
+  }
+  
+  .top-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  
+  .status-badge.active {
+    background: #e6f7ef;
+    color: #00a86b;
+  }
+  
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  }
+  
+  .card-header {
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  
+  .customer-grid {
+    display: flex;
+    gap: 20px;
+  }
+  
+  .customer-photo img {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+  
+  .loan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .items-table th,
+  .items-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+  }
+   */
+
+
+
+
+   :root {
+    --primary-green: #00a86b;
+    --bg-gray: #f8f9fa;
+    --border-color: #f0f0f0;
+    --text-main: #333;
+    --text-muted: #777;
+  }
+  
+  .single-pledge-container {
+    background-color: var(--bg-gray);
+    min-height: 100vh;
+    padding: 20px 40px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+  }
+  
+  /* Header Styles */
+  .page-header {
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Forces everything to the left */
+    gap: 12px;
+    width: 100%;
+  }
+  
+  .back-nav {
+    width: 100%;
+  }
+  
+  .back-btn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    padding: 0;
+  }
+  
+  .header-main-row {
+    display: flex;
+    justify-content: space-between; /* Pushes ID to left and Print to right */
+    align-items: center;
+    width: 100%; /* Spans full width of container */
+  }
+  
+  .id-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .id-group h1 {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0;
+    color: #1e293b;
+  }
+  
+  .status-badge.active {
+    background: #22c55e; /* Vivid green from image 1 */
+    color: white;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  
+  .print-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #1e293b;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    font-size: 15px;
+  }
+  
+  .header-meta {
+    font-size: 15px;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+/* -------------------------------------------------------------------- */
+
+  /* Layout Grid */
+  .content-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 24px;
+  }
+  
+  /* Main Cards */
+
+
+  .customer-card-body {
+    display: flex !important; /* Force flex layout */
+    flex-direction: row !important; /* Ensure side-by-side */
+    align-items: flex-start;
+    gap: 40px;
+    width: 100%;
+  }
+  
+  .customer-photo-container {
+    flex: 0 0 150px; /* Do not grow, do not shrink, stay 150px wide */
+  }
+  
+  .customer-photo-rect, .photo-placeholder {
+    width: 150px;
+    height: 170px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .info-text-wrapper {
+    flex: 1; /* Take up all remaining space */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 400px; /* Prevents text from squishing and dropping down */
+  }
+  
+  .info-row {
+    display: grid;
+    gap: 20px;
+  }
+  
+  /* Row 1: 3 columns with enough room */
+  .three-cols {
+    grid-template-columns: 1fr 1fr 1fr; 
+  }
+  
+  /* Row 2: Just 2 columns */
+  .info-row:not(.three-cols) {
+    grid-template-columns: 1fr 2fr;
+  }
+  
+  .divider-line {
+    height: 1px;
+    background: #f1f5f9;
+    width: 100%;
+  }
+  
+  /* Icon & Text Styling */
+  .value-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  
+  .field span {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 2px;
+    display: block;
+  }
+  
+  .field p {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+
+/* -------------------------------------------------------------------- */
+  .info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  }
+  
+  .info-card h3 { font-size: 16px; margin-bottom: 20px; color: #555; }
+  
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  
+  .info-grid.four-cols { grid-template-columns: repeat(4, 1fr); }
+  
+
+
+
+.phone-with-icon, .address-with-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.icon-small {
+  font-size: 14px;
+  opacity: 0.5;
+  margin-top: 2px;
+}
+  .bold { font-weight: 700 !important; }
+  
+  /* Table Styles */
+  .items-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .items-table th { text-align: left; font-size: 13px; color: var(--text-muted); padding: 12px; border-bottom: 1px solid var(--border-color); }
+  .items-table td { padding: 15px 12px; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+  .purity-tag { background: #fff8e6; color: #ffa000; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #ffe0b2; }
+  
+  /* Sidebar Card Base */
+.side-card {
+  background: white;
+  border: 1px solid #eef2f6;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+  
+/* Status Card (Yellow Theme) */
+.status-card {
+  background-color: #fffdf2; /* Light yellow from design */
+  border-color: #fff5d6;
+}  .side-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+  .highlight { color: #d44b00; }
+  
+  .total-box {
+    background: #f0f7ff;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+  }
+  .total-amt { color: #0056b3; font-weight: 800; font-size: 18px; }
+  
+  /* Buttons */
+  .primary-btn {
+    width: 100%;
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  .secondary-btn {
+    width: 100%;
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    color: #999;
+  }
+
+  /* Table Footer Summary Styling */
+.table-summary-footer {
+  background-color: #fffdf2; /* Light yellow background from design */
+  border-top: 2px solid #fff5d6;
+}
+
+.table-summary-footer td {
+  padding: 15px 12px;
+  font-weight: 700;
+  color: #1e293b;
+  border: none !important; /* Remove individual cell borders in footer */
+}
+
+.total-label {
+  color: #1e40af;
+  font-weight: 700;
+}
+
+.total-val-blue {
+  color: #2563eb;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.total-amount-highlight {
+  font-size: 16px;
+  color: #d97706; /* Match the orange/amber theme */
+  text-align: left;
+}
+
+/* Ensure the main table is prepared for the footer */
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 8px; /* Smooth corners for the whole table */
+}
+
+
+
+/* History Table Styling */
+.history-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.history-table th {
+  background-color: #fafbfc;
+  text-align: left;
+  padding: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.history-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 500;
+  border-bottom: 1px solid #f8fafc;
+}
+
+/* Receipt and Amount specific colors */
+.receipt-no {
+  color: #94a3b8;
+  font-family: 'Courier New', monospace; /* Monospace look for receipt IDs */
+}
+
+.payment-amount {
+  color: #10b981; /* Green color for positive transaction values */
+  font-weight: 700 !important;
+}
+
+/* Mode Badge (e.g., Cash) */
+.mode-badge {
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #475569;
+}
+
+/* Status Pill (e.g., Completed) */
+.status-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-pill.completed {
+  background-color: #22c55e;
+  color: white;
+}
+
+/* Ensure icons in section titles match your Figma orange theme */
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #f59e0b; /* Amber/Orange theme */
+  margin-bottom: 20px;
+}
+
+/* Sidebar  */
+
+.sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+
+/* Status Card (Yellow Theme) */
+.status-card {
+  background-color: #fffdf2; /* Light yellow from design */
+  border-color: #fff5d6;
+}
+
+/* Header within Card */
+.card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.card-header-row h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #1e293b;
+}
+
+.status-title {
+  color: #854d0e;
+  margin: 0;
+}
+/* Summary List Layout */
+.summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Prevents items from touching */
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between; /* Pushes value to far right */
+  align-items: center;
+}
+
+.summary-label {
+  font-size: 14px;
+  color: #64748b; /* Muted slate */
+}
+
+.summary-label.muted {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.summary-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.summary-value.warning {
+  color: #d97706; /* Orange interest color from design */
+}
+
+/* Total Amount Box (The Blue Highlight) */
+.total-due-highlight-box {
+  background-color: #eff6ff; /* Soft blue background */
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.total-due-label {
+  color: #1e40af;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.total-due-amount {
+  color: #2563eb;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* Divider inside the list */
+.divider-line-thin {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 4px 0;
+}
+/* Summary Card (Blue Totals) */
+.total-due-box {
+  background-color: #eff6ff; /* Light blue background */
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+}
+
+
+
+/* Due Alert Box */
+.due-alert-box {
+  background-color: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.alert-title {
+  color: #9a3412;
+  font-weight: 700;
+  margin: 0;
+}
+
+.alert-sub {
+  color: #c2410c;
+  font-size: 12px;
+  margin: 4px 0 0 0;
+}
+
+/* Action Buttons */
+.payment-btn {
+  width: 100%;
+  background: #22c55e; /* Green from image */
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.action-btn-secondary {
+  width: 100%;
+  background: white;
+  border: 1px solid #f1f5f9;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tag-muted {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.side-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.bold-val {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.due-date-val {
+  color: #9a3412;
+  font-weight: 700;
+}
+
+
+.page-loader {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.loader-box {
+  text-align: center;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+
+/* OLD CLEAN ACCOUNT SUMMARY */
+
+.amount-summary-card-old {
+  padding: 20px;
+}
+
+.summary-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.summary-row span:last-child {
+  font-weight: 600;
+}
+
+.summary-row.success span:last-child {
+  color: #16a34a;
+}
+
+.summary-row.danger span:last-child {
+  color: #dc2626;
+}
+
+.summary-row.total-highlight {
+  background: #f3f4f6;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.summary-row.small {
+  font-size: 13px;
+  color: #666;
+}
+
+.divider-line {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 14px 0;
+}

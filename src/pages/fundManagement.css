@@ -1,0 +1,347 @@
+/* ===========================
+   PAGE WRAPPER
+=========================== */
+
+.fund-page {
+  padding: 24px;
+  background: var(--bg-page);
+  min-height: 100%;
+}
+
+.fund-page h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+}
+
+/* ===========================
+   GENERIC CARD
+=========================== */
+
+.fund-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+}
+
+/* ===========================
+   CASH SUMMARY
+=========================== */
+
+.cash-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cash-summary span {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.cash-amount {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+/* ===========================
+   ACTION BUTTONS
+=========================== */
+
+.fund-actions {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.fund-btn {
+  padding: 11px 22px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fund-btn.primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.fund-btn.primary:hover {
+  background: var(--primary-hover);
+}
+
+.fund-btn.danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ===========================
+   MODAL
+=========================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 28px 32px;
+
+  /* ✅ Corporate width */
+  width: 780px;
+  max-width: 95vw;
+
+  /* ✅ Let content decide height */
+  height: auto;
+
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.28);
+}
+
+
+.modal h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 18px;
+}
+
+/* ===========================
+   INPUTS
+=========================== */
+
+.fund-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.fund-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ===========================
+   MODAL ACTIONS
+=========================== */
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.modal-actions button {
+  
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.modal-actions button:first-child {
+  background: #e5e7eb;
+  border: none;
+}
+
+.modal-section {
+  margin-bottom: 24px;
+}
+
+.modal-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+
+
+
+
+
+/* ===========================
+   DENOMINATION UI
+=========================== */
+
+.denom-container {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  background: #ffffff;
+}
+
+.denom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.denom-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.denom-card {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.denom-label {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.denom-card input {
+  text-align: center;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.denom-amount {
+  text-align: right;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--green-main);
+}
+
+.coin-card {
+  background: #f9fafb;
+}
+
+/* ===========================
+   TOTAL BAR
+=========================== */
+
+.denom-total-bar {
+  margin-top: 22px;
+  background: var(--green-main);
+  color: #fff;
+  padding: 14px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ===========================
+   ACTIONS
+=========================== */
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+/* ===========================
+   FORM ROW LAYOUT
+=========================== */
+
+.fund-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.fund-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.fund-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* ===========================
+   INPUTS
+=========================== */
+
+.fund-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.fund-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.fund-input[readonly] {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+/* ===========================
+   NORMALIZE SELECT (MATCH INPUT)
+=========================== */
+
+.fund-input,
+.fund-input select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* specifically for select */
+select.fund-input {
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9L12 15L18 9' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+
+  padding-right: 40px; /* space for arrow */
+  cursor: pointer;
+}
+/* ===========================
+   TOTAL VALIDATION COLORS
+=========================== */
+
+.total-ok {
+  background: var(--green-main);
+  color: #0d761b;
+}
+
+.total-error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Disable Save button */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

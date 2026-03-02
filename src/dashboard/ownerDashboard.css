@@ -1,0 +1,139 @@
+.owner-dashboard {
+  padding: 1.5rem;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.dashboard-date {
+  font-size: 0.9375rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Quick Actions Section */
+.quick-actions {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quick-actions h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 1.5rem 0;
+}
+
+.action-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: #334155;
+}
+
+.action-item:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.action-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.action-label {
+  font-size: 0.9375rem;
+  flex: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .action-list {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .owner-dashboard {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-date {
+    font-size: 0.875rem;
+  }
+
+  .quick-actions {
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .action-list {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .action-item {
+    padding: 0.875rem 1rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .quick-actions {
+    page-break-before: always;
+  }
+
+  .action-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+  }
+
+  .action-item:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}

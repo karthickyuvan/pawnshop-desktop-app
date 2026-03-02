@@ -1,0 +1,81 @@
+/* auth.css */
+
+/* Container styling provided by AuthLayout (assumed) */
+.auth-layout-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+  }
+  
+  /* Typography for the Title */
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #0f172a;
+    text-align: center;
+  }
+  
+  /* Input Fields */
+  .user-input {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box; /* Ensures padding doesn't break width */
+    background-color: #f8fafc;
+  }
+  
+  .user-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .user-input::placeholder {
+    color: #94a3b8;
+  }
+  
+  /* Action Button */
+  .login-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #1f3a5f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 0.5rem;
+  }
+  
+  .login-button:hover {
+    background-color: #1f3a5f;
+  }
+  
+  .login-button:active {
+    transform: translateY(1px);
+  }
+  
+  /* Error Message */
+  .auth-error {
+    margin-top: 1rem;
+    padding: 10px;
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    border-radius: 6px;
+    color: #b91c1c;
+    font-size: 0.85rem;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }

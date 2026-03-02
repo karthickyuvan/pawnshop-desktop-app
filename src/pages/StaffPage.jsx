@@ -1,0 +1,141 @@
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import "../styles/auth.css";
+import { useAuthStore } from "../auth/authStore";
+
+
+export default function StaffPage() {
+  const [staff, setStaff] = useState([]);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
+  const user = useAuthStore((s) => s.user);
+
+  const loadStaff = async () => {
+    const result = await invoke("get_staff_cmd");
+    setStaff(result);
+  };
+
+  useEffect(() => {
+    loadStaff();
+  }, []);
+
+  const createStaff = async () => {
+    try {
+      await invoke("create_staff_cmd", {
+        username,
+        password,
+        actorUserId: user.user_id, // 👈 ADD THIS
+      });
+  
+      setMsg("Staff created successfully");
+      setUsername("");
+      setPassword("");
+      loadStaff();
+    } catch (err) {
+      setMsg(err);
+    }
+  };
+  
+
+  const toggleStatus = async (id, isActive) => {
+    await invoke("toggle_staff_cmd", {
+      staffId: id,
+      isActive: !isActive,
+      actorUserId: user.user_id, 
+    });
+  
+    loadStaff();
+  };
+  
+
+
+    return (
+      <div className="admin-container">
+  {/* TOP BAR / BREADCRUMBS */}
+  <header className="page-header">
+    <div className="header-text">
+      <h2>Staff Management</h2>
+      <p>Configure access levels and security for your team.</p>
+    </div>
+
+  </header>
+
+  <div className="admin-grid">
+    {/* CREATE STAFF CARD */}
+    <aside className="admin-card sidebar-form">
+      <h3>Add New Staff</h3>
+      <div className="form-group">
+        <label>Username</label>
+        <input
+          className="auth-input"
+          placeholder="e.g. john_doe"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+
+        <label>Security PIN / Password</label>
+        <input
+          className="auth-input"
+          type="password"
+          placeholder="••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button className="auth-button primary" onClick={createStaff}>
+          Create Account
+        </button>
+      </div>
+      {msg && <div className={`status-msg ${msg.includes("success") ? "success" : "error"}`}>{msg}</div>}
+    </aside>
+
+    {/* STAFF LIST CARD */}
+    <main className="admin-card main-content">
+      <div className="header">
+        <h3>Staff Accounts</h3>
+      </div>
+      
+      <table className="staff-table">
+        <thead>
+          <tr>
+            <th>User Details</th>
+            <th>Status</th>
+            <th className="text-right">Manage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {staff.map((s) => (
+            <tr key={s.id}>
+              <td>
+                <div className="user-info">
+                  <div className="avatar">{s.username.charAt(0).toUpperCase()}</div>
+                  <div className="user-details">
+                    <span className="username">{s.username}</span>
+                    <span className="user-role">Staff Member</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span className={`status-pill ${s.is_active ? "active" : "disabled"}`}>
+                  {s.is_active ? "Active" : "Disabled"}
+                </span>
+              </td>
+              <td className="center">
+                <button
+                  className={`action-link ${s.is_active ? "danger" : "success"}`}
+                  onClick={() => toggleStatus(s.id, s.is_active)}
+                >
+                  {s.is_active ? "Deactivate" : "Activate"}
+                </button>
+                <button  className="action-link">Reset Password</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </main>
+  </div>
+</div>
+    );
+  }

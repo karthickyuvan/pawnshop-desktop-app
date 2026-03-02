@@ -1,0 +1,351 @@
+
+/* ------------------------------------------------------------------- */
+
+
+
+:root {
+  --bg-color: #f4f7f6;
+  --card-bg: #ffffff;
+  --primary: #2c3e50;
+  --accent: #3498db;
+  --danger: #e74c3c;
+  --success: #27ae60;
+  --border: #dee2e6;
+}
+
+.audit-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--bg-color);
+  min-height: 100vh;
+}
+
+/* Header */
+.audit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-print {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Layout */
+.audit-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 2rem;
+}
+
+
+/* ================================= */
+/* Block Border Based On Direction */
+/* ================================= */
+
+
+
+.audit-block.block-in {
+  border-left: 6px solid #16a34a; /* green */
+}
+
+.audit-block.block-out {
+  border-left: 6px solid #dc2626; /* red */
+}
+
+.audit-block {
+  background: var(--card-bg);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border-left: 6px solid #bdc3c7;
+  overflow: hidden;
+}
+
+.audit-block.payment { border-left-color: var(--success); }
+.audit-block.branch_expense { border-left-color: var(--danger); }
+
+.block-header {
+  padding: 1rem;
+  background: #fcfcfc;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  background: #f8f9fa;
+}
+
+td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.text-right { text-align: right; }
+.red { color: var(--danger); font-weight: 600; }
+.green { color: var(--success); font-weight: 600; }
+
+/* Sidebar Cards */
+.card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.dark-card { background: var(--primary); color: white; }
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.total-line {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+  font-weight: bold;
+}
+
+.variance.mismatch { color: var(--danger); background: #feebeb; padding: 0.5rem; border-radius: 4px; }
+.variance.ok { color: var(--success); }
+
+.method-tag {
+  font-size: 0.7rem;
+  background: #eee;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+/* Print Logic */
+@media print {
+  .header-actions, .loader { display: none !important; }
+  .audit-layout { display: block; }
+  .audit-container { padding: 0; background: white; }
+  .card { box-shadow: none; border: 1px solid #eee; }
+}
+
+
+/* ============================= */
+/* Amount Colors */
+/* ============================= */
+
+.amount-cell.green {
+  color: #16a34a; /* professional green */
+  font-weight: 600;
+}
+
+.amount-cell.red {
+  color: #dc2626; /* professional red */
+  font-weight: 600;
+}
+
+/* Block Total */
+.category-total.green {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.category-total.red {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+
+/* Daybook denomination table  */
+/* Reduce space by aligning Count next to Denom */
+.denom-table th:nth-child(2), 
+.denom-table td.denom-qty {
+  text-align: left;    /* Pulls the count toward the left */
+  padding-left: 50px;  /* Adjust this value to control the exact gap */
+  padding-right: 30px;
+}
+
+/* Ensure Denom column doesn't take more space than it needs */
+.denom-value {
+  width: 20px;         /* Or use white-space: nowrap; */
+  text-align: left;
+}
+
+/* Right align the total column to keep it neat */
+.text-right {
+  text-align: right;
+}
+
+/* FIX for your Total Badge: Remove width: 200% */
+.total-badge {
+  display: flex;             
+  justify-content: space-between; 
+  align-items: center;       
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;   
+  background: var(--primary);
+  color: white;
+  border-radius: 6px;
+  font-weight: 800;
+  width: 100%;               /* Changed from 200% to 100% to stay inside the box */
+  box-sizing: border-box;    
+}
+
+
+
+/* Customer Name Column */
+.customer-cell {
+  padding: 8px 12px;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.no-customer {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* Expand Button */
+.expand-cell {
+  text-align: center;
+  padding: 4px;
+}
+
+.expand-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.expand-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Row with expandable details */
+.has-details {
+  cursor: pointer;
+}
+
+.has-details:hover {
+  background: #f9fafb;
+}
+
+/* Denomination Detail Row */
+.denomination-detail-row {
+  background: #f8fafc;
+  border-top: 1px solid #e5e7eb;
+}
+
+.denomination-detail {
+  padding: 16px 20px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.denomination-detail h5 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin: 0 0 12px 0;
+  letter-spacing: 0.5px;
+}
+
+/* Denomination Grid */
+.denom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.denom-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.denom-note {
+  font-weight: 700;
+  color: #059669;
+  min-width: 45px;
+}
+
+.denom-multiply,
+.denom-equals {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.denom-qty {
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 30px;
+  text-align: right;
+}
+
+.denom-total {
+  font-weight: 700;
+  color: #0891b2;
+  margin-left: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .denom-grid {
+    grid-template-columns: 1fr;
+  }
+}

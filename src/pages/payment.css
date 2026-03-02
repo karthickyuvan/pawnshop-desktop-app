@@ -1,0 +1,338 @@
+/* Global Page Styling */
+
+.payment-page {
+  padding: 24px;
+  background: #f6f7fb;
+  min-height: 100vh;
+}
+
+/* 2 column layout */
+.payment-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+}
+
+
+/* Payment Header */
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.payment-title {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.payment-subtitle {
+  margin: 14px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+ 
+}
+p.payment-subtitle{
+  padding-left: 12px;
+}
+
+.login-badge span {
+  background: #e5e7eb;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* Payment Tabs */
+
+.payment-tabs {
+  display: inline-flex;
+  background: #eaeaf0;
+  border-radius: 999px;
+  padding: 10px;
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  border: none;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tab-btn.active {
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  padding: 10px;
+}
+
+/* Search Sidebar */
+
+/* Container */
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ================= SEARCH CARD ================= */
+
+.search-card {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  border: 1px solid #e5e7eb;
+}
+
+/* Blue Header Strip */
+.search-card-header {
+  background: #dbe6f3;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Body */
+.search-card-body {
+  padding: 22px;
+}
+
+.search-card-body label {
+  font-size: 15px;
+  font-weight: 400;
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Input */
+.search-input-wrapper {
+  display: flex;
+  gap: 12px;
+}
+
+.search-input-wrapper input {
+  flex: 1;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: #f1f3f6;
+  font-size: 12px;
+  outline: none;
+}
+
+/* Blue Search Button */
+.search-input-wrapper button {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  border: none;
+  background: #2f6fed;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ================= QUICK ACCESS ================= */
+
+.quick-card {
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.quick-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.quick-header h3 {
+  margin: 0;
+  font-size: 15x;
+  font-weight: 400;
+}
+
+/* Quick Items */
+.quick-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f3f4f6;
+  margin-bottom: 14px;
+}
+
+.pledge-id {
+  font-weight: 400;
+  color: #2563eb;
+  font-size: 16px;
+}
+
+.customer-name {
+  color: #374151;
+  margin-top: 4px;
+}
+
+/* Red Dot */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background: #ff2d2d;
+  border-radius: 50%;
+}
+
+
+/* Paymenty empty stats */
+.empty-state {
+  background: white;
+  border-radius: 20px;
+  padding: 100px;
+  border: 2px dashed #d8dbe3;
+  text-align: center;
+  color: #6b7280;
+}
+
+.empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+/* Payment History */
+.history-card {
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.history-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.history-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-title h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.history-summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.total-section p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.total-section h2 {
+  margin: 4px 0 0;
+  color: #15803d;
+  font-weight: 700;
+}
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: white;
+  cursor: pointer;
+}
+.payment-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.payment-table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 14px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.payment-table td {
+  padding: 16px 10px;
+  border-bottom: 1px solid #f1f1f1;
+}
+.link {
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.amount {
+  font-weight: 600;
+}
+.badge-type {
+  background: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.badge-cash {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.badge-upi {
+  background: #dbeafe;
+  color: #2563eb;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.badge-bank {
+  background: #ede9fe;
+  color: #7c3aed;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.badge-staff {
+  background: #e5e7eb;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.badge-owner {
+  background: #111827;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+}
