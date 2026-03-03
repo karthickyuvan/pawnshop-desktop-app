@@ -202,17 +202,26 @@
   margin-bottom: 20px;
 }
 
+.search-input-wrapper.hide-icon .search-icon-inner {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease; /* Smooth transition */
+}
+
 .search-input-wrapper {
   position: relative;
   flex: 1;
   display: flex;
   align-items: center;
+
 }
 
 .search-icon-inner {
   position: absolute;
   left: 12px;
   color: #9ca3af;
+  pointer-events: none;
+  
 }
 
 .form-input-clean {
@@ -223,7 +232,13 @@
   border-radius: 8px;
   font-size: 14px;
   transition: all 0.2s;
+
 }
+
+.form-input-clean::placeholder{
+  padding-left: 20px;
+}
+
 
 .form-input-clean:focus {
   outline: none;
@@ -231,6 +246,7 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
+
 
 /* Empty State Styling */
 .customer-empty-state {
@@ -883,11 +899,14 @@
 
 .page-header h2 {
   margin: 0;
+  text-align: left;
+  padding-right: 950px;
 }
 
 .page-header p {
   color: #777;
   margin-bottom: 24px;
+  padding-right: 830px;
 }
 
 /* SUMMARY CARDS */
@@ -934,12 +953,22 @@
   left: 18px;
   color: #999;
   font-size: 18px;
+  margin-top: 20px;
+  pointer-events: none; /* User clicks pass through to the input */
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 2;
   /* Make sure you are using a thin-line icon for that modern look */
+}
+
+/* Hide the icon when the parent has the hide-icon class */
+.search-wrapper.hide-icon .search-icon {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .search-input {
   width: 100%;
-  padding: 14px 14px 14px 45px; /* Extra left padding to make room for icon */
+  padding: 4px 14px 14px 45px; /* Extra left padding to make room for icon */
   background-color: #f1f3f5;    /* Light grey background from screenshot */
   border: 1px solid transparent; 
   border-radius: 10px;          /* Smooth rounded corners */
@@ -950,6 +979,7 @@
 
 .search-input::placeholder {
   color: #8e8e8e;
+  padding-left: 25px;
 }
 
 .search-input:focus {
@@ -1924,3 +1954,48 @@
     background-color: #ffebee;
     color: #b71c1c;
   }
+
+
+  /* View pledge Search  */
+
+.filter-bar-container {
+  display: flex;
+  align-items: center; 
+  gap: 15px;          
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+
+.search-flex-item {
+  flex: 1; 
+}
+
+.pledge-filters {
+    display: flex;
+    gap: 12px;
+    margin: 15px 0;
+    align-items: center;
+  }
+  
+/* Clean up the select boxes to match the UI */
+.pledge-filters select, 
+.pledge-filters input[type="date"] {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  font-size: 14px;
+  outline: none;
+}
+
+/* Group custom date inputs together */
+.custom-date-inputs {
+  display: flex;
+  gap: 5px;
+}
+
+
+.search-container {
+  margin-bottom: 0 !important;
+}

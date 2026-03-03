@@ -327,19 +327,19 @@ const handleAutoFill = async () => {
             <>
               {/* Search Row */}
               <div className="customer-search-container">
-                <div className="search-input-wrapper">
-                  <Search className="search-icon-inner" size={18} />
-                  <input
-                      className="form-input-clean"
-                      placeholder="Search by phone or name"
-                      value={searchQuery}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSearchQuery(val);
-                        handleSearch(val); // Trigger search with the new value
-                      }}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearch(searchQuery)}
-                    />
+              <div className={`search-input-wrapper ${searchQuery ? 'hide-icon' : ''}`}>
+              <Search className="search-icon-inner" size={18} />
+              <input
+                className="form-input-clean"
+                placeholder="Search by phone or name"
+                value={searchQuery}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchQuery(val);
+                  handleSearch(val);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch(searchQuery)}
+              />
 
                     {searchQuery && (
                       <div className="search-results-dropdown">

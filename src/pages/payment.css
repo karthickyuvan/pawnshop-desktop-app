@@ -336,3 +336,23 @@ p.payment-subtitle{
   border-radius: 999px;
   font-weight: 600;
 }
+
+
+
+/* Search Live  */
+
+.search-dropdown {
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.search-loading {
+  padding: 8px;
+  font-size: 13px;
+  color: #6b7280;
+}

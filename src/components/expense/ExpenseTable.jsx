@@ -1,12 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo ,useEffect} from "react";
 import { deleteExpense } from "../../services/expenseApi";
 import {formatDateTimeIST} from "../../utils/timeFormatter";
 
-export default function ExpenseTable({ expenses, user, reload }) {
+export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedMode, setSelectedMode] = useState("ALL");
+
+  const [dateFilterType, setDateFilterType] = useState("ALL");
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date().getMonth() + 1
+  );
+  const [selectedYear, setSelectedYear] = useState(
+    new Date().getFullYear()
+  );
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this expense?")) return;
@@ -25,26 +35,77 @@ export default function ExpenseTable({ expenses, user, reload }) {
     return unique;
   }, [expenses]);
 
-  /* ---------------- FILTER LOGIC ---------------- */
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter((exp) => {
 
-      const matchesSearch =
-        exp.expense_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (exp.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        exp.category_name.toLowerCase().includes(searchTerm.toLowerCase());
+      /* ---------------- FILTER LOGIC ---------------- */
+    const filteredExpenses = useMemo(() => {
+      return expenses.filter((exp) => {
 
-      const matchesCategory =
-        selectedCategory === "ALL" ||
-        exp.category_name === selectedCategory;
+        const expenseDate = new Date(exp.expense_date);
 
-      const matchesMode =
-        selectedMode === "ALL" ||
-        exp.payment_mode === selectedMode;
+        // 🔎 Search Filter
+        const matchesSearch =
+          exp.expense_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (exp.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          exp.category_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-      return matchesSearch && matchesCategory && matchesMode;
-    });
-  }, [expenses, searchTerm, selectedCategory, selectedMode]);
+        // 📂 Category Filter
+        const matchesCategory =
+          selectedCategory === "ALL" ||
+          exp.category_name === selectedCategory;
+
+        // 💳 Mode Filter
+        const matchesMode =
+          selectedMode === "ALL" ||
+          exp.payment_mode === selectedMode;
+
+        // 📅 Date Filter
+        let matchesDate = true;
+
+        if (dateFilterType === "MONTH") {
+          matchesDate =
+            expenseDate.getMonth() + 1 === selectedMonth &&
+            expenseDate.getFullYear() === selectedYear;
+        }
+
+        if (dateFilterType === "YEAR") {
+          matchesDate =
+            expenseDate.getFullYear() === selectedYear;
+        }
+
+        if (dateFilterType === "CUSTOM") {
+          if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+
+            matchesDate = expenseDate >= start && expenseDate <= end;
+          }
+        }
+
+        return (
+          matchesSearch &&
+          matchesCategory &&
+          matchesMode &&
+          matchesDate
+        );
+      });
+    }, [
+      expenses,
+      searchTerm,
+      selectedCategory,
+      selectedMode,
+      dateFilterType,
+      selectedMonth,
+      selectedYear,
+      startDate,
+      endDate
+    ]);
+
+    useEffect(() => {
+      if (onFilter) {
+        onFilter(filteredExpenses);
+      }
+    }, [filteredExpenses, onFilter]);
 
   return (
     <div className="table-section">
@@ -82,6 +143,69 @@ export default function ExpenseTable({ expenses, user, reload }) {
             <option value="BANK_TRANSFER">BANK_TRANSFER</option>
             <option value="UPI">UPI</option>
           </select>
+          <select
+          value={dateFilterType}
+          onChange={(e) => setDateFilterType(e.target.value)}
+        >
+          <option value="ALL">All Dates</option>
+          <option value="MONTH">Month</option>
+          <option value="YEAR">Year</option>
+          <option value="CUSTOM">Custom Range</option>
+        </select>
+
+        {dateFilterType === "MONTH" && (
+          <>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            >
+              {[...Array(12)].map((_, i) => (
+                <option key={i} value={i + 1}>
+                  {new Date(0, i).toLocaleString("default", { month: "long" })}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+            >
+              {[2023, 2024, 2025, 2026].map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+
+        {dateFilterType === "YEAR" && (
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+          >
+            {[2023, 2024, 2025, 2026].map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {dateFilterType === "CUSTOM" && (
+          <>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </>
+        )}
         </div>
       </div>
 
