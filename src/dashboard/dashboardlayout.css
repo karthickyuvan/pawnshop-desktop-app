@@ -57,7 +57,7 @@
   }
   
   .menu-item.active {
-    background: #162c49;
+    background: #a07840;
     font-weight: 500;
   }
   
@@ -112,6 +112,7 @@
   .content {
     padding: 20px;
     overflow-y: auto;
+    margin-left: 40px;
   }
   
   .clickable {

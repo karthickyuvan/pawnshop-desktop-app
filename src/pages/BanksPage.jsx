@@ -53,7 +53,7 @@ export default function BankPage() {
   return (
     <div className="bank-container">
       {/* HEADER */}
-      <header className="page-header">
+      {/* <header className="page-header">
         <div className="title-group">
           <Building2 className="icon-main" />
           <div>
@@ -70,6 +70,27 @@ export default function BankPage() {
         >
           <Link size={16} /> Bank Mapping
         </button>
+      </header> */}
+      {/* HEADER */}
+      <header className="page-header-with-actions">
+        <div className="title-group">
+          <Building2 className="icon-main" />
+          <div className="title-text">
+            <h1>Bank Accounts</h1>
+            <p>Manage settlement accounts and banking details.</p>
+          </div>
+        </div>
+
+        <div className="header-actions">
+          <button
+            className="secondary-btn"
+            onClick={() => window.dispatchEvent(
+              new CustomEvent("menu-change", { detail: "bank-mapping" })
+            )}
+          >
+            <Link size={16} /> Bank Mapping
+          </button>
+        </div>
       </header>
 
       {/* FORM CARD */}

@@ -97,6 +97,8 @@ pub struct PledgeDetails {
     pub total_gross_weight: f64,
     pub total_net_weight: f64,
     pub total_value: f64,
+
+    pub is_bank_mapped:bool,
 }
 
 #[derive(Serialize)]
@@ -543,7 +545,11 @@ pub fn get_single_pledge(db: &Db, pledge_id: i64) -> Result<SinglePledgeResponse
                 p.loan_amount,
                 p.total_gross_weight,
                 p.total_net_weight,
-                p.total_estimated_value
+                p.total_estimated_value,
+                CASE WHEN EXISTS (
+            SELECT 1 FROM bank_mappings 
+            WHERE pledge_id = p.id AND status = 'ACTIVE'
+        ) THEN 1 ELSE 0 END as is_bank_mapped
             FROM pledges p
             JOIN customers c ON p.customer_id = c.id
             WHERE p.id = ?1
@@ -569,6 +575,7 @@ pub fn get_single_pledge(db: &Db, pledge_id: i64) -> Result<SinglePledgeResponse
                         total_gross_weight: row.get(15)?,
                         total_net_weight: row.get(16)?,
                         total_value: row.get(17)?,
+                        is_bank_mapped: row.get::<_, i64>(18)? == 1,
                     })
                 },
             )
@@ -699,6 +706,26 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
 
     let pledge_data = get_single_pledge(db, req.pledge_id)?;
     let settings = crate::settings::service::get_system_settings(db)?;
+
+    // ── NEW: Block closure if pledge is bank-mapped ──────────────────────────
+    if req.payment_type == "CLOSURE" {
+        let conn_check = db.0.lock().unwrap();
+        let is_bank_mapped: bool = conn_check
+            .query_row(
+                "SELECT COUNT(*) FROM bank_mappings WHERE pledge_id = ?1 AND status = 'ACTIVE'",
+                params![req.pledge_id],
+                |row| row.get::<_, i64>(0),
+            )
+            .unwrap_or(0) > 0;
+        drop(conn_check); // release lock before continuing
+
+        if is_bank_mapped {
+            return Err(
+                "This pledge is bank-mapped. Please use Bank Unmapping to close this pledge.".to_string()
+            );
+        }
+    }
+
 
     let interest_paid: f64 = pledge_data
         .payments

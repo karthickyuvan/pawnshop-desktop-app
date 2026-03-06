@@ -1,0 +1,638 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PledgePrintModal.css
+   Theme: Crisp professional — dark overlay, white modal, receipt paper
+   Fonts: Lora (display) · IBM Plex Mono (receipt numbers)
+   ═══════════════════════════════════════════════════════════════════ */
+
+   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+   /* ── Variables ──────────────────────────────────────────────────── */
+   :root {
+     --ppm-overlay:       rgba(10, 12, 20, 0.72);
+     --ppm-modal-bg:      #ffffff;
+     --ppm-header-bg:     #0f172a;
+     --ppm-header-text:   #f8fafc;
+     --ppm-body-bg:       #f8fafc;
+     --ppm-border:        #e2e8f0;
+     --ppm-text-main:     #0f172a;
+     --ppm-text-muted:    #64748b;
+     --ppm-text-faint:    #94a3b8;
+     --ppm-paper-bg:      #fefefe;
+     --ppm-paper-shadow:  0 4px 32px rgba(0,0,0,0.14);
+     --ppm-radius:        16px;
+     --ppm-radius-sm:     8px;
+     --ppm-success:       #059669;
+     --ppm-success-bg:    #d1fae5;
+     --ppm-font-display:  'Lora', Georgia, serif;
+     --ppm-font-mono:     'IBM Plex Mono', 'Courier New', monospace;
+     --ppm-transition:    0.18s ease;
+   }
+   
+   /* ── Overlay ────────────────────────────────────────────────────── */
+   .ppm-overlay {
+     position: fixed;
+     inset: 0;
+     background: var(--ppm-overlay);
+     z-index: 9999;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     padding: 16px;
+     backdrop-filter: blur(6px);
+     animation: ppm-fade-in 0.22s ease;
+   }
+   
+   @keyframes ppm-fade-in {
+     from { opacity: 0; }
+     to   { opacity: 1; }
+   }
+   
+   /* ── Modal Shell ────────────────────────────────────────────────── */
+   .ppm-modal {
+     background: var(--ppm-modal-bg);
+     border-radius: var(--ppm-radius);
+     width: min(92vw, 1000px);
+     max-height: 92vh;
+     display: flex;
+     flex-direction: column;
+     overflow: hidden;
+     box-shadow: 0 32px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08);
+     animation: ppm-slide-in 0.25s cubic-bezier(0.34, 1.3, 0.64, 1);
+   }
+   
+   @keyframes ppm-slide-in {
+     from { transform: translateY(24px) scale(0.97); opacity: 0; }
+     to   { transform: translateY(0)    scale(1);    opacity: 1; }
+   }
+   
+   /* ── Header ─────────────────────────────────────────────────────── */
+   .ppm-header {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     padding: 20px 24px;
+     background: var(--ppm-header-bg);
+     flex-shrink: 0;
+   }
+   
+   .ppm-header-left {
+     display: flex;
+     align-items: center;
+     gap: 14px;
+   }
+   
+   .ppm-success-icon {
+     width: 40px;
+     height: 40px;
+     border-radius: 50%;
+     background: var(--ppm-success);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     color: #fff;
+     flex-shrink: 0;
+   }
+   
+   .ppm-success-icon svg { width: 20px; height: 20px; }
+   
+   .ppm-title {
+     font-family: var(--ppm-font-display);
+     font-size: 18px;
+     font-weight: 700;
+     color: var(--ppm-header-text);
+     letter-spacing: 0.01em;
+   }
+   
+   .ppm-subtitle {
+     font-size: 13px;
+     color: #94a3b8;
+     margin-top: 2px;
+   }
+   
+   .ppm-pledge-no {
+     font-family: var(--ppm-font-mono);
+     font-weight: 700;
+     color: #fbbf24;
+     letter-spacing: 0.05em;
+   }
+   
+   .ppm-close {
+     width: 36px;
+     height: 36px;
+     border: none;
+     background: rgba(255,255,255,0.08);
+     border-radius: 50%;
+     cursor: pointer;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     color: #94a3b8;
+     transition: background var(--ppm-transition), color var(--ppm-transition);
+     flex-shrink: 0;
+   }
+   
+   .ppm-close svg { width: 16px; height: 16px; }
+   
+   .ppm-close:hover {
+     background: rgba(255,255,255,0.16);
+     color: #fff;
+   }
+   
+   /* ── Body layout ────────────────────────────────────────────────── */
+   .ppm-body {
+     display: grid;
+     grid-template-columns: 280px 1fr;
+     flex: 1;
+     overflow: hidden;
+   }
+   
+   /* ── Left: Selector panel ───────────────────────────────────────── */
+   .ppm-selector {
+     background: var(--ppm-body-bg);
+     border-right: 1px solid var(--ppm-border);
+     padding: 24px 20px;
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+     overflow-y: auto;
+   }
+   
+   .ppm-selector-title {
+     font-size: 11px;
+     font-weight: 700;
+     letter-spacing: 0.12em;
+     text-transform: uppercase;
+     color: var(--ppm-text-muted);
+     margin-bottom: 4px;
+   }
+   
+   /* Copy selection button */
+   .ppm-copy-btn {
+     display: flex;
+     align-items: center;
+     gap: 12px;
+     padding: 12px 14px;
+     border: 1.5px solid var(--ppm-border);
+     border-radius: var(--ppm-radius-sm);
+     background: #fff;
+     cursor: pointer;
+     text-align: left;
+     transition: all var(--ppm-transition);
+     position: relative;
+   }
+   
+   .ppm-copy-btn:hover {
+     border-color: #cbd5e1;
+     background: #f8fafc;
+     transform: translateX(2px);
+   }
+   
+   .ppm-copy-btn--active {
+     border-color: var(--copy-border, #bfdbfe);
+     background: var(--copy-bg, #eff6ff);
+     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+   }
+   
+   .ppm-copy-btn--printed {
+     opacity: 0.85;
+   }
+   
+   .ppm-copy-icon {
+     width: 36px;
+     height: 36px;
+     border-radius: 8px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     flex-shrink: 0;
+   }
+   
+   .ppm-copy-icon svg { width: 18px; height: 18px; }
+   
+   .ppm-copy-text {
+     display: flex;
+     flex-direction: column;
+     gap: 1px;
+     flex: 1;
+   }
+   
+   .ppm-copy-label {
+     font-size: 14px;
+     font-weight: 700;
+     color: var(--ppm-text-main);
+     font-family: var(--ppm-font-display);
+   }
+   
+   .ppm-copy-sub {
+     font-size: 11px;
+     color: var(--ppm-text-muted);
+   }
+   
+   .ppm-printed-badge {
+     display: flex;
+     align-items: center;
+     gap: 4px;
+     font-size: 10px;
+     font-weight: 700;
+     padding: 3px 8px;
+     border-radius: 99px;
+     white-space: nowrap;
+   }
+   
+   .ppm-printed-badge svg { width: 10px; height: 10px; }
+   
+   .ppm-active-dot {
+     width: 8px;
+     height: 8px;
+     border-radius: 50%;
+     flex-shrink: 0;
+   }
+   
+   /* Print button */
+   .ppm-print-btn {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 8px;
+     margin-top: 6px;
+     padding: 13px 16px;
+     background: var(--ppm-header-bg);
+     color: #fff;
+     border: none;
+     border-radius: var(--ppm-radius-sm);
+     font-size: 14px;
+     font-weight: 700;
+     font-family: var(--ppm-font-display);
+     cursor: pointer;
+     transition: all var(--ppm-transition);
+     letter-spacing: 0.02em;
+   }
+   
+   .ppm-print-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+   
+   .ppm-print-btn:hover:not(.ppm-print-btn--disabled) {
+     background: #1e293b;
+     transform: translateY(-1px);
+     box-shadow: 0 6px 20px rgba(15,23,42,0.3);
+   }
+   
+   .ppm-print-btn--disabled {
+     background: #e2e8f0;
+     color: #94a3b8;
+     cursor: not-allowed;
+   }
+   
+   /* Done button */
+   .ppm-done-btn {
+     padding: 11px 16px;
+     background: transparent;
+     border: 1.5px solid var(--ppm-border);
+     border-radius: var(--ppm-radius-sm);
+     font-size: 14px;
+     font-weight: 600;
+     color: var(--ppm-text-muted);
+     cursor: pointer;
+     transition: all var(--ppm-transition);
+     text-align: center;
+   }
+   
+   .ppm-done-btn:hover {
+     background: #f1f5f9;
+     color: var(--ppm-text-main);
+     border-color: #cbd5e1;
+   }
+   
+   /* ── Right: Preview panel ───────────────────────────────────────── */
+   .ppm-preview-panel {
+     background: #e8edf2;
+     overflow-y: auto;
+     display: flex;
+     flex-direction: column;
+     background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 0);
+     background-size: 20px 20px;
+   }
+   
+   .ppm-preview-scroll {
+     padding: 28px;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 12px;
+   }
+   
+   .ppm-preview-label {
+     font-size: 11px;
+     font-weight: 700;
+     letter-spacing: 0.10em;
+     text-transform: uppercase;
+     color: #64748b;
+     align-self: flex-start;
+   }
+   
+   /* The "paper" that wraps the receipt */
+   .ppm-preview-paper {
+     background: var(--ppm-paper-bg);
+     border-radius: 4px;
+     box-shadow: var(--ppm-paper-shadow);
+     border: 1px solid rgba(0,0,0,0.08);
+   }
+   
+   .ppm-preview-paper--customer { width: 340px; padding: 20px; }
+   .ppm-preview-paper--store    { width: 380px; padding: 20px; }
+   .ppm-preview-paper--pocket   { width: 220px; padding: 14px; }
+   
+   /* Empty preview state */
+   .ppm-preview-empty {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     gap: 14px;
+     padding: 40px;
+   }
+   
+   .ppm-preview-empty-icon {
+     width: 56px;
+     height: 56px;
+     border-radius: 50%;
+     background: rgba(255,255,255,0.7);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     color: #94a3b8;
+   }
+   
+   .ppm-preview-empty-icon svg { width: 28px; height: 28px; }
+   
+   .ppm-preview-empty-text {
+     text-align: center;
+     font-size: 14px;
+     color: #64748b;
+     line-height: 1.6;
+     font-family: var(--ppm-font-display);
+   }
+   
+   /* ═══════════════════════════════════════════════════════════════════
+      RECEIPT STYLES (shared across all 3 types)
+      These render both in preview and in the print window
+      ═══════════════════════════════════════════════════════════════════ */
+   .receipt {
+     font-family: var(--ppm-font-display);
+     font-size: 11px;
+     color: #111;
+     line-height: 1.5;
+   }
+   
+   /* Header */
+   .receipt-header {
+     display: flex;
+     align-items: flex-start;
+     gap: 8px;
+     margin-bottom: 8px;
+   }
+   
+   .receipt-logo {
+     width: 40px;
+     height: 40px;
+     object-fit: contain;
+     flex-shrink: 0;
+     border-radius: 4px;
+   }
+   
+   .receipt-shop-info { flex: 1; }
+   
+   .receipt-shop-name {
+     font-size: 14px;
+     font-weight: 700;
+     letter-spacing: 0.02em;
+   }
+   
+   .receipt-shop-line {
+     font-size: 9px;
+     color: #555;
+     line-height: 1.4;
+   }
+   
+   .receipt-copy-badge {
+     font-size: 8px;
+     font-weight: 800;
+     letter-spacing: 0.08em;
+     border: 1.5px solid #111;
+     padding: 2px 6px;
+     white-space: nowrap;
+     align-self: flex-start;
+     border-radius: 2px;
+   }
+   
+   /* Title row */
+   .receipt-title {
+     text-align: center;
+     font-size: 12px;
+     font-weight: 700;
+     letter-spacing: 0.08em;
+     text-transform: uppercase;
+     margin: 8px 0 2px;
+   }
+   
+   .receipt-pledge-no {
+     text-align: center;
+     font-family: var(--ppm-font-mono);
+     font-size: 15px;
+     font-weight: 700;
+     letter-spacing: 0.06em;
+     color: #111;
+   }
+   
+   .receipt-date {
+     text-align: center;
+     font-size: 9px;
+     color: #666;
+     margin-bottom: 4px;
+   }
+   
+   /* Dividers */
+   .receipt-divider          { border: none; border-top: 1.5px solid #111; margin: 6px 0; }
+   .receipt-divider--dashed  { border-top-style: dashed; border-color: #aaa; border-width: 1px; }
+   
+   /* Section label */
+   .receipt-section-label {
+     font-size: 9px;
+     font-weight: 800;
+     letter-spacing: 0.12em;
+     text-transform: uppercase;
+     color: #444;
+     margin: 5px 0 3px;
+   }
+   
+   /* Data rows */
+   .receipt-row {
+     display: flex;
+     justify-content: space-between;
+     align-items: baseline;
+     gap: 6px;
+     margin: 2px 0;
+     font-size: 10px;
+   }
+   
+   .receipt-row--bold {
+     font-weight: 700;
+     font-size: 11px;
+   }
+   
+   .receipt-row-label {
+     color: #555;
+     flex-shrink: 0;
+   }
+   
+   .receipt-row-value {
+     font-weight: 600;
+     text-align: right;
+     word-break: break-all;
+   }
+   
+   /* Items table */
+   .receipt-items-table {
+     width: 100%;
+     border-collapse: collapse;
+     font-size: 9px;
+     margin-top: 4px;
+   }
+   
+   .receipt-items-table th {
+     border-bottom: 1.5px solid #111;
+     padding: 3px 2px;
+     text-align: left;
+     font-size: 8px;
+     font-weight: 700;
+     letter-spacing: 0.06em;
+     text-transform: uppercase;
+   }
+   
+   .receipt-items-table td {
+     padding: 2px;
+     border-bottom: 1px dashed #ddd;
+   }
+   
+   .receipt-items-table--store th,
+   .receipt-items-table--store td {
+     padding: 2.5px 3px;
+   }
+   
+   .receipt-items-table tfoot td {
+     border-top: 1.5px solid #111;
+     border-bottom: none;
+     font-weight: 700;
+     padding-top: 3px;
+   }
+   
+   /* Two-column layout (store copy) */
+   .receipt-two-col {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 12px;
+     margin: 4px 0;
+   }
+   
+   /* Terms */
+   .receipt-terms {
+     font-size: 8px;
+     color: #555;
+     line-height: 1.5;
+   }
+   
+   .receipt-terms-title {
+     font-weight: 700;
+     font-size: 9px;
+     margin-bottom: 2px;
+   }
+   
+   /* Signatures */
+   .receipt-signatures {
+     display: flex;
+     justify-content: space-between;
+     gap: 8px;
+     margin-top: 14px;
+   }
+   
+   .receipt-signatures--3 { gap: 4px; }
+   
+   .receipt-sig-box {
+     flex: 1;
+     text-align: center;
+     font-size: 8px;
+     color: #666;
+   }
+   
+   .receipt-sig-line {
+     border-top: 1px solid #333;
+     margin-bottom: 3px;
+     margin-top: 18px;
+   }
+   
+   .receipt-footer {
+     text-align: center;
+     font-size: 8px;
+     color: #999;
+     margin-top: 10px;
+     font-style: italic;
+   }
+   
+   /* ── Pocket-specific ─────────────────────────────────────────────── */
+   .receipt--pocket { font-size: 10px; }
+   
+   .receipt-pocket-shop {
+     text-align: center;
+     font-size: 14px;
+     font-weight: 700;
+     letter-spacing: 0.03em;
+   }
+   
+   .receipt-pocket-phone {
+     text-align: center;
+     font-size: 9px;
+     color: #666;
+     margin-bottom: 4px;
+   }
+   
+   .receipt-pocket-pledgeno {
+     text-align: center;
+     font-family: var(--ppm-font-mono);
+     font-size: 13px;
+     font-weight: 700;
+     margin: 3px 0;
+   }
+   
+   .receipt-pocket-date {
+     text-align: center;
+     font-size: 9px;
+     color: #666;
+     margin-bottom: 4px;
+   }
+   
+   .receipt-pocket-note {
+     text-align: center;
+     font-size: 9px;
+     font-style: italic;
+     color: #666;
+     margin: 4px 0;
+   }
+   
+   /* ── Responsive ──────────────────────────────────────────────────── */
+   @media (max-width: 680px) {
+     .ppm-body {
+       grid-template-columns: 1fr;
+       grid-template-rows: auto 1fr;
+     }
+   
+     .ppm-selector {
+       border-right: none;
+       border-bottom: 1px solid var(--ppm-border);
+       padding: 16px;
+       gap: 8px;
+     }
+   
+     .ppm-preview-paper--customer,
+     .ppm-preview-paper--store { width: 100%; max-width: 320px; }
+     .ppm-preview-paper--pocket { width: 100%; max-width: 200px; }
+   }

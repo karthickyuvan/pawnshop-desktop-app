@@ -225,49 +225,6 @@ pub fn get_owner_dashboard_summary(db: State<Db>) -> Result<OwnerDashboardSummar
                 silver_net += net;
             }
         }
-    // let mut stmt = conn
-    //     .prepare(
-    //         "
-    //         SELECT 
-    //             pi.jewellery_type,
-    //             SUM(pi.gross_weight) as total_gross,
-    //             SUM(pi.net_weight) as total_net
-    //         FROM pledge_items pi
-    //         JOIN pledges p ON pi.pledge_id = p.id
-    //         WHERE p.status = 'ACTIVE'
-    //         GROUP BY pi.jewellery_type
-    //         ",
-    //     )
-    //     .map_err(|e| e.to_string())?;
-
-    // let rows = stmt
-    //     .query_map([], |row| {
-    //         Ok((
-    //             row.get::<_, String>(0)?,
-    //             row.get::<_, f64>(1)?,
-    //             row.get::<_, f64>(2)?,
-    //         ))
-    //     })
-    //     .map_err(|e| e.to_string())?;
-
-    // let mut gold_gross = 0.0;
-    // let mut gold_net = 0.0;
-    // let mut silver_gross = 0.0;
-    // let mut silver_net = 0.0;
-
-    // for row in rows {
-    //     let (jewellery_type, gross, net) = row.map_err(|e| e.to_string())?;
-    //     let jewellery_lower = jewellery_type.to_lowercase();
-
-    //     if jewellery_lower.contains("gold") {
-    //         gold_gross += gross;
-    //         gold_net += net;
-    //     } else if jewellery_lower.contains("silver") {
-    //         silver_gross += gross;
-    //         silver_net += net;
-    //     }
-    // }
-
     // 9️⃣ Today's Part Payment (PRINCIPAL payments)
     let (part_payment_count, part_payment_amount): (i64, f64) = conn
         .query_row(

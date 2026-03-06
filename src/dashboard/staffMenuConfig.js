@@ -13,6 +13,8 @@ export const staffMenu = [
       { title: "Create Pledge", key: "pledges" },
       { title: "View All Pledges", key: "viewpledges" },
       { title: "Re-Pledges", key: "repledges" },
+      { title: "Overlimit Pledges", key: "overlimit-pledges" },
+
     ],
   },
   {

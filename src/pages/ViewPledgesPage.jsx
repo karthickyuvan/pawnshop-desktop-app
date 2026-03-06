@@ -64,7 +64,7 @@ export default function ViewPledgesPage({ user,setActiveMenu }) {
 
   return (
     <div className="pledge-page">
-      <div className="page-header">
+      <div className="page-header1">
         <h2>Active Pledges</h2>
         <p>View and manage all active pledge accounts</p>
       </div>

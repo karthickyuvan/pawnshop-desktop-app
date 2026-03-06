@@ -10,3 +10,9 @@ export const getAllPledges = async (search, actorUserId) => {
     actorUserId,
   });
 };
+
+export const getSinglePledge = async (pledgeId) => {
+  return await invoke("get_single_pledge_cmd", {
+    pledgeId: Number(pledgeId),
+  });
+};

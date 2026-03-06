@@ -22,6 +22,8 @@ mod schemes;
 mod settings;
 mod daybook;
 mod dashboard;
+mod repledge;
+mod shop_settings; 
 
 // 2. IMPORTS
 use crate::db::connection::Db;
@@ -36,7 +38,9 @@ use auth::staff::{create_staff, get_all_staff, update_staff_status};
 use audit::audit_service::{get_audit_logs, log_action};
 
 // Masters
-use bank_mapping::service::*;
+use bank_mapping::service::{BankMappingRequest as MapBankRequest, BankUnmappingRequest as UnmapBankRequest};
+
+
 use banks::service::*;
 use jewellery_types::services::{
     create_jewellery_type, get_jewellery_types, toggle_jewellery_type, JewelleryType,
@@ -305,18 +309,51 @@ fn get_banks_cmd(db: State<Db>) -> Result<Vec<Bank>, String> {
     get_banks(&db)
 }
 
+// ---------------- BANK MAPPING COMMANDS ----------------
+
 #[tauri::command]
-fn map_bank_to_pledge_cmd(
+fn get_pledge_by_number_cmd(
     db: State<Db>,
-    pledge_id: i64,
-    bank_id: i64,
-    amount: f64,
-    bank_charges: f64,
-    actor_user_id: i64,
+    pledge_no: String,
+) -> Result<bank_mapping::service::PledgeDetails, String> {
+    bank_mapping::service::get_pledge_by_number(&db, &pledge_no)
+}
+
+
+#[tauri::command]
+fn map_bank_to_pledge(
+    db: tauri::State<Db>,
+    req: MapBankRequest,
 ) -> Result<(), String> {
-    map_bank_to_pledge(&db, pledge_id, bank_id, amount, bank_charges)?;
-    audit::audit_service::log_action(&db, actor_user_id, "BANK_MAPPED");
+    let _ = bank_mapping::service::map_bank_to_pledge(&db, &req)?;
+    audit::audit_service::log_action(&db, req.actor_user_id, "BANK_MAPPED");
     Ok(())
+}
+
+#[tauri::command]
+fn unmap_bank_from_pledge(
+    db: tauri::State<Db>,
+    req: UnmapBankRequest,
+) -> Result<(), String> {
+    bank_mapping::service::unmap_bank_from_pledge(&db, &req)?;
+    audit::audit_service::log_action(&db, req.actor_user_id, "BANK_UNMAPPED");
+    Ok(())
+}
+
+#[tauri::command]
+fn get_bank_mappings_list_cmd(
+    db: State<Db>,
+) -> Result<Vec<serde_json::Value>, String> {
+    bank_mapping::service::get_bank_mappings(&db)
+}
+
+
+#[tauri::command]
+fn search_pledges_for_mapping_cmd(
+    db: State<Db>,
+    query: String,
+) -> Result<Vec<bank_mapping::service::PledgeDetails>, String> {
+    bank_mapping::service::search_pledges_for_mapping(&db, &query)
 }
 
 // ---------------- FUND COMMANDS ----------------
@@ -529,10 +566,38 @@ fn add_pledge_payment_cmd(
     pledge::service::add_pledge_payment(&db, req)
 }
 
+// ----------------REPLEDGE ----------------
+
+#[tauri::command]
+fn get_eligible_pledges_for_repledge_cmd(
+    db: tauri::State<Db>,
+    query: String,
+) -> Result<Vec<repledge::service::RepledgeListItem>, String> {
+    repledge::service::get_eligible_pledges_for_repledge(&db, &query)
+}
+
+#[tauri::command]
+fn get_repledge_detail_cmd(
+    db: tauri::State<Db>,
+    pledge_id: i64,
+) -> Result<repledge::service::RepledgeDetailResponse, String> {
+    repledge::service::get_repledge_detail(&db, pledge_id)
+}
+
+#[tauri::command]
+fn execute_repledge_cmd(
+    db: tauri::State<Db>,
+    req: repledge::service::ExecuteRepledgeRequest,
+) -> Result<repledge::service::RepledgeResult, String> {
+    let result = repledge::service::execute_repledge(&db, &req)?;
+    audit::audit_service::log_action(&db, req.created_by, "REPLEDGE_EXECUTED");
+    Ok(result)
+}
 // ---------------- MAIN ----------------
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             let db_path = app
                 .path()
@@ -543,8 +608,8 @@ fn main() {
             app.manage(db);
             Ok(())
         })
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_dialog::init()) 
+        
+       
         .invoke_handler(tauri::generate_handler![
             // Auth
             check_owner,
@@ -576,7 +641,12 @@ fn main() {
             // Banks
             create_bank_cmd,
             get_banks_cmd,
-            map_bank_to_pledge_cmd,
+            // Bank Mapping
+            get_pledge_by_number_cmd,        
+            get_bank_mappings_list_cmd,     
+            map_bank_to_pledge,              
+            unmap_bank_from_pledge,
+            search_pledges_for_mapping_cmd,
             // Funds
             get_available_cash_cmd,
             add_fund_cmd,
@@ -616,6 +686,16 @@ fn main() {
 
             //dashboard
             get_owner_dashboard_summary,
+
+            // repledge
+            get_eligible_pledges_for_repledge_cmd,
+            get_repledge_detail_cmd,
+            execute_repledge_cmd,
+
+            // ── Shop Settings (NEW) ───────────────────────────────────────
+            shop_settings::service::get_shop_settings,
+            shop_settings::service::save_shop_settings,
+            shop_settings::service::change_password,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

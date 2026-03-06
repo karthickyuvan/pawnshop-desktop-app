@@ -108,7 +108,6 @@
 
 //     case "expenses":
 //       return <ExpensesPage user={user} />;
-      
 
 //     case "daybook":
 //       return <DayBookPage />;
@@ -127,9 +126,6 @@
 //   }
 // }
 
-
-
-
 import HomePage from "../pages/HomePage";
 import LoanTypesPage from "../pages/LoanTypesPage";
 import JewelleryTypesPage from "../pages/JewelleryTypesPage";
@@ -139,7 +135,7 @@ import BanksPage from "../pages/BanksPage";
 import StaffPage from "../pages/StaffPage";
 import CustomersPage from "../pages/CustomersPage";
 import PledgesPage from "../pages/PledgesPage";
-import RepledgesPage from "../pages/RepledgesPage";
+import RepledgesPage from "../pages/RepledgesPage.jsx";
 import TransactionsPage from "../pages/TransactionsPage";
 import ExpensesPage from "../pages/ExpensesPage";
 import DayBookPage from "../pages/DayBookPage";
@@ -154,10 +150,8 @@ import PaymentsPage from "../pages/PaymentsPage";
 import CustomerListPage from "../pages/CustomerListPage";
 
 export default function PageRenderer({ activeKey, user, setActiveMenu }) {
-
   // ✅ Handle dynamic single pledge route FIRST
   if (activeKey?.startsWith("single-pledge-")) {
-
     const pledgeId = activeKey.split("-")[2];
 
     // 🚫 Example: If you later restrict staff from editing pledges
@@ -168,6 +162,32 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
         pledgeId={pledgeId}
         user={user}
         setActiveMenu={setActiveMenu}
+      />
+    );
+  }
+
+  // ✅ Handle dynamic payment route
+  if (activeKey?.startsWith("payments-")) {
+    const pledgeId = activeKey.split("-")[1];
+
+    return (
+      <PaymentsPage
+        user={user}
+        pledgeId={pledgeId}
+        setActiveMenu={setActiveMenu}
+      />
+    );
+  }
+
+  // Handle dynamic repledge route
+  if (activeKey?.startsWith("repledge-")) {
+    const pledgeId = activeKey.split("-")[1];
+
+    return (
+      <RepledgesPage
+        defaultPledgeId={pledgeId}
+        setActiveMenu={setActiveMenu}
+        user={user}
       />
     );
   }
@@ -184,7 +204,7 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
     "interest-settings",
     "staff",
     "reports",
-    "settings"
+    "settings",
   ];
 
   if (user?.role === "STAFF" && restrictedForStaff.includes(activeKey)) {
@@ -197,7 +217,6 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
   }
 
   switch (activeKey) {
-
     case "home":
       return <HomePage />;
 
@@ -237,13 +256,11 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
     case "repledges":
       return <RepledgesPage />;
 
+    case "overlimit-pledges":
+      return <RepledgesPage defaultTab="overlimit" />;
+
     case "viewpledges":
-      return (
-        <ViewPledgesPage
-          user={user}
-          setActiveMenu={setActiveMenu}
-        />
-      );
+      return <ViewPledgesPage user={user} setActiveMenu={setActiveMenu} />;
 
     case "payments":
       return <PaymentsPage user={user} />;

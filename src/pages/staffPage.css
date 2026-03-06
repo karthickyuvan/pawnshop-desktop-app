@@ -1,0 +1,226 @@
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --border: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --bg-subtle: #f8fafc;
+  }
+  
+  .staff-container {
+    padding: 2.5rem 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* --- HEADER FIX (Matches Price/Gram) --- */
+  .page-header {
+    margin-bottom: 2.5rem;
+    display: block;
+  }
+  
+  .title-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 1.25rem;
+  }
+  
+  .icon-main {
+    flex-shrink: 0;
+    color: var(--primary);
+    width: 44px;
+    height: 44px;
+    background: #eff6ff;
+    padding: 10px;
+    border-radius: 12px;
+  }
+  
+  .title-text {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px;
+  }
+  
+  .title-text h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 !important;
+    color: var(--text-main);
+  }
+  
+  .title-text p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0 !important;
+  }
+  
+  /* --- GRID LAYOUT --- */
+  .staff-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+  
+  /* --- CARDS --- */
+  .admin-card, .table-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  
+  .card-header, .table-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-subtle);
+  }
+  
+  .card-header h3, .table-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .form-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  
+  /* --- FORMS --- */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  
+  .form-group input {
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 0.95rem;
+    height: 42px;
+  }
+  
+  .btn-primary-staff {
+    background: var(--primary);
+    color: white;
+    border: none;
+    height: 42px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+  
+  /* --- TABLE --- */
+  .staff-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .staff-table th {
+    text-align: left;
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: #fafafa;
+  }
+  
+  .staff-table td {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  
+  /* --- USER INFO & AVATAR --- */
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .avatar {
+    width: 36px;
+    height: 36px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  
+  .user-meta {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .username {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.95rem;
+  }
+  
+  .user-role {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  
+  /* --- STATUS PILLS --- */
+  .pill {
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .pill-active { background: #ecfdf5; color: #065f46; }
+  .pill-disabled { background: #fef2f2; color: #991b1b; }
+  
+  /* --- ACTIONS --- */
+  .btn-outline {
+    background: white;
+    border: 1px solid #d1d5db;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .btn-danger:hover { color: #dc2626; border-color: #fca5a5; background: #fef2f2; }
+  .btn-success:hover { color: #16a34a; border-color: #86efac; background: #f0fdf4; }
+  
+  .text-right { text-align: right; }
+  
+  .status-msg {
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .status-msg.success { background: #f0fdf4; color: #16a34a; }
+  .status-msg.error { background: #fef2f2; color: #dc2626; }

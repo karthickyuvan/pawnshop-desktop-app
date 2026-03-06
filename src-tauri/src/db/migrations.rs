@@ -255,6 +255,21 @@ pub fn run_migrations(conn: &Connection) {
         FOREIGN KEY (category_id) REFERENCES expense_categories(id),
         FOREIGN KEY (created_by) REFERENCES users(id)
         );
+
+    CREATE TABLE IF NOT EXISTS shop_settings (
+    id              INTEGER PRIMARY KEY CHECK (id = 1),
+    shop_name       TEXT    NOT NULL DEFAULT '',
+    address         TEXT    NOT NULL DEFAULT '',
+    phone           TEXT    NOT NULL DEFAULT '',
+    email           TEXT             DEFAULT '',
+    website         TEXT             DEFAULT '',
+    license_number  TEXT             DEFAULT '',
+    logo_path       TEXT             DEFAULT '',   -- relative path to stored logo
+    updated_at      DATETIME         DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- Always keep exactly one row
+        INSERT OR IGNORE INTO shop_settings (id) VALUES (1);
     ",
     )
     .expect("Failed to run migrations");

@@ -108,9 +108,22 @@
   
   .header-main-row {
     display: flex;
-    justify-content: space-between; /* Pushes ID to left and Print to right */
-    align-items: center;
-    width: 100%; /* Spans full width of container */
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .header-meta {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 2px;
   }
   
   .id-group {
@@ -710,4 +723,20 @@
   height: 1px;
   background: #e5e7eb;
   margin: 14px 0;
+}
+
+
+.repledge-btn {
+  width: 100%;
+  background: #ed8608; /* Green from image */
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
 }

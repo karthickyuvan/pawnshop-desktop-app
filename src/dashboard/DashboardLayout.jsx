@@ -8,15 +8,21 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
   const logout = useAuthStore((s) => s.logout);
 
   const [active, setActive] = useState("home");
-  const [expanded, setExpanded] = useState({});
+  
+  // ✅ CHANGED: Single state to track which ONE menu is expanded
+  const [expandedMenu, setExpandedMenu] = useState(null);
 
   const menuConfig = role === "STAFF" ? staffMenu : ownerMenu;
 
+  // ✅ CHANGED: Accordion toggle - only one menu open at a time
   const toggleExpand = (key) => {
-    setExpanded((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    if (expandedMenu === key) {
+      // If clicking the already-open menu, close it
+      setExpandedMenu(null);
+    } else {
+      // Otherwise, open this menu (and close any other)
+      setExpandedMenu(key);
+    }
   };
 
   // Centralized menu handler
@@ -56,16 +62,18 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
               {menu.title}
               {menu.children && (
                 <span className="arrow">
-                  {expanded[menu.title] ? "▼" : "▶"}
+                  {/* ✅ CHANGED: Check against expandedMenu instead of expanded[menu.title] */}
+                  {expandedMenu === menu.title ? "▼" : "▶"}
                 </span>
               )}
             </div>
 
             {/* LEVEL 2 */}
+            {/* ✅ CHANGED: Check against expandedMenu instead of expanded[menu.title] */}
             {menu.children &&
-              expanded[menu.title] &&
+              expandedMenu === menu.title &&
               menu.children.map((child) => {
-                // LEVEL 3
+                // LEVEL 3 (nested submenu)
                 if (child.children) {
                   return (
                     <div key={child.title}>
@@ -75,11 +83,13 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
                       >
                         {child.title}
                         <span className="arrow">
-                          {expanded[child.title] ? "▼" : "▶"}
+                          {/* ✅ CHANGED: Check against expandedMenu */}
+                          {expandedMenu === child.title ? "▼" : "▶"}
                         </span>
                       </div>
 
-                      {expanded[child.title] &&
+                      {/* ✅ CHANGED: Check against expandedMenu */}
+                      {expandedMenu === child.title &&
                         child.children.map((sub) => (
                           <div
                             key={sub.key}

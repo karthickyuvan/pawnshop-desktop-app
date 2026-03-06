@@ -33,6 +33,8 @@ export const ownerMenu = [
         { title: "Pledges", key: "pledges" },
         {title:"View-Pledges", key :"viewpledges"},
         { title: "Re-Pledges", key: "repledges" },
+        { title: "Overlimit Pledges", key: "overlimit-pledges" },
+
 
       ],
     },

@@ -1,155 +1,564 @@
-:root {
-  --primary: #2563eb;
-  --bg-main: #f8fafc; /* Lighter, modern gray */
-  --text-dark: #0f172a;
-  --text-gray: #64748b;
-  --border-color: #e2e8f0;
-  --radius-lg: 12px;
-  --radius-md: 8px;
-}
+/* ─────────────────────────────────────────────
+   PAWNSHOP ADMIN — Auth & Staff System Styles
+   Theme: Dark Luxury / Financial Vault
+   ───────────────────────────────────────────── */
 
-.admin-container {
-  padding: 40px;
-  background-color: var(--bg-main);
-  min-height: 100vh;
-  color: var(--text-dark);
-}
+   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 32px;
-}
-
-.header-text h2 {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  margin: 0;
-}
-
-.header-text p {
-  color: var(--text-gray);
-  margin: 4px 0 0 0;
-}
-
-/* CARDS */
-.admin-grid {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
-}
-
-.admin-card {
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  overflow: hidden;
-}
-
-.admin-card h3 {
-  padding: 20px 24px;
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  border-bottom: 1px solid var(--border-color);
-}
-
-/* FORM STYLING */
-.form-group { padding: 24px; }
-
-.auth-input {
-  width: 100%;
-  padding: 12px;
-  background: #f1f5f9;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  margin-bottom: 20px;
-  transition: all 0.2s;
-}
-
-.auth-input:focus {
-  background: #fff;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-  outline: none;
-}
-
-.auth-button.primary {
-  background: var(--primary);
-  font-weight: 600;
-  padding: 12px;
-  transition: transform 0.1s;
-  color: var(--border-color);
-}
-
-.auth-button.primary:active { transform: scale(0.98); }
-
-/* TABLE STYLING */
-.staff-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.staff-table th {
-  background: #fcfcfd;
-  padding: 12px 24px;
-  text-align: left;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-gray);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.staff-table td {
-  padding: 16px 24px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.user-info { display: flex; align-items: center; gap: 12px; }
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  background: #eff6ff;
-  color: var(--primary);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-}
-
-.username { display: block; font-weight: 600; font-size: 14px; }
-.user-role { font-size: 12px; color: var(--text-gray); }
-
-/* STATUS PILLS */
-.status-pill {
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.status-pill.active { background: #dcfce7; color: #15803d; }
-.status-pill.disabled { background: #f1f5f9; color: #475569; }
-
-/* ACTION BUTTONS */
-.action-link {
-  border: none;
-  background: none;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 6px;
-}
-.action-link.danger { color: #dc2626; }
-.action-link.danger:hover { background: #fef2f2; }
-.action-link.success { color: var(--primary); }
-.action-link.success:hover { background: #eff6ff; }
-
-.text-right { text-align: right; }
+   /* ── Tokens ─────────────────────────────────── */
+   :root {
+     --gold:          #c9a84c;
+     --gold-light:    #e8c96a;
+     --gold-dim:      rgba(201, 168, 76, 0.12);
+     --gold-border:   rgba(201, 168, 76, 0.28);
+   
+     --vault-900:     #f8f8f8;
+     --vault-800:     #1f3a5f;
+     --vault-700:     #162c49;
+     --vault-600:     #65656a;
+     --vault-500:     #32323f;
+     --vault-400:     #f8f8f8;
+     --vault-300:     #e8c96a;
+     --vault-200:     #b0b0c4;
+     --vault-100:     #e8e8f0;
+   
+     --red:           #e05252;
+     --red-dim:       rgba(224, 82, 82, 0.10);
+     --green:         #4caf7d;
+     --green-dim:     rgba(76, 175, 125, 0.10);
+   
+     --radius-xl:     16px;
+     --radius-lg:     12px;
+     --radius-md:     8px;
+     --radius-sm:     6px;
+   
+     --shadow-vault:  0 24px 64px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.4);
+     --shadow-glow:   0 0 0 1px var(--gold-border), 0 0 20px rgba(201,168,76,0.08);
+   }
+   
+   
+   /* ═══════════════════════════════════════════════
+      AUTH LAYOUT (Login + Create Owner)
+      ═══════════════════════════════════════════════ */
+   
+   .auth-root {
+     min-height: 100vh;
+     background: var(--vault-900);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     position: relative;
+     overflow: hidden;
+   }
+   
+   /* Ambient vault texture */
+   .auth-root::before {
+     content: '';
+     position: fixed;
+     inset: 0;
+     background:
+       radial-gradient(ellipse 70% 50% at 20% 80%, rgba(201,168,76,0.05) 0%, transparent 60%),
+       radial-gradient(ellipse 50% 60% at 80% 20%, rgba(201,168,76,0.04) 0%, transparent 50%),
+       repeating-linear-gradient(
+         0deg, transparent, transparent 80px,
+         rgba(255,255,255,0.012) 80px, rgba(255,255,255,0.012) 81px
+       ),
+       repeating-linear-gradient(
+         90deg, transparent, transparent 80px,
+         rgba(255,255,255,0.012) 80px, rgba(255,255,255,0.012) 81px
+       );
+     pointer-events: none;
+   }
+   
+   .auth-card {
+     position: relative;
+     z-index: 1;
+     width: 420px;
+     background: var(--vault-800);
+     border: 1px solid var(--gold-border);
+     border-radius: var(--radius-xl);
+     box-shadow: var(--shadow-vault);
+     overflow: hidden;
+     animation: auth-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+   }
+   
+   @keyframes auth-rise {
+     from { opacity: 0; transform: translateY(24px) scale(0.97); }
+     to   { opacity: 1; transform: translateY(0) scale(1); }
+   }
+   
+   /* Gold top bar */
+   .auth-card::before {
+     content: '';
+     display: block;
+     height: 3px;
+     background: linear-gradient(90deg, transparent, var(--gold), transparent);
+   }
+   
+   .auth-header {
+     padding: 36px 40px 28px;
+     text-align: center;
+     border-bottom: 1px solid rgba(255,255,255,0.05);
+   }
+   
+   .auth-logo {
+     width: 48px;
+     height: 48px;
+     background: var(--gold-dim);
+     border: 1px solid var(--gold-border);
+     border-radius: 14px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     margin: 0 auto 16px;
+     font-size: 22px;
+   }
+   
+   .auth-header h1 {
+     font-family: 'Playfair Display', serif;
+     font-size:30px;
+     font-weight: 700;
+     color: var(--vault-100);
+     margin: 0 0 6px;
+     letter-spacing: 0.01em;
+   }
+   
+   .auth-header p {
+     font-family: 'DM Sans', sans-serif;
+     font-size: 13px;
+     color: var(--vault-300);
+     margin: 0;
+     letter-spacing: 0.02em;
+   }
+   
+   .auth-body {
+     padding: 32px 40px 36px;
+     display: flex;
+     flex-direction: column;
+     gap: 14px;
+   }
+   
+   /* ── Inputs ──────────────────────────────────── */
+   .auth-input,
+   .user-input {
+     width: 100%;
+     box-sizing: border-box;
+     padding: 13px 16px;
+     background: var(--vault-700);
+     border: 1px solid var(--vault-500);
+     border-radius: var(--radius-md);
+     color: var(--vault-100);
+     font-family: 'DM Sans', sans-serif;
+     font-size: 14px;
+     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+     outline: none;
+   }
+   
+   .auth-input::placeholder,
+   .user-input::placeholder {
+     color: var(--vault-400);
+   }
+   
+   .auth-input:focus,
+   .user-input:focus {
+     background: var(--vault-600);
+     border-color: var(--gold);
+     box-shadow: 0 0 0 3px rgba(201,168,76,0.14);
+   }
+   
+   /* ── Buttons ─────────────────────────────────── */
+   .auth-button,
+   .login-button {
+     width: 100%;
+     padding: 13px;
+     background: linear-gradient(135deg, var(--gold), #a8892a);
+     border: none;
+     border-radius: var(--radius-md);
+     color: var(--vault-900);
+     font-family: 'DM Sans', sans-serif;
+     font-size: 14px;
+     font-weight: 700;
+     letter-spacing: 0.04em;
+     cursor: pointer;
+     transition: opacity 0.18s, transform 0.12s, box-shadow 0.2s;
+     box-shadow: 0 4px 16px rgba(201,168,76,0.25);
+     margin-top: 4px;
+   }
+   
+   .auth-button:hover,
+   .login-button:hover {
+     opacity: 0.92;
+     box-shadow: 0 6px 24px rgba(201,168,76,0.4);
+   }
+   
+   .auth-button:active,
+   .login-button:active {
+     transform: scale(0.985);
+   }
+   
+   .auth-button:disabled,
+   .login-button:disabled {
+     opacity: 0.5;
+     cursor: not-allowed;
+     transform: none;
+   }
+   
+   /* ── Error ───────────────────────────────────── */
+   .auth-error {
+     padding: 11px 14px;
+     background: var(--red-dim);
+     border: 1px solid rgba(224, 82, 82, 0.3);
+     border-radius: var(--radius-sm);
+     color: #f87171;
+     font-family: 'DM Sans', sans-serif;
+     font-size: 13px;
+     text-align: center;
+     animation: shake 0.35s ease;
+   }
+   
+   @keyframes shake {
+     0%, 100% { transform: translateX(0); }
+     25%       { transform: translateX(-6px); }
+     75%       { transform: translateX(6px); }
+   }
+   
+   /* ── Footer ──────────────────────────────────── */
+   .auth-footer {
+     padding: 16px 40px 28px;
+     text-align: center;
+     font-family: 'DM Sans', sans-serif;
+     font-size: 11px;
+     color: var(--vault-400);
+     letter-spacing: 0.06em;
+     text-transform: uppercase;
+     border-top: 1px solid rgba(255,255,255,0.04);
+   }
+   
+   .auth-footer span {
+     color: var(--gold-light);
+   }
+   
+   
+   /* ═══════════════════════════════════════════════
+      STAFF / ADMIN PAGE
+      ═══════════════════════════════════════════════ */
+   
+   .admin-container {
+     min-height: 100vh;
+     background: var(--vault-900);
+     color: var(--vault-100);
+     font-family: 'DM Sans', sans-serif;
+     padding: 40px 48px;
+     position: relative;
+   }
+   
+   /* Subtle grid background */
+   .admin-container::before {
+     content: '';
+     position: fixed;
+     inset: 0;
+     background:
+       radial-gradient(ellipse 60% 40% at 100% 0%, rgba(201,168,76,0.04) 0%, transparent 50%),
+       repeating-linear-gradient(
+         90deg, transparent, transparent 60px,
+         rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px
+       ),
+       repeating-linear-gradient(
+         0deg, transparent, transparent 60px,
+         rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px
+       );
+     pointer-events: none;
+   }
+   
+   /* ── Page header ─────────────────────────────── */
+   .page-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: flex-end;
+     margin-bottom: 36px;
+     position: relative;
+   }
+   
+   .header-text h2 {
+     font-family: 'Playfair Display', serif;
+     font-size: 30px;
+     font-weight: 800;
+     color: var(--vault-100);
+     margin: 0 0 6px;
+     letter-spacing: -0.3px;
+   }
+   
+   .header-text p {
+     color: var(--vault-300);
+     font-size: 14px;
+     margin: 0;
+   }
+   
+   /* Decorative gold line under title */
+   .header-text h2::after {
+     content: '';
+     display: block;
+     width: 36px;
+     height: 2px;
+     background: var(--gold);
+     margin-top: 10px;
+     border-radius: 2px;
+   }
+   
+   /* ── Admin grid ──────────────────────────────── */
+   .admin-grid {
+     display: grid;
+     grid-template-columns: 300px 1fr;
+     gap: 24px;
+     position: relative;
+   }
+   
+   /* ── Cards ───────────────────────────────────── */
+   .admin-card {
+     background: var(--vault-800);
+     border: 1px solid rgba(255,255,255,0.07);
+     border-radius: var(--radius-xl);
+     overflow: hidden;
+     position: relative;
+   }
+   
+   /* Gold accent line on left edge of sidebar card */
+   .admin-card.sidebar-form {
+     border-left: 2px solid var(--gold-border);
+   }
+   
+   .admin-card h3 {
+     padding: 20px 24px;
+     margin: 0;
+     font-family: 'DM Sans', sans-serif;
+     font-size: 13px;
+     font-weight: 600;
+     letter-spacing: 0.08em;
+     text-transform: uppercase;
+     color: var(--vault-300);
+     border-bottom: 1px solid rgba(255,255,255,0.06);
+     display: flex;
+     align-items: center;
+     gap: 8px;
+   }
+   
+   .admin-card h3::before {
+     content: '';
+     width: 6px;
+     height: 6px;
+     border-radius: 50%;
+     background: var(--gold);
+     flex-shrink: 0;
+   }
+   
+   /* ── Sidebar form ────────────────────────────── */
+   .form-group {
+     padding: 24px;
+     display: flex;
+     flex-direction: column;
+     gap: 6px;
+   }
+   
+   .form-group label {
+     font-size: 11px;
+     font-weight: 600;
+     letter-spacing: 0.08em;
+     text-transform: uppercase;
+     color: var(--vault-300);
+     margin-bottom: 2px;
+     margin-top: 10px;
+   }
+   
+   .form-group label:first-child {
+     margin-top: 0;
+   }
+   
+   .form-group .auth-input {
+     margin-bottom: 0;
+   }
+   
+   .form-group .auth-button {
+     margin-top: 20px;
+   }
+   
+   /* ── Status message ──────────────────────────── */
+   .status-msg {
+     margin: 0 24px 20px;
+     padding: 10px 14px;
+     border-radius: var(--radius-sm);
+     font-size: 13px;
+     font-weight: 500;
+   }
+   
+   .status-msg.success {
+     background: var(--green-dim);
+     border: 1px solid rgba(76,175,125,0.25);
+     color: var(--green);
+   }
+   
+   .status-msg.error {
+     background: var(--red-dim);
+     border: 1px solid rgba(224,82,82,0.25);
+     color: #f87171;
+   }
+   
+   /* ── Staff table ─────────────────────────────── */
+   .staff-table {
+     width: 100%;
+     border-collapse: collapse;
+   }
+   
+   .staff-table th {
+     padding: 13px 24px;
+     text-align: left;
+     font-size: 10.5px;
+     font-weight: 700;
+     letter-spacing: 0.1em;
+     text-transform: uppercase;
+     color: var(--vault-400);
+     background: var(--vault-700);
+     border-bottom: 1px solid rgba(255,255,255,0.06);
+   }
+   
+   .staff-table tbody tr {
+     transition: background 0.15s;
+   }
+   
+   .staff-table tbody tr:hover {
+     background: rgba(255,255,255,0.025);
+   }
+   
+   .staff-table td {
+     padding: 16px 24px;
+     border-bottom: 1px solid rgba(255,255,255,0.04);
+     font-size: 14px;
+     vertical-align: middle;
+   }
+   
+   .staff-table tbody tr:last-child td {
+     border-bottom: none;
+   }
+   
+   /* ── User info cell ──────────────────────────── */
+   .user-info {
+     display: flex;
+     align-items: center;
+     gap: 13px;
+   }
+   
+   .avatar {
+     width: 38px;
+     height: 38px;
+     background: var(--gold-dim);
+     border: 1px solid var(--gold-border);
+     border-radius: 10px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-family: 'Playfair Display', serif;
+     font-size: 16px;
+     font-weight: 700;
+     color: var(--gold);
+     flex-shrink: 0;
+   }
+   
+   .username {
+     display: block;
+     font-weight: 600;
+     font-size: 14px;
+     color: var(--vault-100);
+     font-family: 'JetBrains Mono', monospace;
+     letter-spacing: -0.01em;
+   }
+   
+   .user-role {
+     display: block;
+     font-size: 11px;
+     color: var(--vault-400);
+     margin-top: 2px;
+     letter-spacing: 0.04em;
+   }
+   
+   /* ── Status pills ────────────────────────────── */
+   .status-pill {
+     display: inline-flex;
+     align-items: center;
+     gap: 5px;
+     padding: 4px 10px;
+     border-radius: 6px;
+     font-size: 10.5px;
+     font-weight: 700;
+     letter-spacing: 0.07em;
+     text-transform: uppercase;
+   }
+   
+   .status-pill::before {
+     content: '';
+     width: 5px;
+     height: 5px;
+     border-radius: 50%;
+     flex-shrink: 0;
+   }
+   
+   .status-pill.active {
+     background: var(--green-dim);
+     border: 1px solid rgba(76,175,125,0.25);
+     color: var(--green);
+   }
+   
+   .status-pill.active::before {
+     background: var(--green);
+     box-shadow: 0 0 6px var(--green);
+   }
+   
+   .status-pill.disabled {
+     background: rgba(255,255,255,0.04);
+     border: 1px solid rgba(255,255,255,0.08);
+     color: var(--vault-400);
+   }
+   
+   .status-pill.disabled::before {
+     background: var(--vault-400);
+   }
+   
+   /* ── Action buttons ──────────────────────────── */
+   .action-link {
+     border: none;
+     background: transparent;
+     font-family: 'DM Sans', sans-serif;
+     font-size: 12.5px;
+     font-weight: 600;
+     cursor: pointer;
+     padding: 6px 12px;
+     border-radius: var(--radius-sm);
+     transition: background 0.15s, color 0.15s;
+     letter-spacing: 0.02em;
+     color: var(--vault-300);
+   }
+   
+   .action-link + .action-link {
+     margin-left: 4px;
+   }
+   
+   .action-link.danger {
+     color: var(--red);
+   }
+   .action-link.danger:hover {
+     background: var(--red-dim);
+     color: #f87171;
+   }
+   
+   .action-link.success {
+     color: var(--green);
+   }
+   .action-link.success:hover {
+     background: var(--green-dim);
+   }
+   
+   .action-link:not(.danger):not(.success):hover {
+     background: rgba(255,255,255,0.06);
+     color: var(--vault-100);
+   }
+   
+   .text-right { text-align: right; }
+   .center     { text-align: center; }

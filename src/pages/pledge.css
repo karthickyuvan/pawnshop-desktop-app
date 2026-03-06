@@ -908,6 +908,18 @@
   margin-bottom: 24px;
   padding-right: 830px;
 }
+.page-header1 h2{
+  margin: 0;
+  text-align: left;
+  white-space: nowrap; 
+  margin-bottom: 14px;
+}
+.page-header1 p{
+  color: #777;
+  margin-bottom: 24px;
+  padding-right: 830px;
+  white-space: nowrap; 
+}
 
 /* SUMMARY CARDS */
 .summary-grid {

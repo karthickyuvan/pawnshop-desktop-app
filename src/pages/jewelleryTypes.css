@@ -15,22 +15,42 @@
   color: var(--text-main);
 }
 
+/* --- HEADER FIX --- */
+/* --- FIXED HEADER STACKING --- */
 .page-header {
   margin-bottom: 32px;
+  display: block; /* Ensure the header itself isn't a flex row */
+}
+
+.title-text {
+  display: flex !important;
+  flex-direction: column !important; /* Forces the vertical stack */
+  align-items: flex-start !important; /* Aligns both to the left */
+  gap: 8px !important; /* Controlled space between them */
+  width: 100%;
 }
 
 .page-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.1;
+  color: #111827;
+  display: block;
 }
 
 .page-subtitle {
-  color: var(--text-muted);
-  font-size: 14px;
+  color: #6b7280;
+  font-size: 15px;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.5;
+  max-width: 500px; /* Prevents the subtitle from stretching too wide */
+  display: block;
 }
 
-/* Corporate Form Card */
+/* --- FORM DESIGN --- */
 .jewellery-form {
   display: grid;
   grid-template-columns: 1fr 1fr 1.5fr auto;
@@ -65,14 +85,12 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
-  transition: all 0.2s;
+  height: 42px;
 }
 
-.jewellery-form select:focus,
-.jewellery-form input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+.jewellery-form textarea {
+  height: auto;
+  min-height: 42px;
 }
 
 .btn-primary {
@@ -84,9 +102,14 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
-/* Table Design */
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+/* --- TABLE DESIGN --- */
 .table-container {
   background: white;
   border: 1px solid var(--border-color);
@@ -116,21 +139,25 @@
   font-size: 14px;
 }
 
-.font-medium { font-weight: 500; }
+.text-center { text-align: center; }
 .text-right { text-align: right; }
+.font-medium { font-weight: 500; }
 
 /* Status Pills */
 .pill {
+  display: inline-block;
+  min-width: 80px;
   padding: 4px 12px;
   border-radius: 99px;
   font-size: 12px;
   font-weight: 500;
+  text-align: center;
 }
 
 .pill-active { background: #ecfdf5; color: #065f46; }
 .pill-disabled { background: #f3f4f6; color: #374151; }
 
-/* Outline Buttons */
+/* Buttons */
 .btn-outline {
   background: white;
   border: 1px solid #d1d5db;
@@ -139,7 +166,6 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: 0.2s;
 }
 
 .btn-danger:hover { color: #dc2626; border-color: #fca5a5; background: #fef2f2; }
@@ -150,65 +176,4 @@
   text-align: center;
   color: var(--text-muted);
   font-style: italic;
-}
-
-/* Styling the Select Dropdown */
-.jewellery-form select {
-  appearance: none; /* Removes default browser arrow */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 40px; /* Space for the custom arrow */
-  background-color: #ffffff;
-  cursor: pointer;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  height: 42px; /* Standardized height */
-  transition: all 0.2s ease;
-}
-
-/* Hover & Focus States */
-.jewellery-form select:hover {
-  border-color: #9ca3af;
-}
-
-.jewellery-form select:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-/* Styling the Options inside the dropdown */
-.jewellery-form select option {
-  padding: 10px;
-  font-size: 14px;
-  background-color: #fff;
-  color: #111827;
-}
-
-/* Update or add these classes */
-
-.text-center {
-  text-align: center;
-}
-
-/* Ensure the pill and button don't stretch and stay centered */
-.jewellery-table td.text-center {
-  vertical-align: middle;
-}
-
-/* Optional: Add a specific width to the Action column 
-   so it doesn't feel too spread out */
-.jewellery-table th:last-child, 
-.jewellery-table td:last-child {
-  width: 150px;
-}
-
-/* Adjust the pill to ensure it's inline-block for centering */
-.pill {
-  display: inline-block;
-  min-width: 80px; /* Keeps all pills the same width for a cleaner look */
-  text-align: center;
 }

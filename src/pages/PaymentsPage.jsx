@@ -7,35 +7,46 @@ import PaymentEmptyState from "../components/payment/PaymentEmptyState";
 import "./payment.css";
 import PledgePaymentPanel from "../components/payment/PledgePaymentPanel";
 
-export default function PaymentsPage() {
-  const [activeTab, setActiveTab] = useState("collect");
-  const [selectedPledgeId, setSelectedPledgeId] = useState(null);
+export default function PaymentsPage({ pledgeId }) {
 
+  const [activeTab, setActiveTab] = useState("collect");
+
+  // If pledgeId comes from navigation → load it immediately
+  const [selectedPledgeId, setSelectedPledgeId] = useState(
+    pledgeId ? Number(pledgeId) : null
+  );
 
   return (
     <div className="payment-page">
-      <PaymentHeader />
-      <PaymentTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* CONDITIONAL RENDERING */}
+      <PaymentHeader />
+
+      <PaymentTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+
       {activeTab === "collect" ? (
         <div className="payment-layout">
+
           <SearchSidebar
-        onSelectPledge={(id) => setSelectedPledgeId(id)}
-      />
-         
-      {selectedPledgeId ? (
-       <PledgePaymentPanel
-       pledgeId={selectedPledgeId}
-       onChangePledge={() => setSelectedPledgeId(null)}
-     />
-      ) : (
-        <PaymentEmptyState />
-      )}
+            onSelectPledge={(id) => setSelectedPledgeId(id)}
+          />
+
+          {selectedPledgeId ? (
+            <PledgePaymentPanel
+              pledgeId={selectedPledgeId}
+              onChangePledge={() => setSelectedPledgeId(null)}
+            />
+          ) : (
+            <PaymentEmptyState />
+          )}
+
         </div>
       ) : (
         <PaymentHistoryCard />
       )}
-      </div>
+
+    </div>
   );
 }
