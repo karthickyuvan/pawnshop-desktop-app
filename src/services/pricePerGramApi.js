@@ -1,19 +1,16 @@
 import { invoke } from "@tauri-apps/api/core";
 
-/* ---------------- GET PRICE LIST ---------------- */
-export const getPrices = async () => {
+/* GET CURRENT PRICES */
+export async function getPrices() {
   return await invoke("get_price_per_gram_cmd");
-};
+}
 
-/* ---------------- SET / UPDATE PRICE ---------------- */
-export const setPricePerGram = async ({
-  metalTypeId,
-  pricePerGram,
-  actorUserId,
-}) => {
-  return await invoke("set_price_per_gram_cmd", {
-    metalTypeId,
-    pricePerGram,
-    actorUserId,
-  });
-};
+/* SET PRICE */
+export async function setPricePerGram(data) {
+  return await invoke("set_price_per_gram_cmd", data);
+}
+
+/* GET PRICE HISTORY */
+export async function getPriceHistory() {
+  return await invoke("get_price_history_cmd");
+}

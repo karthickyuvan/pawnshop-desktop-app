@@ -29,7 +29,9 @@ pub struct DaybookEntry {
     pub type_field: String,
     pub module_type: String,
     pub reason: String,
+    pub description: String,
     pub payment_method: String,
+    pub transaction_ref: Option<String>,
     pub amount: f64,
     pub customer_name: Option<String>,  
     pub fund_tx_id: i64,    
@@ -51,24 +53,19 @@ pub fn get_daybook(db: &Db, date: String) -> Result<DaybookResponse, String> {
     let conn = db.0.lock().unwrap();
 
     // 🟢 Opening Balance Calculation
-    // Include: All transactions BEFORE today + Any "Opening Balance" transactions up to today
     let opening_balance: f64 = conn
-        .query_row(
-            "
-            SELECT COALESCE(SUM(
-                CASE WHEN type='ADD' THEN total_amount
-                     WHEN type='WITHDRAW' THEN -total_amount
-                END
-            ),0)
-            FROM fund_transactions
-            WHERE DATE(created_at) < DATE(?1)
-               OR (DATE(created_at) = DATE(?1) 
-                   AND LOWER(COALESCE(reference, '')) = 'opening balance')
-            ",
-            params![date],
-            |row| row.get(0),
-        )
-        .unwrap_or(0.0);
+    .query_row(
+        "SELECT COALESCE(SUM(
+            CASE WHEN type='ADD' THEN total_amount
+                 WHEN type='WITHDRAW' THEN -total_amount
+            END
+        ),0)
+        FROM fund_transactions
+        WHERE DATE(created_at) < DATE(?1)", 
+        params![date],
+        |row| row.get(0),
+    )
+    .unwrap_or(0.0);
 
     // 🟢 Calculate payment method breakdown CUMULATIVELY (up to and including selected date)
     // This shows the current balance in each payment method AS OF the selected date
@@ -117,10 +114,11 @@ pub fn get_daybook(db: &Db, date: String) -> Result<DaybookResponse, String> {
             ft.type, 
             ft.module_type,
             ft.reference, 
+            ft.description,
             ft.payment_method, 
             ft.total_amount,
             ft.module_id,
-            c.name as customer_name
+            c.name as customer_name,ft.transaction_ref 
         FROM fund_transactions ft
         LEFT JOIN pledges p ON ft.module_id = p.id 
             AND ft.module_type IN ('PLEDGE', 'PAYMENT', 'INTEREST', 'CLOSURE', 'FEE')
@@ -132,14 +130,16 @@ pub fn get_daybook(db: &Db, date: String) -> Result<DaybookResponse, String> {
 
     let rows = stmt.query_map(params![date], |row| {
         Ok(DaybookEntry {
-            fund_tx_id: row.get(0)?,
-            time: row.get(1)?,
-            type_field: row.get(2)?,
-            module_type: row.get::<_, Option<String>>(3)?.unwrap_or("OTHER".to_string()),
-            reason: row.get::<_, Option<String>>(4)?.unwrap_or("".to_string()),
-            payment_method: row.get(5)?,
-            amount: row.get(6)?,
-            customer_name: row.get::<_, Option<String>>(8)?,
+            fund_tx_id:      row.get(0)?,
+            time:            row.get(1)?,
+            type_field:      row.get(2)?,
+            module_type:     row.get::<_, Option<String>>(3)?.unwrap_or("OTHER".to_string()),
+            reason:          row.get::<_, Option<String>>(4)?.unwrap_or("".to_string()),
+            description:     row.get::<_, Option<String>>(5)?.unwrap_or("".to_string()), // ← ADD
+            payment_method:  row.get(6)?,
+            amount:          row.get(7)?,
+            customer_name:   row.get::<_, Option<String>>(9)?,
+            transaction_ref: row.get::<_, Option<String>>(10)?,
         })
     })
     .map_err(|e| e.to_string())?;
@@ -150,19 +150,13 @@ pub fn get_daybook(db: &Db, date: String) -> Result<DaybookResponse, String> {
 
     for row in rows {
         let entry = row.map_err(|e| e.to_string())?;
-
-        // Check if this is an opening balance entry
-        let is_opening = entry.reason.to_lowercase() == "opening balance";
-
+    
         if entry.type_field == "ADD" {
-            // Only add to total_in if NOT opening balance
-            if !is_opening {
-                total_in += entry.amount;
-            }
+            total_in += entry.amount;
         } else {
             total_out += entry.amount;
         }
-
+    
         entries.push(entry);
     }
 
@@ -261,6 +255,6 @@ let denom_detail_rows = denom_detail_stmt
             breakdown: PaymentModeBreakdown { cash, bank, upi },
             denominations,
             entries,
-            transaction_denominations: transaction_denominations_vec,  // ✅ ADD THIS
+            transaction_denominations: transaction_denominations_vec,  
         })
 }

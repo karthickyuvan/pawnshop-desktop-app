@@ -1,0 +1,159 @@
+.ledger-page {
+    padding: 25px;
+  }
+  
+  /* ── Header + filters ── */
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .report-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+  }
+  
+  .report-header p {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+  }
+  
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  
+  .filters select {
+    padding: 7px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+    background: white;
+  }
+  
+  .filters button {
+    padding: 7px 18px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  
+  .filters button:hover { background: #1d4ed8; }
+  
+  /* ── Stat cards — same system as all report pages ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+  }
+  
+  .stat-card-icon {
+    font-size: 28px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  
+  .stat-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  
+  .stat-card-value {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .stat-card-label {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+  
+  .card-blue   { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+  .card-green  { background: #f0fdf4; border-color: #86efac; color: #15803d; }
+  .card-slate  { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+  .card-yellow { background: #fefce8; border-color: #fde68a; color: #92400e; }
+  .card-purple { background: #fdf4ff; border-color: #d8b4fe; color: #7e22ce; }
+  .card-orange { background: #fff7ed; border-color: #fdba74; color: #c2410c; }
+  .card-teal   { background: #f0fdfa; border-color: #99f6e4; color: #0f766e; }
+  .card-rose   { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+  
+  /* ── Table ── */
+  .table-section {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 14px 16px 0;
+    margin-bottom: 10px;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th {
+    background: #f8fafc;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+  }
+  
+  td {
+    padding: 10px 12px;
+    border-top: 1px solid #f1f5f9;
+    font-size: 13px;
+  }
+  
+  tbody tr:hover { background: #f9fafb; }
+  
+  .debit  { color: #dc2626; font-weight: 600; }
+  .credit { color: #16a34a; font-weight: 600; }
+  
+  .loader {
+    padding: 30px;
+    color: #94a3b8;
+  }

@@ -1,3 +1,5 @@
+use super::pledge_number::generate_next_pledge_no;
+use crate::pledge::pocket::generate_next_pocket_number;
 use crate::db::connection::Db;
 use base64::{engine::general_purpose, Engine as _};
 use chrono::{Local, NaiveDate};
@@ -5,12 +7,15 @@ use rusqlite::params_from_iter;
 use rusqlite::{params, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::Path;
+// use std::path::Path;
 use tauri::Manager;
+use crate::receipt::generator::generate_next_receipt_no;
+
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PledgeItemRequest {
     pub jewellery_type_id: i64,
+    pub description: Option<String>,
     pub purity: String,
     pub gross_weight: f64,
     pub net_weight: f64,
@@ -78,13 +83,16 @@ pub struct SinglePledgeResponse {
 #[derive(Serialize)]
 pub struct PledgeDetails {
     pub pledge_no: String,
+    pub receipt_number: String, 
+    pub pocket_number: Option<i64>, 
     pub status: String,
     pub created_at: String,
     pub duration_months: i32,
     // Customer
-    pub customer_id: String,
+    pub customer_code: String,
     pub customer_name: String,
-    pub relation: String,
+    pub relation_type: Option<String>,
+    pub relation_name: Option<String>,
     pub phone: String,
     pub address: String,
     pub photo_path: Option<String>,
@@ -104,6 +112,7 @@ pub struct PledgeDetails {
 #[derive(Serialize)]
 pub struct PledgeItemDetails {
     pub jewellery_type: String,
+    pub description: Option<String>, 
     pub purity: String,
     pub gross_weight: f64,
     pub net_weight: f64,
@@ -136,35 +145,22 @@ pub fn create_pledge(
     app_handle: &tauri::AppHandle,
     req: CreatePledgeRequest,
 ) -> Result<String, String> {
-    let mut conn = db.0.lock().unwrap();
-    let tx = conn.transaction().map_err(|e| e.to_string())?;
+
 
     // ===============================
     // 1️⃣ Generate Pledge Number
     // ===============================
-    let year = Local::now().format("%Y").to_string();
-    let pattern = format!("PLG-{}-%", year);
 
-    let last_number: Result<String> = tx.query_row(
-        "SELECT pledge_no FROM pledges 
-         WHERE pledge_no LIKE ?1
-         ORDER BY id DESC LIMIT 1",
-        params![pattern],
-        |row| row.get(0),
-    );
+    let pledge_no = generate_next_pledge_no(&db).map_err(|e| e.to_string())?;
+    let pocket_number = generate_next_pocket_number(&db)?; 
+    let mut conn = db.0.lock().unwrap();
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-    let next_sequence = match last_number {
-        Ok(last) => {
-            last.split('-')
-                .last()
-                .and_then(|n| n.parse::<i64>().ok())
-                .unwrap_or(0)
-                + 1
-        }
-        Err(_) => 1,
-    };
+    // ✅ Generate unified receipt number , ✅ Generate ONE receipt number for the entire transaction
 
-    let pledge_no = format!("PLG-{}-{:05}", year, next_sequence);
+    let receipt_number = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+
+        
 
     // ===============================
     // 2️⃣ Calculate Totals
@@ -172,6 +168,17 @@ pub fn create_pledge(
     let total_gross: f64 = req.items.iter().map(|i| i.gross_weight).sum();
     let total_net: f64 = req.items.iter().map(|i| i.net_weight).sum();
     let total_value: f64 = req.items.iter().map(|i| i.item_value).sum();
+
+
+
+     // ✅ Calculate loan percentage and check if overlimit
+     let actual_loan_percentage = if total_value > 0.0 {
+        (req.loan_amount / total_value) * 100.0
+    } else {
+        0.0
+    };
+
+    let is_overlimit = actual_loan_percentage > 80.0;
 
     // ===============================
     // 3️⃣ CASH VALIDATION
@@ -223,13 +230,15 @@ pub fn create_pledge(
     // ===============================
     tx.execute(
         "INSERT INTO pledges (
-            pledge_no, customer_id, scheme_name, loan_type, interest_rate,
+            pledge_no,receipt_number,pocket_number, customer_id, scheme_name, loan_type, interest_rate,
             loan_duration_months, price_per_gram,
             total_gross_weight, total_net_weight,
-            total_estimated_value, loan_amount, created_by
-        ) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
+            total_estimated_value, loan_amount,is_overlimit, actual_loan_percentage, created_by
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14 ,?15,?16)",
         params![
             pledge_no,
+            receipt_number, 
+            pocket_number,
             req.customer_id,
             req.scheme_name,
             req.loan_type,
@@ -240,6 +249,8 @@ pub fn create_pledge(
             total_net,
             total_value,
             req.loan_amount,
+            if is_overlimit { 1 } else { 0 },  
+            actual_loan_percentage,   
             req.created_by
         ],
     )
@@ -253,12 +264,14 @@ pub fn create_pledge(
     if req.payment_method == "CASH" {
         tx.execute(
             "INSERT INTO fund_transactions
-            (type,total_amount,module_type,module_id,reference,payment_method,created_by)
-            VALUES ('WITHDRAW',?1,'PLEDGE',?2,?3,'CASH',?4)",
+            (type,total_amount,module_type,module_id,reference,description,payment_method, transaction_ref,created_by)
+            VALUES ('WITHDRAW',?1,'PLEDGE',?2,?3,?4,'CASH',?5,?6)",
             params![
                 req.loan_amount,
                 pledge_id,
-                format!("Pledge Disbursement {}", pledge_no),
+                pledge_no,
+                format!("Loan Disbursement - {}", receipt_number), 
+                req.transaction_ref,
                 req.created_by
             ],
         )
@@ -281,13 +294,15 @@ pub fn create_pledge(
         // UPI / BANK disbursement
         tx.execute(
             "INSERT INTO fund_transactions
-            (type,total_amount,module_type,module_id,reference,payment_method,created_by)
-            VALUES ('WITHDRAW',?1,'PLEDGE',?2,?3,?4,?5)",
+            (type,total_amount,module_type,module_id,reference,description,payment_method,transaction_ref,created_by)
+            VALUES ('WITHDRAW',?1,'PLEDGE',?2,?3,?4,?5,?6,?7)",
             params![
                 req.loan_amount,
                 pledge_id,
-                format!("Pledge Disbursement {}", pledge_no),
+                pledge_no,
+                format!("Loan Disbursement - {}", receipt_number),
                 req.payment_method,
+                req.transaction_ref, 
                 req.created_by
             ],
         )
@@ -300,13 +315,15 @@ pub fn create_pledge(
     if req.processing_fee_amount > 0.0 {
         tx.execute(
             "INSERT INTO fund_transactions
-            (type,total_amount,module_type,module_id,reference,payment_method,created_by)
-            VALUES ('ADD',?1,'FEE',?2,?3,?4,?5)",
+            (type,total_amount,module_type,module_id,reference,description,payment_method, transaction_ref,created_by)
+            VALUES ('ADD',?1,'FEE',?2,?3,?4,?5,?6,?7)",
             params![
                 req.processing_fee_amount,
                 pledge_id,
-                format!("Processing Fee {}", pledge_no),
+                pledge_no,
+                format!("Processing Fee - {}", receipt_number),
                 req.payment_method,
+                req.transaction_ref,
                 req.created_by
             ],
         )
@@ -317,7 +334,8 @@ pub fn create_pledge(
     // 7️⃣ First Interest Record
     // ===============================
     if req.first_interest_amount > 0.0 {
-        let receipt_no = format!("INIT-{}-{}", Local::now().format("%Y"), pledge_no);
+        // let interest_receipt_no = generate_next_receipt_no(&tx)?;
+
 
         tx.execute(
             "INSERT INTO pledge_payments
@@ -326,7 +344,7 @@ pub fn create_pledge(
             params![
                 pledge_id,
                 req.payment_method,
-                req.transaction_ref.clone().unwrap_or(receipt_no),
+                receipt_number,
                 req.first_interest_amount,
                 req.created_by
             ],
@@ -335,13 +353,15 @@ pub fn create_pledge(
 
         tx.execute(
             "INSERT INTO fund_transactions
-            (type,total_amount,module_type,module_id,reference,payment_method,created_by)
-            VALUES ('ADD',?1,'INTEREST',?2,?3,?4,?5)",
+            (type,total_amount,module_type,module_id,reference,description,payment_method,transaction_ref,created_by)
+            VALUES ('ADD',?1,'INTEREST',?2,?3,?4,?5,?6,?7)",
             params![
                 req.first_interest_amount,
                 pledge_id,
-                format!("First Interest {}", pledge_no),
+                pledge_no,
+                format!("First Month Interest - {}", receipt_number),
                 req.payment_method,
+                req.transaction_ref,
                 req.created_by
             ],
         )
@@ -380,11 +400,12 @@ pub fn create_pledge(
 
         tx.execute(
             "INSERT INTO pledge_items
-            (pledge_id,jewellery_type_id,purity,gross_weight,net_weight,item_value,image_path)
-            VALUES (?1,?2,?3,?4,?5,?6,?7)",
+            (pledge_id,jewellery_type_id,description,purity,gross_weight,net_weight,item_value,image_path)
+            VALUES (?1,?2,?3,?4,?5,?6,?7,?8)",
             params![
                 pledge_id,
                 item.jewellery_type_id,
+                item.description,
                 item.purity,
                 item.gross_weight,
                 item.net_weight,
@@ -529,12 +550,15 @@ pub fn get_single_pledge(db: &Db, pledge_id: i64) -> Result<SinglePledgeResponse
                 "
             SELECT 
                 p.pledge_no,
+                 p.receipt_number, 
+                p.pocket_number,
                 p.status,
                 p.created_at,
                 p.loan_duration_months,
                 c.customer_code,
                 c.name,
-                c.relation,
+                c.relation_type,
+                c.relation_name,
                 c.phone,
                 c.address,
                 c.photo_path,
@@ -558,24 +582,27 @@ pub fn get_single_pledge(db: &Db, pledge_id: i64) -> Result<SinglePledgeResponse
                 |row| {
                     Ok(PledgeDetails {
                         pledge_no: row.get(0)?,
-                        status: row.get(1)?,
-                        created_at: row.get(2)?,
-                        duration_months: row.get(3)?,
-                        customer_id: row.get(4)?,
-                        customer_name: row.get(5)?,
-                        relation: row.get(6)?,
-                        phone: row.get(7)?,
-                        address: row.get(8)?,
-                        photo_path: row.get(9)?,
-                        loan_type: row.get(10)?,
-                        scheme_name: row.get(11)?,
-                        interest_rate: row.get(12)?,
-                        price_per_gram: row.get(13)?,
-                        principal_amount: row.get(14)?,
-                        total_gross_weight: row.get(15)?,
-                        total_net_weight: row.get(16)?,
-                        total_value: row.get(17)?,
-                        is_bank_mapped: row.get::<_, i64>(18)? == 1,
+                        receipt_number: row.get(1)?,  
+                        pocket_number: row.get(2)?,
+                        status: row.get(3)?,
+                        created_at: row.get(4)?,
+                        duration_months: row.get(5)?,
+                        customer_code: row.get(6)?,
+                        customer_name: row.get(7)?,
+                        relation_type: row.get(8)?,
+                        relation_name: row.get(9)?,
+                        phone: row.get(10)?,
+                        address: row.get(11)?,
+                        photo_path: row.get(12)?,
+                        loan_type: row.get(13)?,
+                        scheme_name: row.get(14)?,
+                        interest_rate: row.get(15)?,
+                        price_per_gram: row.get(16)?,
+                        principal_amount: row.get(17)?,
+                        total_gross_weight: row.get(18)?,
+                        total_net_weight: row.get(19)?,
+                        total_value: row.get(20)?,
+                        is_bank_mapped: row.get::<_, i64>(21)? == 1,
                     })
                 },
             )
@@ -586,6 +613,7 @@ pub fn get_single_pledge(db: &Db, pledge_id: i64) -> Result<SinglePledgeResponse
                 "
                 SELECT 
                     jt.name,
+                    pi.description,
                     pi.purity,
                     pi.gross_weight,
                     pi.net_weight,
@@ -601,10 +629,11 @@ pub fn get_single_pledge(db: &Db, pledge_id: i64) -> Result<SinglePledgeResponse
             .query_map(params![pledge_id], |row| {
                 Ok(PledgeItemDetails {
                     jewellery_type: row.get(0)?,
-                    purity: row.get(1)?,
-                    gross_weight: row.get(2)?,
-                    net_weight: row.get(3)?,
-                    value: row.get(4)?,
+    description: row.get(1)?,
+    purity: row.get(2)?,
+    gross_weight: row.get(3)?,
+    net_weight: row.get(4)?,
+    value: row.get(5)?,
                 })
             })
             .map_err(|e| e.to_string())?;
@@ -699,15 +728,12 @@ pub fn calculate_payment(db: &Db, pledge_id: i64) -> Result<serde_json::Value, S
 }
 
 pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String> {
-    println!(
-        "🚀 [RUST] Processing payment for pledge_id: {}",
-        req.pledge_id
-    );
+    println!("🚀 [RUST] Processing payment for pledge_id: {}", req.pledge_id);
 
     let pledge_data = get_single_pledge(db, req.pledge_id)?;
     let settings = crate::settings::service::get_system_settings(db)?;
 
-    // ── NEW: Block closure if pledge is bank-mapped ──────────────────────────
+    // Block closure if pledge is bank-mapped
     if req.payment_type == "CLOSURE" {
         let conn_check = db.0.lock().unwrap();
         let is_bank_mapped: bool = conn_check
@@ -717,7 +743,7 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
                 |row| row.get::<_, i64>(0),
             )
             .unwrap_or(0) > 0;
-        drop(conn_check); // release lock before continuing
+        drop(conn_check);
 
         if is_bank_mapped {
             return Err(
@@ -725,7 +751,6 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
             );
         }
     }
-
 
     let interest_paid: f64 = pledge_data
         .payments
@@ -771,9 +796,7 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
     let mut conn = db.0.lock().unwrap();
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-    let year = chrono::Local::now().format("%Y").to_string();
-    let receipt_base = format!("RCP-{}", year);
-
+    // ✅ CASH handling for fund transactions
     if req.payment_mode == "CASH" {
         let is_closure = req.payment_type == "CLOSURE" || (total_payable - req.amount) <= 0.0;
 
@@ -786,16 +809,34 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
 
         tx.execute(
             "INSERT INTO fund_transactions 
-             (type, total_amount, module_type, module_id, reference, payment_method, created_by)
-             VALUES ('ADD', ?1, ?2, ?3, ?4, 'CASH', ?5)",
+             (type, total_amount, module_type, module_id, reference, description, payment_method,transaction_ref,  created_by)
+             VALUES ('ADD', ?1, ?2, ?3, ?4, ?5, 'CASH', ?6,?7)",
             params![
                 req.amount,
                 module_type,
                 req.pledge_id,
+                pledge_data.pledge.pledge_no,
                 reference_text,
+                req.reference,
                 req.created_by
             ],
-        )
+        ).map_err(|e| e.to_string())?;} else {
+            // UPI / Bank — add fund transaction with transaction_ref
+            tx.execute(
+                "INSERT INTO fund_transactions 
+                 (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_by)
+                 VALUES ('ADD', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                params![
+                    req.amount,
+                    if req.payment_type == "CLOSURE" { "CLOSURE" } else { "PAYMENT" },
+                    req.pledge_id,
+                    pledge_data.pledge.pledge_no,
+                    format!("Payment for Pledge {}", pledge_data.pledge.pledge_no),
+                    req.payment_mode,
+                    req.reference,      // ← UPI ref number saved here
+                    req.created_by
+                ],
+            )
         .map_err(|e| e.to_string())?;
 
         let fund_tx_id = tx.last_insert_rowid();
@@ -813,30 +854,38 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
         }
     }
 
+    // ✅ Record interest payment with generated receipt
     if interest_portion > 0.0 {
-        let receipt_no = format!(
-            "{}-{}-INT",
-            receipt_base,
-            chrono::Local::now().timestamp_subsec_millis()
-        );
+        let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+        
         tx.execute(
             "INSERT INTO pledge_payments (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by)
              VALUES (?1, 'INTEREST', ?2, ?3, ?4, ?5)",
-            params![req.pledge_id, req.payment_mode, req.reference.clone().unwrap_or(receipt_no), interest_portion, req.created_by],
+            params![
+                req.pledge_id, 
+                req.payment_mode, 
+                receipt_no,
+                interest_portion, 
+                req.created_by
+            ],
         )
         .map_err(|e| e.to_string())?;
     }
 
+    // ✅ Record principal payment with generated receipt
     if principal_portion > 0.0 {
-        let receipt_no = format!(
-            "{}-{}-PRN",
-            receipt_base,
-            chrono::Local::now().timestamp_subsec_millis()
-        );
+        let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+        
         tx.execute(
             "INSERT INTO pledge_payments (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by)
              VALUES (?1, 'PRINCIPAL', ?2, ?3, ?4, ?5)",
-            params![req.pledge_id, req.payment_mode, req.reference.clone().unwrap_or(receipt_no), principal_portion, req.created_by],
+            params![
+                req.pledge_id, 
+                req.payment_mode, 
+                receipt_no,
+                principal_portion, 
+                req.created_by
+            ],
         )
         .map_err(|e| e.to_string())?;
 
@@ -858,4 +907,70 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
     tx.commit().map_err(|e| e.to_string())?;
     println!("✅ [RUST] Payment split & processed successfully!");
     Ok(())
+}
+
+// ✅ Get all overlimit pledges (for both regular pledges and repledges)
+pub fn get_overlimit_pledges(db: &Db) -> Result<Vec<serde_json::Value>, String> {
+    let conn = db.0.lock().unwrap();
+
+    let mut stmt = conn
+        .prepare(
+            "
+            SELECT 
+                p.id,
+                p.pledge_no,
+                p.receipt_number,
+                c.name as customer_name,
+                c.customer_code,
+                c.phone,
+                p.scheme_name,
+                p.loan_amount,
+                p.total_estimated_value,
+                p.actual_loan_percentage,
+                p.status,
+                p.created_at
+            FROM pledges p
+            JOIN customers c ON c.id = p.customer_id
+            WHERE p.is_overlimit = 1
+            AND p.status = 'ACTIVE'
+            ORDER BY p.created_at DESC
+            ",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            let loan_amount: f64 = row.get(7)?;
+            let total_value: f64 = row.get(8)?;
+            let actual_percentage: f64 = row.get(9)?;
+            
+            // Calculate 80% threshold
+            let threshold_80 = total_value * 0.80;
+            let overlimit_amount = loan_amount - threshold_80;
+
+            Ok(serde_json::json!({
+                "id": row.get::<_, i64>(0)?,
+                "pledge_no": row.get::<_, String>(1)?,
+                "receipt_number": row.get::<_, Option<String>>(2)?,
+                "customer_name": row.get::<_, String>(3)?,
+                "customer_code": row.get::<_, String>(4)?,
+                "phone": row.get::<_, String>(5)?,
+                "scheme_name": row.get::<_, String>(6)?,
+                "loan_amount": loan_amount,
+                "total_value": total_value,
+                "actual_loan_percentage": actual_percentage,
+                "overlimit_amount": overlimit_amount,
+                "max_repledge_amount": threshold_80,
+                "status": row.get::<_, String>(10)?,
+                "created_at": row.get::<_, String>(11)?,
+            }))
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut list = Vec::new();
+    for r in rows {
+        list.push(r.map_err(|e| e.to_string())?);
+    }
+
+    Ok(list)
 }

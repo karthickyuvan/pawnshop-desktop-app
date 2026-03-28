@@ -1,0 +1,95 @@
+.stock-page{
+    padding:25px;
+  }
+  
+  /* HEADER */
+  
+  .report-header{
+    margin-bottom:20px;
+  }
+  
+  .report-header h2{
+    margin:0;
+    font-size:22px;
+    font-weight:600;
+  }
+  
+  .report-header p{
+    margin-top:4px;
+    color:#777;
+    font-size:13px;
+  }
+  
+  
+  /* TABLE CONTAINER */
+  
+  .stock-page table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid #e6e6e6;
+  }
+  
+  
+  /* TABLE HEADER */
+  
+  .stock-page th{
+    background:#f7f9fb;
+    text-align:left;
+    padding:12px;
+    font-size:13px;
+    font-weight:600;
+    border-bottom:1px solid #e6e6e6;
+  }
+  
+  
+  /* TABLE BODY */
+  
+  .stock-page td{
+    padding:12px;
+    font-size:14px;
+    border-bottom:1px solid #f0f0f0;
+  }
+  
+  
+  /* HOVER EFFECT */
+  
+  .stock-page tbody tr:hover{
+    background:#fafafa;
+  }
+  
+  
+  /* VALUE STYLING */
+  
+  .stock-page td:nth-child(2),
+  .stock-page td:nth-child(3){
+    font-weight:500;
+  }
+  
+  .stock-page td:nth-child(4){
+    font-weight:600;
+    color:#444;
+  }
+  
+  .stock-page td:nth-child(5){
+    font-weight:600;
+    color:#1976d2;
+  }
+  
+  
+  /* RESPONSIVE */
+  
+  @media (max-width:900px){
+  
+    .stock-page table{
+      font-size:12px;
+    }
+  
+    .stock-page th,
+    .stock-page td{
+      padding:8px;
+    }
+  
+  }

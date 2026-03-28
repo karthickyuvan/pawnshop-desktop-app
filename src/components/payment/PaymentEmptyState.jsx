@@ -1,10 +1,16 @@
+import { useLanguage } from "../../context/LanguageContext";
+
 export default function PaymentEmptyState() {
+
+  const { t } = useLanguage();
+
+
     return (
       <div className="empty-state">
         <div className="empty-icon">🔍</div>
-        <h3>Search and select a pledge to collect payment</h3>
+        <h3>{t("search_select_pledge")}</h3>
         <p>
-          Use the search box to find pledge by number, customer name, or phone
+        {t("use_search_to_find_pledge")}
         </p>
       </div>
     );

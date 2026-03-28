@@ -1,18 +1,9 @@
-// src/pages/SettingsPage.jsx
-//
-// Calls Tauri commands:
-//   get_shop_settings   → ShopSettings
-//   save_shop_settings  → ShopSettings (returns updated row)
-//   change_password     → String (success message)
-//
-// Import the companion stylesheet:
-//   import "./settings.css";
+
 
 import { useState, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./settingspage.css";
-
-const TABS = ["Shop Profile", "Change Password"];
+import { useLanguage } from "../context/LanguageContext";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -73,7 +64,13 @@ function SectionTitle({ children, subtitle }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState(0);
+
+  const TABS = [
+    t("shop_profile"),
+    t("change_password")
+  ];
 
   // Shop Profile state
   const [shop, setShop] = useState({
@@ -199,9 +196,9 @@ export default function SettingsPage() {
           <div className="settings-header__title-group">
             <div className="settings-header__icon-row">
               <div className="settings-header__icon">⚙</div>
-              <h1 className="settings-header__title">Settings</h1>
+              <h1 className="settings-header__title">{t("settings")}</h1>
             </div>
-            <p className="settings-header__subtitle">Manage your shop configuration &amp; security</p>
+            <p className="settings-header__subtitle">{t("manage_shop_settings")}</p>
           </div>
 
         </div>
@@ -231,8 +228,8 @@ export default function SettingsPage() {
 
                 {/* Logo Upload */}
                 <div>
-                  <SectionTitle subtitle="Displayed on receipts and printed documents">
-                    Store Logo
+                  <SectionTitle subtitle={t("logo_receipt_description")}>
+                  {t("store_logo")}
                   </SectionTitle>
                   <div className="logo-row">
                     <div className="logo-preview">
@@ -247,8 +244,8 @@ export default function SettingsPage() {
                     </div>
                     <div className="logo-dropzone" onClick={() => fileInputRef.current.click()}>
                       <div className="logo-dropzone__icon">📁</div>
-                      <p className="logo-dropzone__label">Click to upload logo</p>
-                      <p className="logo-dropzone__hint">PNG, JPG, SVG — MAX 2 MB</p>
+                      <p className="logo-dropzone__label">{t("click_upload_logo")}</p>
+                      <p className="logo-dropzone__hint">{t("logo_format_hint")}</p>
                       {logoFilename && (
                         <span className="logo-dropzone__filename">{logoFilename}</span>
                       )}
@@ -265,24 +262,24 @@ export default function SettingsPage() {
 
                 {/* Business Information */}
                 <div>
-                  <SectionTitle subtitle="Core details printed on every receipt">
-                    Business Information
+                  <SectionTitle subtitle={t("receipt_core_details")}>
+                  {t("business_information")}
                   </SectionTitle>
                   <div className="grid-2">
                     <div className="col-span-2">
-                      <InputField label="Shop Name" value={shop.shop_name}
+                      <InputField label={t("shop_name")} value={shop.shop_name}
                         onChange={v => setShop({ ...shop, shop_name: v })}
                         placeholder="e.g. Royal Gold &amp; Jewels" icon="🏪" />
                     </div>
                     <div className="col-span-2">
-                      <InputField label="Full Address" value={shop.address}
+                      <InputField label={t("full_address")} value={shop.address}
                         onChange={v => setShop({ ...shop, address: v })}
                         placeholder="Street, City, State, PIN — as shown on receipts" icon="📍" />
                     </div>
-                    <InputField label="Phone Number" value={shop.phone}
+                    <InputField label={t("phone_number")} value={shop.phone}
                       onChange={v => setShop({ ...shop, phone: v })}
                       placeholder="+91 98765 43210" icon="📞" />
-                    <InputField label="Email Address" type="email" value={shop.email}
+                    <InputField label={t("email_address")} type="email" value={shop.email}
                       onChange={v => setShop({ ...shop, email: v })}
                       placeholder="shop@example.com" icon="✉" />
                   </div>
@@ -294,10 +291,10 @@ export default function SettingsPage() {
                     Legal &amp; Online
                   </SectionTitle>
                   <div className="grid-2">
-                    <InputField label="Website" value={shop.website}
+                    <InputField label={t("website")} value={shop.website}
                       onChange={v => setShop({ ...shop, website: v })}
                       placeholder="www.yourshop.com" icon="🌐" />
-                    <InputField label="License Number" value={shop.license_number}
+                    <InputField label={t("license_number")} value={shop.license_number}
                       onChange={v => setShop({ ...shop, license_number: v })}
                       placeholder="e.g. PLM-2024-00123" icon="📋" />
                   </div>
@@ -307,7 +304,7 @@ export default function SettingsPage() {
                 {(shop.shop_name || shop.phone || shop.address) && (
                   <div>
                     <SectionTitle subtitle="How this appears on printed receipts">
-                      Receipt Preview
+                    {t("receipt_preview")}
                     </SectionTitle>
                     <div className="receipt-preview">
                       <div className="receipt-preview__header">
@@ -343,7 +340,7 @@ export default function SettingsPage() {
                     disabled={shopSaving}
                   >
                     {shopSaving
-                      ? <><span className="btn__spinner">◌</span> Saving…</>
+                      ? <><span className="btn__spinner">◌</span> {t("saving")}</>
                       : "✓ Save Profile"
                     }
                   </button>
@@ -361,27 +358,27 @@ export default function SettingsPage() {
                 ══════════════════════════════════════════════ */}
             {activeTab === 1 && (
               <div className="password-panel">
-                <SectionTitle subtitle="Keep your account secure">Update Password</SectionTitle>
+                <SectionTitle subtitle={t("password_security_subtitle")}>{t("update_password")}</SectionTitle>
 
                 <div className="security-notice">
                   <span className="security-notice__icon">🔐</span>
                   <div>
-                    <div className="security-notice__title">Security Notice</div>
+                    <div className="security-notice__title">{t("security_notice")}</div>
                     <div className="security-notice__body">
-                      Use a strong password — at least 8 characters with symbols and uppercase letters
+                    {t("strong_password_hint")}
                     </div>
                   </div>
                 </div>
 
                 <div className="password-fields">
-                  <InputField label="Current Password" type="password"
+                  <InputField label={t("current_password")}type="password"
                     value={passwords.current}
                     onChange={v => setPasswords({ ...passwords, current: v })}
                     placeholder="Enter your current password" icon="🔑" />
 
                   <div className="field-divider" />
 
-                  <InputField label="New Password" type="password"
+                  <InputField label={t("new_password")} type="password"
                     value={passwords.newPass}
                     onChange={v => setPasswords({ ...passwords, newPass: v })}
                     placeholder="Minimum 8 characters" icon="🔒" />
@@ -392,7 +389,7 @@ export default function SettingsPage() {
                     const colors = ["", "strength-meter__bar--1", "strength-meter__bar--2", "strength-meter__bar--3"];
                     return (
                       <div className="strength-meter">
-                        <div className="strength-meter__label">Password Strength</div>
+                        <div className="strength-meter__label">{t("password_strength")}</div>
                         <div className="strength-meter__bars">
                           {[1, 2, 3].map(t => (
                             <div key={t}
@@ -407,7 +404,7 @@ export default function SettingsPage() {
                     );
                   })()}
 
-                  <InputField label="Confirm New Password" type="password"
+                  <InputField label={t("confirm_new_password")} type="password"
                     value={passwords.confirm}
                     onChange={v => setPasswords({ ...passwords, confirm: v })}
                     placeholder="Re-enter new password" icon="🔒" />
@@ -435,7 +432,7 @@ export default function SettingsPage() {
                     disabled={pwSaving}
                     style={{ alignSelf: "flex-start" }}
                   >
-                    {pwSaving ? "Updating…" : "🔐 Update Password"}
+                    {pwSaving ? t("updating") : "🔐 Update Password"}
                   </button>
                 </div>
               </div>
@@ -445,7 +442,7 @@ export default function SettingsPage() {
         </div>{/* /settings-card */}
 
         <div className="settings-footer">
-          <p className="settings-footer__text">PAWN MANAGEMENT SYSTEM · SETTINGS</p>
+          <p className="settings-footer__text">{t("pawn_system_settings")}</p>
         </div>
       </div>
     </div>

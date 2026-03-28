@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { searchCustomers } from "../services/customerApi";
 import "./CustomerListPage.css";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function CustomerListPage({ setActiveMenu }) {
 
   const [customers, setCustomers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadCustomers("");
@@ -32,79 +34,26 @@ export default function CustomerListPage({ setActiveMenu }) {
     return () => clearTimeout(delay);
   }, [searchText]);
 
-//   return (
-//     <div className="customer-list-page">
-//         <h3>Displaying All Customers</h3>
-//       <div className="search-bar">
-//         <button className="primary-btn" onClick={() => setActiveMenu("customers")} > + Add New Customer </button>
-//         <input className="search-input-container" placeholder="Search by name, phone, or code..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-//       </div>
-
-//       {loading && <div>Loading...</div>}
-
-//       <table className="customer-table">
-//         <thead>
-//           <tr>
-//             <th>Code</th>
-//             <th>Name</th>
-//             <th>Phone</th>
-//             <th>Relation</th>
-//             <th>Address</th>
-//             <th>ID Proof</th>
-//             <th>Visit Count</th>
-//           </tr>
-//         </thead>
-
-//         <tbody>
-//           {customers.map((c) => (
-//             <tr key={c.id}>
-//               <td>{c.customer_code}</td>
-//               <td>{c.name}</td>
-//               <td>{c.phone}</td>
-//               <td>{c.relation || "-"}</td>
-//               <td>{c.address || "-"}</td>
-//               <td>
-//                 {c.id_proof_type
-//                   ? `${c.id_proof_type} - ${c.id_proof_number}`
-//                   : "-"}
-//               </td>
-//               <td style={{  fontWeight: "bold", color: c.visit_count > 3 ? "green" : "black"}}>
-//                 {c.visit_count} </td>
-//             </tr>
-//           ))}
-
-//           {!loading && customers.length === 0 && (
-//             <tr>
-//               <td colSpan="5" style={{ textAlign: "center" }}>
-//                 No customers found
-//               </td>
-//             </tr>
-//           )}
-//         </tbody>
-//       </table>
-
-//     </div>
-//   );
 
 return (
     <div className="customer-list-page">
   
       {/* HEADER */}
-        <h2>Customers</h2>
-        <span>Review all registered customers</span>
+       <h2>{t("customers")}</h2>
+<span>{t("review_registered_customers")}</span>
         
       {/* SEARCH + SUMMARY BAR */}
       <div className="toolbar">
         <div className="search-wrapper">
         <button className="primary-btn" onClick={() => setActiveMenu("customers")} >
-          + Add New Customer
+        + {t("add_new_customer")}
         </button>
-          <input className="search-input" placeholder="Search by name, phone, or code..." value={searchText} onChange={(e) => setSearchText(e.target.value)}
+          <input className="search-input" placeholder={t("search_customer_placeholder")}value={searchText} onChange={(e) => setSearchText(e.target.value)}
           />
         </div>
 
         <div className="customer-count">
-          Total Customer Count: <strong>{customers.length}</strong>
+        {t("total_customer_count")}: <strong>{customers.length}</strong>
         </div>
       </div>
   
@@ -112,19 +61,18 @@ return (
       <div className="table-card">
   
         {loading && (
-          <div className="loading-state">Loading customers...</div>
+          <div className="loading-state">{t("loading_customers")}</div>
         )}
   
         <table className="customer-table">
           <thead>
             <tr>
-              <th>Code</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Relation</th>
-              <th>Address</th>
-              <th>ID Proof</th>
-              <th>Visits</th>
+            <th>{t("code")}</th>
+            <th>{t("name")}</th>
+            <th>{t("phone")}</th>
+            <th>{t("address")}</th>
+            <th>{t("id_proof")}</th>
+            <th>{t("visits")}</th>
             </tr>
           </thead>
   
@@ -132,9 +80,16 @@ return (
             {customers.map((c) => (
               <tr key={c.id}>
                 <td className="code">{c.customer_code}</td>
-                <td className="name">{c.name}</td>
+                <td className="name">
+  {c.name}
+  {c.relation_type && c.relation_name && (
+    <div className="relation">
+      {c.relation_type} {c.relation_name}
+    </div>
+  )}
+</td>
                 <td>{c.phone}</td>
-                <td>{c.relation || "-"}</td>
+
                 <td className="address">{c.address || "-"}</td>
                 <td>
                   {c.id_proof_type
@@ -156,7 +111,7 @@ return (
             {!loading && customers.length === 0 && (
               <tr>
                 <td colSpan="7" className="empty-state">
-                  No customers found
+                {t("no_customers_found")}
                 </td>
               </tr>
             )}

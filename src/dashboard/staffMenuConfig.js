@@ -1,32 +1,31 @@
 export const staffMenu = [
   {
-    title: "Home",
+    titleKey: "home",
     key: "home",
   },
   {
-    title: "Customers",
+    titleKey: "customers",
     key: "customers",
   },
   {
-    title: "Pledges",
+    titleKey: "pledges_menu",
     children: [
-      { title: "Create Pledge", key: "pledges" },
-      { title: "View All Pledges", key: "viewpledges" },
-      { title: "Re-Pledges", key: "repledges" },
-      { title: "Overlimit Pledges", key: "overlimit-pledges" },
-
+      { titleKey: "pledges", key: "pledges" },
+      { titleKey: "view_pledges", key: "viewpledges" },
+      { titleKey: "repledges", key: "repledges" },
+      { titleKey: "overlimit_pledges", key: "overlimit-pledges" },
     ],
   },
   {
-    title: "Payments",
+    titleKey: "payments",
     key: "payments",
   },
   {
-    title: "Accounts",
+    titleKey: "accounts",
     children: [
-      { title: "Transactions", key: "transactions" },
-      { title: "Expenses", key: "expenses" },
-      { title: "Day Book", key: "daybook" },
+      { titleKey: "transactions", key: "transactions" },
+      { titleKey: "expenses", key: "expenses" },
+      { titleKey: "daybook", key: "daybook" },
     ],
   },
 ];

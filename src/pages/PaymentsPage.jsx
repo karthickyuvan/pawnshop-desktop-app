@@ -10,7 +10,7 @@ import PledgePaymentPanel from "../components/payment/PledgePaymentPanel";
 export default function PaymentsPage({ pledgeId }) {
 
   const [activeTab, setActiveTab] = useState("collect");
-
+ 
   // If pledgeId comes from navigation → load it immediately
   const [selectedPledgeId, setSelectedPledgeId] = useState(
     pledgeId ? Number(pledgeId) : null

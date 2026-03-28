@@ -1,65 +1,64 @@
 export const ownerMenu = [
-    {
-      title: "Home",
-      key: "home",
-    },
-  
-    {
-      title: "Masters",
-      children: [
-        { title: "Loan Types", key: "loan-types" },
-        { title: "Jewellery Types", key: "jewellery-types" },
-        { title: "Schemes", key: "schemes" },
-        { title: "Price / Gram", key: "price-per-gram" },
-        { title: "Banks", key: "banks" },
-        { title: "Bank Mapping", key: "bank-mapping" }, 
-        { title: "Fund Management", key: "fund-management" },
-        { title: "Interest Settings", key: "interest-settings" },
+  {
+    titleKey: "home",
+    key: "home",
+  },
 
-      ],
-    },
-  
-    {
-      title: "People",
-      children: [
-        { title: "Staff", key: "staff" },
-        { title: "Customers", key: "customers" },
-      ],
-    },
-  
-    {
-      title: "Pledges",
-      children: [
-        { title: "Pledges", key: "pledges" },
-        {title:"View-Pledges", key :"viewpledges"},
-        { title: "Re-Pledges", key: "repledges" },
-        { title: "Overlimit Pledges", key: "overlimit-pledges" },
+  {
+    titleKey: "masters",
+    children: [
+      { titleKey: "loan_types", key: "loan-types" },
+      { titleKey: "jewellery_types", key: "jewellery-types" },
+      { titleKey: "schemes", key: "schemes" },
+      { titleKey: "price_per_gram", key: "price-per-gram" },
+      { titleKey: "banks", key: "banks" },
+      { titleKey: "bank_mapping", key: "bank-mapping" },
+      { titleKey: "fund_management", key: "fund-management" },
+      { titleKey: "interest_settings", key: "interest-settings" },
+      { titleKey: "expense_categories", key: "expense-categories" }
+    ],
+  },
 
+  {
+    titleKey: "people",
+    children: [
+      { titleKey: "staff", key: "staff" },
+      { titleKey: "customers", key: "customers" },
+    ],
+  },
 
-      ],
-    },
-    {
-        title:"Payments",key:"payments",
+  {
+    titleKey: "pledges_menu",
+    children: [
+      { titleKey: "pledges", key: "pledges" },
+      { titleKey: "view_pledges", key: "viewpledges" },
+      { titleKey: "repledges", key: "repledges" },
+      { titleKey: "overlimit_pledges", key: "overlimit-pledges" },
+      { titleKey: "auction_list", key: "auction-list" },
+    ],
+  },
 
-    },
-  
-    {
-      title: "Accounts",
-      children: [
-        { title: "Transactions", key: "transactions" },
-        { title: "Expenses", key: "expenses" },
-        { title: "Day Book", key: "daybook" },
-      ],
-    },
-  
-    {
-      title: "Reports",
-      key: "reports",
-    },
-  
-    {
-      title: "Settings",
-      key: "settings",
-    },
-  ];
-  
+  {
+    titleKey: "payments",
+    key: "payments",
+  },
+
+  {
+    titleKey: "accounts",
+    children: [
+      { titleKey: "transactions", key: "transactions" },
+      { titleKey: "expenses", key: "expenses" },
+      { titleKey: "daybook", key: "daybook" },
+    ],
+  },
+
+  {
+    titleKey: "reports",
+    key: "reports",
+  },
+
+  {
+    titleKey: "settings",
+    key: "settings",
+  },
+];

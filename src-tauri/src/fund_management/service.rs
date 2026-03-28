@@ -1,6 +1,7 @@
 use crate::db::connection::Db;
 use rusqlite::{params, Error, Result, Row};
-use std::collections::HashMap;
+// use std::collections::HashMap;
+use tauri::State;
 
 /// ===============================
 /// Drawer total
@@ -75,30 +76,36 @@ fn save_fund_transaction(
     }
 
     // 4️⃣ Insert Transaction (CORRECTED)
-    tx.execute(
-        "
-        INSERT INTO fund_transactions
-        (
-            type,
-            total_amount,
-            module_type,
-            module_id,
-            reference,
-            payment_method,
-            transaction_ref,
-            created_by
-        )
-        VALUES (?1, ?2, 'CAPITAL', NULL, ?3, ?4, ?5, ?6)
-        ",
-        params![
-            tx_type,
-            amount,
-            reason,            // now stored in reference
-            payment_method,
-            transaction_ref,
-            created_by
-        ],
-    )?;
+   
+
+tx.execute(
+    "
+    INSERT INTO fund_transactions
+    (
+        type,
+        total_amount,
+        module_type,
+        module_id,
+        reference,
+        description,
+        payment_method,
+        transaction_ref,
+        created_by
+        
+    )
+    VALUES (?1, ?2, 'CAPITAL', NULL, ?3, ?4, ?5, ?6, ?7)
+    ",
+    params![
+        tx_type,
+        amount,
+        transaction_ref.clone().unwrap_or("CAPITAL".to_string()),
+        reason,
+        payment_method,
+        transaction_ref,
+        created_by,
+
+    ],
+)?;
 
     let fund_tx_id = tx.last_insert_rowid();
 
@@ -165,7 +172,7 @@ pub fn withdraw_fund(
     )
 }
 
-pub fn get_fund_ledger(db: &Db) -> Result<Vec<(i64, String, f64, String, String, String)>> {
+pub fn get_fund_ledger(db: &Db) -> Result<Vec<(i64, String, f64, String, String, String,String)>> {
     let conn = db.0.lock().unwrap();
 
     let mut stmt = conn.prepare(
@@ -175,6 +182,7 @@ pub fn get_fund_ledger(db: &Db) -> Result<Vec<(i64, String, f64, String, String,
             type,
             total_amount,
             COALESCE(reference, ''),
+            COALESCE(description, ''),
             created_at,
             COALESCE(payment_method, 'CASH') -- 6th Column
         FROM fund_transactions
@@ -190,6 +198,8 @@ pub fn get_fund_ledger(db: &Db) -> Result<Vec<(i64, String, f64, String, String,
             row.get(3)?,
             row.get(4)?,
             row.get(5)?,
+            row.get(6)?,
+
         ))
     })?;
 
@@ -234,3 +244,4 @@ pub fn get_current_denominations(db: &Db) -> Result<Vec<(i32, i32)>, String> {
 
     Ok(result)
 }
+

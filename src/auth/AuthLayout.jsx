@@ -35,13 +35,16 @@
 
 // AuthLayout.jsx
 import "../styles/auth.css";
+import logo from "../assets/logo.jpeg";
 
 export default function AuthLayout({ title, subtitle, children }) {
   return (
     <div className="auth-root">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">⚖️</div>
+        <div className="auth-logo">
+          <img src={logo} alt="Pawnshop Logo" />
+        </div>
           <h1>{title}</h1>
           {subtitle && <p>{subtitle}</p>}
         </div>

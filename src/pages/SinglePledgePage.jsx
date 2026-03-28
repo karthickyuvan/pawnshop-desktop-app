@@ -1,12 +1,16 @@
 import { useEffect, useState, useCallback } from "react";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import "./singlepledgepage.css";
+import { useLanguage } from "../context/LanguageContext";
+import PaymentPrintModal from "../components/paymentPrint/PaymentPrintModal";
 
-export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
+export default function SinglePledgePage({ pledgeId,source, setActiveMenu }) {
   const [data, setData] = useState(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  // const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const [reprintData, setReprintData] = useState(null);   // ← reprint state
+  const [shopSettings, setShopSettings] = useState(null); // ← shop settings
+  const { t } = useLanguage();
   // ✅ Reusable fetch function (PRODUCTION STYLE)
   const fetchData = useCallback(async () => {
     if (!pledgeId) {
@@ -33,7 +37,47 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+// ── Fetch shop settings once ────────────────────────────────────────────────
+useEffect(() => {
+  invoke("get_shop_settings").then(setShopSettings).catch(console.error);
+}, []);
 
+// ── Reprint handler ─────────────────────────────────────────────────────────
+// Builds the same data shape that PaymentPrintModal expects, then marks it
+// as a duplicate so the modal shows "DUPLICATE COPY" watermark.
+function handleReprintPayment(payment) {
+  if (!data) return;
+  const { pledge } = data;
+
+  setReprintData({
+    receiptNo:   payment.receipt_no || "N/A",
+    pledgeNo:    pledge.pledge_no,
+    paymentType: payment.payment_type,   // "INTEREST" | "PRINCIPAL" | "CLOSURE"
+    paymentMode: payment.mode,
+    amount:      payment.amount,
+    reference:   null,                   // not stored per-row; omit on reprint
+    isReprint:   true,                   // ← tells modal to show DUPLICATE banner
+    pledge: {
+      pledge_no:        pledge.pledge_no,
+      loan_type:        pledge.loan_type,
+      scheme_name:      pledge.scheme_name,
+      interest_rate:    pledge.interest_rate,
+      principal_amount: data.original_principal || pledge.principal_amount,
+      created_at:       pledge.created_at,
+      duration_months:  pledge.duration_months,
+      customer_name:    pledge.customer_name,
+      customer_code:    pledge.customer_code,
+      phone:            pledge.phone,
+      address:          pledge.address,
+      photo_path:       pledge.photo_path,
+      relation_type:    pledge.relation_type,
+      relation_name:    pledge.relation_name,
+    },
+    // For reprints we don't show live balances — pass null so modal skips them
+    pendingInterest:    null,
+    remainingPrincipal: null,
+  });
+}
   if (loading) {
     return (
       <div className="page-loader">
@@ -157,6 +201,13 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
     pledge?.photo_path && pledge.photo_path.trim() !== ""
       ? convertFileSrc(pledge.photo_path)
       : null;
+// ── Payment type display helpers ────────────────────────────────────────────
+function paymentTypeDisplay(type) {
+  if (type === "INTEREST")  return { label: t("interest_payment"),  color: "#16a34a", bg: "#f0fdf4", border: "#86efac" };
+  if (type === "PRINCIPAL") return { label: t("principal_payment"), color: "#2563eb", bg: "#eff6ff", border: "#93c5fd" };
+  if (type === "CLOSURE")   return { label: t("closure_payment"),   color: "#dc2626", bg: "#fef2f2", border: "#fca5a5" };
+  return                           { label: type,                    color: "#475569", bg: "#f1f5f9", border: "#cbd5e1" };
+}
 
   return (
     <div className="single-pledge-container">
@@ -165,9 +216,9 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
         <div className="back-nav">
           <button
             className="back-btn"
-            onClick={() => setActiveMenu("viewpledges")}
+            onClick={() => setActiveMenu(source || "viewpledges")}
           >
-            ← Back to Active Pledges{" "}
+           ← {t("back_to")} {source.replace("-", " ")}
           </button>
         </div>
 
@@ -187,9 +238,9 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
             </div>
 
             <div className="header-meta">
-              Created on {formattedCreatedDate} • Due on {formattedDueDate}
+            {t("created_on")} {formattedCreatedDate} • {t("due_on")} {formattedDueDate}
               <span style={{ marginLeft: "10px", color: "#888" }}>
-                ({daysSinceCreated} days ago)
+              ({daysSinceCreated} {t("days_ago")})
               </span>
             </div>
           </div>
@@ -204,7 +255,7 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
         {/* LEFT COLUMN */}
         <div className="main-column">
           <section className="info-card">
-            <h3 className="card-title">👤 Customer Information</h3>
+          <h3 className="card-title">👤 {t("customer_information")}</h3>
 
             <div className="customer-card-body">
               {/* LEFT: PHOTO (Fixed Width) */}
@@ -227,31 +278,35 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
               <div className="info-text-wrapper">
                 <div className="info-row three-cols">
                   <div className="field">
-                    <span>Customer ID</span>
-                    <p>{pledge.customer_id}</p>
+                    <span>{t("customer_id")}</span>
+                    <p>{pledge.customer_code}</p>
                   </div>
                   <div className="field">
-                    <span>Full Name</span>
+                    <span>{t("full_name")}</span>
                     <p>{pledge.customer_name}</p>
                   </div>
                   <div className="field">
-                    <span>Relation</span>
-                    <p>{pledge.relation}</p>
-                  </div>
+  <span>{t("relation")}</span>
+  <p>
+    {pledge.relation_type && pledge.relation_name
+      ? `${pledge.relation_type} ${pledge.relation_name}`
+      : "Self"}
+  </p>
+</div>
                 </div>
 
                 <div className="divider-line"></div>
 
                 <div className="info-row">
                   <div className="field">
-                    <span>Phone Number</span>
+                    <span>{t("phone_number")}</span>
                     <div className="value-with-icon">
                       <span className="icon-muted">📞</span>
                       <p>{pledge.phone}</p>
                     </div>
                   </div>
                   <div className="field">
-                    <span>Address</span>
+                    <span>{t("address")}</span>
                     <div className="value-with-icon">
                       <span className="icon-muted">📍</span>
                       <p>{pledge.address}</p>
@@ -263,29 +318,29 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
           </section>
 
           <section className="info-card">
-            <h3>📄 Loan Details</h3>
+          <h3>📄 {t("loan_details")}</h3>
             <div className="info-grid four-cols">
               <div className="field">
-                <span>Loan Type</span>
+                <span>{t("loan_type")}</span>
                 <p>{pledge.loan_type}</p>
               </div>
               <div className="field">
-                <span>Scheme</span>
+                <span>{t("scheme")}</span>
                 <p>{pledge.scheme_name}</p>
               </div>
               <div className="field">
-                <span>Interest Rate</span>
+                <span>{t("interest_rate")}</span>
                 <p>{pledge.interest_rate}%</p>
               </div>
               <div className="field">
-                <span>Duration</span>
+                <span>{t("duration")}</span>
                 <p>{pledge.duration_months} months</p>
               </div>
               <div className="divider-line"></div>
 
               {/* 3️⃣ SHOW ORIGINAL AMOUNT + REMAINING IF PARTIALLY PAID */}
               <div className="field">
-                <span>Principal Amount</span>
+                <span>{t("principal_amount")}</span>
                 <p className="bold">₹{originalAmount.toLocaleString()}</p>
                 {originalAmount > pledge.principal_amount && (
                   <span
@@ -297,29 +352,29 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
                       display: "block",
                     }}
                   >
-                    Remaining: ₹{pledge.principal_amount.toLocaleString()}
+                    {t("remaining")} ₹{pledge.principal_amount.toLocaleString()}
                   </span>
                 )}
               </div>
 
               <div className="field">
-                <span>Price per Gram</span>
+                <span>{t("price_per_gram")}</span>
                 <p>₹{pledge.price_per_gram}</p>
               </div>
             </div>
           </section>
 
           <section className="info-card">
-            <h3>💍 Pledged Jewellery Items</h3>
+          <h3>💍 {t("pledged_items")}</h3>
             <table className="items-table">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Item Type</th>
-                  <th>Purity</th>
-                  <th>Gross Wt.</th>
-                  <th>Net Wt.</th>
-                  <th>Value</th>
+                <th>#</th>
+<th>{t("item_type")}</th>
+<th>{t("purity")}</th>
+<th>{t("gross_weight")}</th>
+<th>{t("net_weight")}</th>
+<th>{t("value")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -339,7 +394,7 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
               <tfoot className="table-summary-footer">
                 <tr>
                   <td colSpan="3" className="total-label">
-                    Total Value:
+                  {t("total_value")}
                   </td>
                   <td className="total-value">{pledge.total_gross_weight} g</td>
                   <td className="total-value">{pledge.total_net_weight} g</td>
@@ -351,18 +406,19 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
             </table>
           </section>
           <section className="info-card">
-            <h3 className="card-title">💳 Payment History</h3>
+          <h3 className="card-title">💳 {t("payment_history")}</h3>
 
             <div className="table-container">
               <table className="history-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Payment Type</th>
-                    <th>Mode</th>
-                    <th>Receipt No.</th>
-                    <th>Amount</th>
-                    <th>Status</th>
+                  <th>{t("date")}</th>
+<th>{t("payment_type")}</th>
+<th>{t("mode")}</th>
+<th>{t("receipt_no")}</th>
+<th>{t("amount")}</th>
+<th>{t("status")}</th>
+<th style={{ textAlign: "center" }}>Reprint</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -373,10 +429,10 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
 
                         <td>
                           {payment.payment_type === "INTEREST"
-                            ? "Interest Payment"
+                            ? t("interest_payment")
                             : payment.payment_type === "PRINCIPAL"
-                            ? "Principal Payment"
-                            : "Closure Payment"}
+                            ? t("principal_payment")
+                            : t("closure_payment")}
                         </td>
 
                         <td>
@@ -402,6 +458,36 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
                             {payment.status}
                           </span>
                         </td>
+                        {/* ── Reprint button ── */}
+                        <td style={{ textAlign: "center" }}>
+                            <button
+                              onClick={() => handleReprintPayment(payment)}
+                              title="Reprint this receipt"
+                              style={{
+                                background: "none",
+                                border: "1px solid #e2e8f0",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                padding: "5px 9px",
+                                fontSize: "15px",
+                                color: "#64748b",
+                                transition: "all 0.15s",
+                                lineHeight: 1,
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "#f0f9ff";
+                                e.currentTarget.style.borderColor = "#7dd3fc";
+                                e.currentTarget.style.color = "#0369a1";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "none";
+                                e.currentTarget.style.borderColor = "#e2e8f0";
+                                e.currentTarget.style.color = "#64748b";
+                              }}
+                            >
+                              🖨️
+                            </button>
+                          </td>
                       </tr>
                     ))
                   ) : (
@@ -414,7 +500,7 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
                           color: "#888",
                         }}
                       >
-                        No payments recorded yet
+                        {t("no_payments_recorded")}
                       </td>
                     </tr>
                   )}
@@ -430,15 +516,15 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
           <div className="side-card status-card">
             <div className="card-header-row">
               <span className="icon-orange">🕒</span>
-              <h4 className="status-title">Current Status</h4>
+              <h4 className="status-title">{t("current_status")}</h4>
             </div>
             <div className="side-row">
-              <span>Days Elapsed</span>
+              <span>{t("days_elapsed")}</span>
               <span className="bold-val">{daysElapsed} days</span>
             </div>
 
             <div className="side-row">
-              <span>Next Due Date</span>
+              <span>{t("next_due_date")}</span>
               <span
                 className="due-date-val"
                 style={{ color: isOverdue ? "#dc2626" : undefined }}
@@ -449,7 +535,7 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
 
             {sortedPayments.length > 0 && (
               <div className="side-row">
-                <span>Last Payment</span>
+                <span>{t("last_payment")}</span>
                 <span>
                   {new Date(sortedPayments[0].date).toLocaleDateString("en-IN")}
                 </span>
@@ -460,10 +546,10 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
           {/* Amount Summary Card */}
 
           <div className="side-card amount-summary-card-old">
-            <h4 className="summary-title">Account Summary</h4>
+          <h4 className="summary-title">{t("account_summary")}</h4>
 
             <div className="summary-row">
-              <span>Item Value</span>
+            <span>{t("item_value")}</span>
               <span>₹{pledge.total_value?.toLocaleString()}</span>
             </div>
 
@@ -471,36 +557,36 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
 
             {/* 3️⃣ UPDATED SIDEBAR ORIGINAL PRINCIPAL VIEW */}
             <div className="summary-row">
-              <span>Original Loan</span>
+            <span>{t("original_loan")}</span>
               <span>₹{originalAmount.toLocaleString()}</span>
             </div>
 
             {originalAmount > pledge.principal_amount && (
               <div className="summary-row danger">
-                <span>Remaining Principal</span>
+                <span>{t("remaining_principal")}</span>
                 <span>₹{pledge.principal_amount.toLocaleString()}</span>
               </div>
             )}
 
             <div className="summary-row">
-              <span>Accrued Interest ({months_elapsed} months)</span>
+              <span>{t("accrued_interest")} ({months_elapsed} months)</span>
               <span>₹{Number(interest_accrued || 0).toLocaleString()}</span>
             </div>
 
             <div className="summary-row success">
-              <span>Interest Paid</span>
+              <span>{t("interest_paid")}</span>
               <span>₹{Number(interest_received || 0).toLocaleString()}</span>
             </div>
 
             <div className="summary-row danger">
-              <span>Interest Balance</span>
+              <span>{t("interest_balance")}</span>
               <span>₹{Number(interest_pending || 0).toLocaleString()}</span>
             </div>
 
             <div className="divider-line"></div>
 
             <div className="summary-row total-highlight">
-              <span>To Close Today</span>
+              <span>{t("to_close_today")}</span>
               <span>
                 ₹
                 {Number(
@@ -512,22 +598,22 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
             <div className="divider-line"></div>
 
             <div className="summary-row small">
-              <span>Days Since Pledge</span>
+              <span>{t("days_since_pledge")}</span>
               <span>{daysElapsed} days</span>
             </div>
 
             <div className="summary-row small">
-              <span>Next Interest Due</span>
+              <span>{t("next_interest_due")}</span>
               <span>{formattedNextDueDate}</span>
             </div>
 
             <div className="summary-row small">
-              <span>Payments Count</span>
+              <span>{t("payments_count")}</span>
               <span>{data.payments?.length || 0}</span>
             </div>
 
             <div className="summary-row small">
-              <span>Last Payment</span>
+              <span>{t("last_payment")}</span>
               <span>
                 {sortedPayments.length > 0
                   ? new Date(sortedPayments[0].date).toLocaleDateString("en-IN")
@@ -547,34 +633,35 @@ export default function SinglePledgePage({ pledgeId, setActiveMenu }) {
 
           {/* Actions Card */}
           <div className="side-card actions-card">
-            <h4>Actions</h4>
+          <h4>{t("actions")}</h4>
             <button
               className="payment-btn"
               disabled={pledge.status === "CLOSED"}
               onClick={() => setActiveMenu(`payments-${pledgeId}`)}
             >
-              <span>💳</span> Make Payment
+              <span>💳</span> {t("make_payment")}
             </button>
 
             <div className="owner-only-group">
             <button className="repledge-btn" disabled={pledge.status === "CLOSED"} 
             onClick={() => setActiveMenu(`repledge-${pledgeId}`)} >
-                🔄 Repledge </button>
+                🔄 {t("repledge")} </button>
               <button className="action-btn-secondary" disabled>
-                <span className="btn-main-danger">📄 Close Pledge</span>
+                <span className="btn-main-danger">📄 {t("close_pledge")}</span>
               </button>
             </div>
           </div>
         </aside>
       </main>
 
-      {showPaymentModal && (
-        <PaymentModal
-          pledgeId={pledgeId}
-          onClose={() => setShowPaymentModal(false)}
-          onSuccess={fetchData}
+      {reprintData && (
+        <PaymentPrintModal
+          data={reprintData}
+          shopSettings={shopSettings}
+          onClose={() => setReprintData(null)}
         />
       )}
+ 
     </div>
   );
 }

@@ -1,0 +1,180 @@
+.financial-dashboard {
+  padding: 28px;
+  background: #f6f8fb;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.dashboard-header p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+}
+
+.filters input {
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.filters button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ── Stat cards — same system as all report pages ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+}
+
+.stat-card-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.stat-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stat-card-value {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-card-label {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.card-blue   { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+.card-green  { background: #f0fdf4; border-color: #86efac; color: #15803d; }
+.card-slate  { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+.card-yellow { background: #fefce8; border-color: #fde68a; color: #92400e; }
+.card-purple { background: #fdf4ff; border-color: #d8b4fe; color: #7e22ce; }
+.card-orange { background: #fff7ed; border-color: #fdba74; color: #c2410c; }
+.card-teal   { background: #f0fdfa; border-color: #99f6e4; color: #0f766e; }
+.card-rose   { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+
+/* ── Analytics panels ── */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+}
+
+.card h3 {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.row.highlight {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 12px 0;
+}
+
+/* ── Metal table ── */
+.metal-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.metal-card th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #374151;
+}
+
+.metal-card td {
+  padding: 10px 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 13px;
+}
+
+.metal-card tbody tr:hover { background: #f9fafb; }
+
+/* ── Loader ── */
+.page-loader {
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}

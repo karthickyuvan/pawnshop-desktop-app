@@ -3,7 +3,7 @@ use crate::db::connection::Db;
 use base64::{engine::general_purpose, Engine as _};
 use rusqlite::{params, Result};
 use std::fs;
-use std::path::PathBuf;
+// use std::path::PathBuf;
 use tauri::Manager;
 
 #[derive(serde::Serialize)]
@@ -11,7 +11,8 @@ pub struct Customer {
     pub id: i64,
     pub customer_code: String,
     pub name: String,
-    pub relation: Option<String>,
+    pub relation_type: Option<String>,
+    pub relation_name: Option<String>,
     pub phone: String,
     pub email: Option<String>,
     pub address: Option<String>,
@@ -31,7 +32,8 @@ pub struct CustomerSummary {
 pub fn add_customer(
     db: &Db,
     name: &str,
-    relation: Option<&str>,
+    relation_type: Option<&str>,
+    relation_name: Option<&str>,
     phone: &str,
     email: Option<&str>,
     address: Option<&str>,
@@ -47,13 +49,14 @@ pub fn add_customer(
     conn.execute(
         "
         INSERT INTO customers
-        (customer_code, name, relation, phone, email, address, id_proof_type, id_proof_number)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+        (customer_code, name, relation_type, relation_name, phone, email, address, id_proof_type, id_proof_number)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8,?9)
         ",
         params![
             customer_code,
             name,
-            relation,
+            relation_type,
+            relation_name,
             phone,
             email,
             address,
@@ -68,7 +71,8 @@ pub fn add_customer(
         id,
         customer_code,
         name: name.to_string(),
-        relation: relation.map(|v| v.to_string()),
+        relation_type: relation_type.map(|v| v.to_string()),
+        relation_name: relation_name.map(|v| v.to_string()),
         phone: phone.to_string(),
         email: email.map(|v| v.to_string()),
         address: address.map(|v| v.to_string()),
@@ -91,7 +95,8 @@ pub fn search_customers(db: &Db, query: &str) -> Result<Vec<Customer>> {
             c.id,
             c.customer_code,
             c.name,
-            c.relation,
+            c.relation_type,
+            c.relation_name,
             c.phone,
             c.email,
             c.address,
@@ -101,9 +106,11 @@ pub fn search_customers(db: &Db, query: &str) -> Result<Vec<Customer>> {
             COUNT(p.id) as visit_count
         FROM customers c
         LEFT JOIN pledges p ON p.customer_id = c.id
-        WHERE c.customer_code = ?2
-        OR LOWER(c.phone) LIKE LOWER(?1)
-        OR LOWER(c.name) LIKE LOWER(?1)
+       WHERE
+(?1 = '%%'
+ OR c.phone LIKE ?1
+ OR c.name LIKE ?1
+ OR c.customer_code LIKE ?1)
         GROUP BY c.id
         ORDER BY c.created_at DESC
         LIMIT 50
@@ -111,20 +118,21 @@ pub fn search_customers(db: &Db, query: &str) -> Result<Vec<Customer>> {
     )?;
 
     let rows = stmt.query_map(
-        params![like_query, query], // ✅ PASS TWO PARAMETERS
+        params![like_query],
         |row| {
             Ok(Customer {
                 id: row.get(0)?,
                 customer_code: row.get(1)?,
                 name: row.get(2)?,
-                relation: row.get(3)?,
-                phone: row.get(4)?,
-                email: row.get(5)?,
-                address: row.get(6)?,
-                id_proof_type: row.get(7)?,
-                id_proof_number: row.get(8)?,
-                photo_path: row.get(9)?,
-                visit_count: row.get(10)?,
+                relation_type: row.get(3)?,
+                relation_name: row.get(4)?,
+                phone: row.get(5)?,
+                email: row.get(6)?,
+                address: row.get(7)?,
+                id_proof_type: row.get(8)?,
+                id_proof_number: row.get(9)?,
+                photo_path: row.get(10)?,
+                visit_count: row.get(11)?,
             })
         },
     )?;
@@ -223,7 +231,8 @@ pub fn update_customer(
     db: &Db,
     id: i64,
     name: &str,
-    relation: Option<&str>,
+    relation_type: Option<&str>,
+    relation_name: Option<&str>,
     phone: &str,
     email: Option<&str>,
     address: Option<&str>,
@@ -235,18 +244,20 @@ pub fn update_customer(
     conn.execute(
         "
         UPDATE customers
-        SET name = ?1,
-            relation = ?2,
-            phone = ?3,
-            email = ?4,
-            address = ?5,
-            id_proof_type = ?6,
-            id_proof_number = ?7
-        WHERE id = ?8
+            SET name = ?1,
+                relation_type = ?2,
+                relation_name = ?3,
+                phone = ?4,
+                email = ?5,
+                address = ?6,
+                id_proof_type = ?7,
+                id_proof_number = ?8
+            WHERE id = ?9
         ",
         params![
             name,
-            relation,
+            relation_type,
+            relation_name,
             phone,
             email,
             address,

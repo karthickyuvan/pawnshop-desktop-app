@@ -1,0 +1,103 @@
+.expense-container {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 10px;
+  }
+  
+  .add-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .add-section input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+  }
+  
+  .add-section button {
+    background: #2f6fed;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .expense-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .expense-table th,
+  .expense-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+  
+  .status.active {
+    background: #e7f7ee;
+    color: #1b8a4b;
+  }
+  
+  .status.inactive {
+    background: #fdecea;
+    color: #d93025;
+  }
+  
+  .actions button {
+    margin-right: 8px;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .edit-btn {
+    background: #ffc107;
+  }
+  
+  .disable-btn {
+    background: #dc3545;
+    color: white;
+  }
+
+
+  .expense-page{
+    padding:40px;
+    background:#f5f6f8;
+    min-height:100vh;
+  }
+  
+  .expense-header{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    margin-bottom:25px;
+  }
+  .expense-header h1{
+    font-size:28px;
+    font-weight:600;
+    color:#111;
+    margin-bottom:4px;
+  }
+  
+  .expense-header p{
+    color:#6b7280;
+    margin-top:5px;
+  }
+  
+  .expense-card{
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05);
+  }

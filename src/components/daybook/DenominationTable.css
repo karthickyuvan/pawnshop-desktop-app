@@ -1,0 +1,87 @@
+/* DenominationTable.css — Daybook physical denominations table */
+
+.db-denom-container {
+    width: 100%;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  
+  .db-denom-heading {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 16px 0;
+  }
+  
+  /* Table */
+  .db-denom-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  /* Header row */
+  .db-denom-table thead tr {
+    background: #eef2f7;
+    border-radius: 8px;
+  }
+  
+  .db-denom-table thead th {
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    text-align: left;
+  }
+  
+  .db-denom-table thead th:nth-child(2),
+  .db-denom-table thead th:nth-child(3) {
+    text-align: right;
+  }
+  
+  /* Body rows */
+  .db-denom-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+  
+  .db-denom-table tbody tr:last-child {
+    border-bottom: none;
+  }
+  
+  .db-denom-table tbody tr:hover {
+    background: #f8fafc;
+  }
+  
+  .db-denom-table tbody td {
+    padding: 11px 14px;
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+  }
+  
+  .db-denom-table tbody td:nth-child(2),
+  .db-denom-table tbody td:nth-child(3) {
+    text-align: right;
+    font-weight: 600;
+  }
+  
+  /* Coins row */
+  .db-denom-coins-row td {
+    background: #fefce8;
+    color: #92400e !important;
+  }
+  
+  /* Total bar — matches image 2 dark navy style */
+  .db-denom-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #1e3a5f;
+    color: #ffffff;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+  }

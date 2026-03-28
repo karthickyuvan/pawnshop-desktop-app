@@ -5,7 +5,8 @@ export const addCustomer = async (data, userId) => {
   // ✅ Rust returns the full Customer object as JSON
   const result = await invoke("add_customer_cmd", {
     name: data.name,
-    relation: data.relation || null,
+    relationType: data.relationType || null,
+    relationName: data.relationName || null,
     phone: data.phone,
     email: data.email || null,
     address: data.address || null,
@@ -45,7 +46,8 @@ export const updateCustomer = async (id, data, userId) => {
   return await invoke("update_customer_cmd", {
     id,
     name: data.name,
-    relation: data.relation || null,
+    relationType: data.relationType || null,
+    relationName: data.relationName || null,
     phone: data.phone,
     email: data.email || null,
     address: data.address || null,

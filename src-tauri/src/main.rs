@@ -3,7 +3,7 @@
     windows_subsystem = "windows"
 )]
 
-// 1. MODULE REGISTRATION
+// ---------------- MODULE REGISTRATION ----------------
 mod audit;
 mod auth;
 mod bank_mapping;
@@ -23,9 +23,12 @@ mod settings;
 mod daybook;
 mod dashboard;
 mod repledge;
-mod shop_settings; 
+mod shop_settings;
+mod auction;
+mod reports;
+mod receipt; 
 
-// 2. IMPORTS
+// ---------------- IMPORTS ----------------
 use crate::db::connection::Db;
 use tauri::{Manager, State};
 
@@ -38,26 +41,60 @@ use auth::staff::{create_staff, get_all_staff, update_staff_status};
 use audit::audit_service::{get_audit_logs, log_action};
 
 // Masters
-use bank_mapping::service::{BankMappingRequest as MapBankRequest, BankUnmappingRequest as UnmapBankRequest};
-
-
-use banks::service::*;
 use jewellery_types::services::{
-    create_jewellery_type, get_jewellery_types, toggle_jewellery_type, JewelleryType,
+    create_jewellery_type,
+    get_jewellery_types,
+    toggle_jewellery_type,
+    JewelleryType,
 };
+
 use metal_types::service::*;
 use price_per_gram::service::*;
 use schemes::service::*;
 
-// settings for interest calcuation
+use bank_mapping::service::{
+    BankMappingRequest as MapBankRequest,
+    BankUnmappingRequest as UnmapBankRequest,
+};
+
+use banks::service::*;
+
+// Settings
 use settings::service::SystemSettings;
 
-use payments::service::{get_quick_access_pledges, get_today_payment_history, search_pledges};
+// Payments
+use payments::service::{
+    get_quick_access_pledges,
+    get_today_payment_history,
+    search_pledges,
+};
 use crate::payments::service::get_payment_history;
 
+// Daybook
 use crate::daybook::service::DaybookResponse;
 
+// Dashboard
 use dashboard::service::get_owner_dashboard_summary;
+
+
+
+// Reports
+use reports::branch_daily::{
+    get_branch_daily_report_cmd,
+    get_transaction_details_cmd
+};
+use reports::cash_flow::get_cash_flow_report_cmd;
+use reports::expense_audit::get_expense_audit_report_cmd;
+use reports::pledge_register::get_pledge_register_report_cmd;
+use reports::stock_report::get_stock_report_cmd;
+use reports::customer_ledger::get_customer_ledger_report_cmd;
+use reports::interest_analytics::get_interest_analytics_report_cmd;
+use reports::bank_mapping_report::get_bank_mapping_report_cmd;
+use reports::profit_loss_report::get_profit_loss_report_cmd;
+use reports::monthly_report::get_monthly_report_cmd;
+use reports::yearly_report::get_yearly_report_cmd;
+use reports::fund_ledger_report::get_fund_ledger_report_cmd;
+
 
 // ---------------- AUTH COMMANDS ----------------
 #[tauri::command]
@@ -131,10 +168,10 @@ fn get_audit_logs_cmd(db: State<Db>) -> Result<Vec<audit::audit_service::AuditLo
 fn create_metal_type_cmd(
     db: State<Db>,
     name: String,
-    description: Option<String>,
+
     actor_user_id: i64,
 ) -> Result<(), String> {
-    create_metal_type(&db, &name, description.as_deref())?;
+    create_metal_type(&db, &name)?;
     log_action(&db, actor_user_id, "METAL_TYPE_CREATED");
     Ok(())
 }
@@ -156,16 +193,20 @@ fn toggle_metal_type_cmd(
     Ok(())
 }
 
+#[tauri::command]
+fn get_active_metal_types_cmd(db: State<Db>) -> Result<Vec<MetalType>, String> {
+    metal_types::service::get_active_metal_types(&db)
+}
+
 // ---------------- JEWELLERY TYPE COMMANDS ----------------
 #[tauri::command]
 fn create_jewellery_type_cmd(
     db: State<Db>,
     metal_type_id: i64,
     name: String,
-    description: Option<String>,
     actor_user_id: i64,
 ) -> Result<(), String> {
-    create_jewellery_type(&db, metal_type_id, &name, description.as_deref())?;
+    create_jewellery_type(&db, metal_type_id, &name)?;
     log_action(&db, actor_user_id, "JEWELLERY_TYPE_CREATED");
     Ok(())
 }
@@ -279,7 +320,7 @@ fn set_price_per_gram_cmd(
     price_per_gram: f64,
     actor_user_id: i64,
 ) -> Result<(), String> {
-    set_price_per_gram(&db, metal_type_id, price_per_gram)?;
+    set_price_per_gram(&db, metal_type_id, price_per_gram,actor_user_id)?;
     log_action(&db, actor_user_id, "PRICE_PER_GRAM_UPDATED");
     Ok(())
 }
@@ -289,6 +330,10 @@ fn get_price_per_gram_cmd(db: State<Db>) -> Result<Vec<PricePerGram>, String> {
     get_prices(&db)
 }
 
+#[tauri::command]
+fn get_price_history_cmd(db: State<Db>) -> Result<Vec<serde_json::Value>, String> {
+    price_per_gram::service::get_price_history(&db)
+}
 // ---------------- BANK COMMANDS ----------------
 #[tauri::command]
 fn create_bank_cmd(
@@ -409,7 +454,7 @@ fn withdraw_fund_cmd(
 #[tauri::command]
 fn get_fund_ledger_cmd(
     db: State<Db>,
-) -> Result<Vec<(i64, String, f64, String, String, String)>, String> {
+) -> Result<Vec<(i64, String, f64, String, String, String, String)>, String> {
     fund_management::service::get_fund_ledger(&db).map_err(|e| e.to_string())
 }
 
@@ -423,7 +468,8 @@ fn get_current_denominations_cmd(db: State<Db>) -> Result<Vec<(i32, i32)>, Strin
 fn add_customer_cmd(
     db: State<Db>,
     name: String,
-    relation: Option<String>,
+    relation_type: Option<String>,
+    relation_name: Option<String>,
     phone: String,
     email: Option<String>,
     address: Option<String>,
@@ -434,7 +480,8 @@ fn add_customer_cmd(
     let customer = customer::service::add_customer(
         &db,
         &name,
-        relation.as_deref(),
+        relation_type.as_deref(),
+        relation_name.as_deref(),
         &phone,
         email.as_deref(),
         address.as_deref(),
@@ -483,7 +530,8 @@ fn update_customer_cmd(
     db: State<Db>,
     id: i64,
     name: String,
-    relation: Option<String>,
+    relation_type: Option<String>,
+    relation_name: Option<String>,
     phone: String,
     email: Option<String>,
     address: Option<String>,
@@ -495,7 +543,8 @@ fn update_customer_cmd(
         &db,
         id,
         &name,
-        relation.as_deref(),
+        relation_type.as_deref(),
+        relation_name.as_deref(),
         &phone,
         email.as_deref(),
         address.as_deref(),
@@ -593,6 +642,35 @@ fn execute_repledge_cmd(
     audit::audit_service::log_action(&db, req.created_by, "REPLEDGE_EXECUTED");
     Ok(result)
 }
+
+
+//---------------Auction List-----------------
+#[tauri::command]
+fn get_auction_list_cmd(
+    db: State<Db>,
+    search: Option<String>,
+) -> Result<auction::service::AuctionListResponse, String> {
+    auction::service::get_auction_eligible_pledges(&db, search)
+}
+
+#[tauri::command]
+fn mark_pledge_auctioned_cmd(
+    db: State<Db>,
+    pledge_id: i64,
+    actor_user_id: i64,
+) -> Result<(), String> {
+    auction::service::mark_pledge_auctioned(&db, pledge_id)?;
+    audit::audit_service::log_action(&db, actor_user_id, "PLEDGE_AUCTIONED");
+    Ok(())
+}
+
+//-------------OverLimit----------------
+#[tauri::command]
+fn get_overlimit_pledges_cmd(db: State<Db>) -> Result<Vec<serde_json::Value>, String> {
+    crate::pledge::service::get_overlimit_pledges(&db)
+}
+
+
 // ---------------- MAIN ----------------
 fn main() {
     tauri::Builder::default()
@@ -626,6 +704,7 @@ fn main() {
             create_metal_type_cmd,
             get_metal_types_cmd,
             toggle_metal_type_cmd,
+            get_active_metal_types_cmd,
             // Jewellery Types
             create_jewellery_type_cmd,
             get_jewellery_types_cmd,
@@ -638,6 +717,7 @@ fn main() {
             // Price
             set_price_per_gram_cmd,
             get_price_per_gram_cmd,
+            get_price_history_cmd,
             // Banks
             create_bank_cmd,
             get_banks_cmd,
@@ -653,6 +733,8 @@ fn main() {
             withdraw_fund_cmd,
             get_fund_ledger_cmd,
             get_current_denominations_cmd,
+            // get_drawer_balance_cmd,
+
             // Customers
             add_customer_cmd,
             search_customers_cmd,
@@ -674,6 +756,7 @@ fn main() {
             expense::service::get_expenses,
             expense::service::delete_expense,
             expense::service::get_expense_categories,
+            expense::service::create_expense_category,
             expense::service::get_expense_stats,
             // Payment
             get_today_payment_history,
@@ -696,6 +779,30 @@ fn main() {
             shop_settings::service::get_shop_settings,
             shop_settings::service::save_shop_settings,
             shop_settings::service::change_password,
+
+
+            // auction 
+            get_auction_list_cmd,
+            mark_pledge_auctioned_cmd,
+
+            // reports
+            get_branch_daily_report_cmd,
+            get_transaction_details_cmd,
+            get_cash_flow_report_cmd,
+            get_expense_audit_report_cmd,
+            get_pledge_register_report_cmd,
+            get_stock_report_cmd,
+            get_customer_ledger_report_cmd,
+            get_interest_analytics_report_cmd,
+            get_bank_mapping_report_cmd,
+            get_profit_loss_report_cmd,
+            get_monthly_report_cmd,
+            get_yearly_report_cmd,
+            get_fund_ledger_report_cmd,
+
+            //overlimit 
+            get_overlimit_pledges_cmd,
+
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

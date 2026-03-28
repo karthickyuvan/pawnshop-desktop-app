@@ -1,0 +1,441 @@
+/* ══════════════════════════════════════════════════════════════════
+   OVERLIMIT PLEDGES PAGE - ADDITIONAL STYLES
+   Add these styles to your existing repledgespage.css
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ─── Overlimit Icon ─────────────────────────────────────────────── */
+.overlimit-icon {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  }
+  
+  /* ─── Overlimit Card Styling ────────────────────────────────────── */
+  .overlimit-card {
+    border-left: 4px solid #ef4444 !important;
+    background: linear-gradient(to right, #fef2f2 0%, white 100%) !important;
+  }
+  
+  .overlimit-card:hover {
+    border-left-color: #dc2626 !important;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15) !important;
+  }
+  
+  /* ─── Overlimit Statistics Strip ────────────────────────────────── */
+  .overlimit-stats {
+    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    border: 1px solid #fee2e2;
+  }
+  
+  .overlimit-stats .rp-stat strong.red {
+    color: #dc2626;
+    font-size: 1.75rem;
+  }
+  
+  .overlimit-stats .rp-stat strong.orange {
+    color: #ea580c;
+    font-size: 1.75rem;
+  }
+  
+  /* ─── Warning Banner ─────────────────────────────────────────────── */
+  .rp-overlimit-warning-banner {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    border: 2px solid #fecaca;
+    border-left: 5px solid #ef4444;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+  }
+  
+  .rp-overlimit-warning-banner svg {
+    flex-shrink: 0;
+    color: #dc2626;
+    margin-top: 2px;
+  }
+  
+  .rp-overlimit-warning-banner strong {
+    color: #991b1b;
+    font-size: 15px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  
+  .rp-overlimit-warning-banner p {
+    color: #7c2d12;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  
+  /* ─── Empty State ────────────────────────────────────────────────── */
+  .overlimit-empty {
+    padding: 60px 20px;
+  }
+  
+  .overlimit-empty svg {
+    color: #f87171;
+    margin-bottom: 20px;
+  }
+  
+  .overlimit-empty h3 {
+    color: #991b1b;
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  
+  .overlimit-empty p {
+    color: #7c2d12;
+    font-size: 14px;
+  }
+  
+  /* ─── Detail Modal ──────────────────────────────────────────────── */
+  .rp-detail-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .rp-detail-modal-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+  
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  .rp-detail-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 24px 28px;
+    border-bottom: 2px solid #f1f5f9;
+    background: linear-gradient(135deg, #fef2f2 0%, white 100%);
+  }
+  
+  .rp-detail-modal-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+  
+  .rp-detail-modal-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 4px 0 0 0;
+    font-weight: 600;
+  }
+  
+  .rp-modal-close-btn {
+    background: #f1f5f9;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .rp-modal-close-btn:hover {
+    background: #e2e8f0;
+    color: #334155;
+  }
+  
+  /* ─── Overlimit Alert in Modal ──────────────────────────────────── */
+  .rp-overlimit-alert {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    margin: 20px 28px;
+    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    border: 2px solid #fecaca;
+    border-left: 5px solid #dc2626;
+    border-radius: 10px;
+  }
+  
+  .rp-overlimit-alert svg {
+    flex-shrink: 0;
+    color: #dc2626;
+    margin-top: 2px;
+  }
+  
+  .rp-overlimit-alert strong {
+    color: #991b1b;
+    font-size: 15px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  
+  .rp-overlimit-alert p {
+    color: #7c2d12;
+    margin: 0;
+    font-size: 13px;
+  }
+  
+  /* ─── Detail Grid ───────────────────────────────────────────────── */
+  .rp-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px 28px;
+  }
+  
+  .rp-detail-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  
+  .rp-detail-section h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #cbd5e1;
+    padding-bottom: 8px;
+  }
+  
+  .rp-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dotted #e2e8f0;
+    font-size: 13px;
+  }
+  
+  .rp-detail-row:last-child {
+    border-bottom: none;
+  }
+  
+  .rp-detail-row span {
+    color: #64748b;
+    font-weight: 500;
+  }
+  
+  .rp-detail-row strong {
+    color: #1e293b;
+    font-weight: 700;
+  }
+  
+  .rp-detail-row strong.red {
+    color: #dc2626;
+  }
+  
+  .rp-detail-row strong.orange {
+    color: #ea580c;
+  }
+  
+  .rp-detail-row strong.green {
+    color: #16a34a;
+  }
+  
+  .rp-detail-row.highlight-row {
+    background: #fef2f2;
+    padding: 10px 12px;
+    margin: 4px -12px;
+    border-radius: 6px;
+    border: 1px solid #fecaca;
+  }
+  
+  /* ─── Detail Actions ────────────────────────────────────────────── */
+  .rp-detail-actions {
+    padding: 20px 28px;
+    border-top: 2px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+  
+  .rp-close-btn {
+    padding: 10px 24px;
+    background: #64748b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+  
+  .rp-close-btn:hover {
+    background: #475569;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+  }
+  
+  /* ─── Responsive ────────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .rp-detail-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .rp-detail-modal-card {
+      max-width: 95vw;
+    }
+  
+    .overlimit-card .rp-amounts {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* ─── Additional Tag Styling ────────────────────────────────────── */
+  .rp-tag.overlimit-tag {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+    font-weight: 700;
+  }
+  
+  .rp-tag.bank-mapped {
+    background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+    color: #9a3412;
+    border: 1px solid #fdba74;
+  }
+
+
+
+  /* ─── Table Container ────────────────────────────────────────────── */
+.overlimit-table-container {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.overlimit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────── */
+.overlimit-table thead th {
+  background-color: #f8fafc;
+  padding: 16px 20px;
+  color: #475569;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.025em;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* ─── Body ───────────────────────────────────────────────────────── */
+.overlimit-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s;
+}
+
+.overlimit-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+.overlimit-table td {
+  padding: 16px 20px;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+/* ─── Specific Column Styling ────────────────────────────────────── */
+.pledge-no {
+  font-weight: 700;
+  color: #2563eb; /* Matches the blue link style in the screenshot */
+}
+
+.customer-cell .name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.customer-cell .code {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.amount {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  color: #0d9488; /* Subtle teal for financial values */
+}
+
+/* ─── LTV Badge ────────────────────────────────────────────────── */
+.ltv-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.ltv-badge.warning {
+  background-color: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+}
+
+.ltv-badge.critical {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
+}
+
+/* ─── Overlimit & Max Repledge ─────────────────────────────────── */
+.overlimit-amt {
+  color: #dc2626;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.max-repledge {
+  font-weight: 600;
+  color: #475569;
+}

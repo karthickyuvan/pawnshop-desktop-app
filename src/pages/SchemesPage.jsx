@@ -1,16 +1,20 @@
+
+
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../auth/authStore";
-import { getMetalTypes } from "../services/metalTypesApi";
+import { getActiveMetalTypes } from "../services/metalTypesApi";
 import { getSchemes, createScheme, updateScheme, toggleScheme } from "../services/schemesApi";
+import { useLanguage } from "../context/LanguageContext";
 import "./schemes.css";
 
 export default function SchemesPages() {
+
   const user = useAuthStore((s) => s.user);
+  const { t } = useLanguage();
 
   const [metals, setMetals] = useState([]);
   const [list, setList] = useState([]);
-  
-  // Form States
+
   const [editingId, setEditingId] = useState(null);
   const [metalId, setMetalId] = useState("");
   const [name, setName] = useState("");
@@ -18,17 +22,17 @@ export default function SchemesPages() {
   const [priceProgram, setPriceProgram] = useState("TODAY_RATE");
   const [interestRate, setInterestRate] = useState("");
   const [interestType, setInterestType] = useState("MONTHLY");
-  
-  const [feeType, setFeeType] = useState(""); 
+
+  const [feeType, setFeeType] = useState("");
   const [feeValue, setFeeValue] = useState("");
 
   const load = async () => {
     try {
-        const [m, s] = await Promise.all([getMetalTypes(), getSchemes()]);
-        setMetals(m);
-        setList(s);
+      const [m, s] = await Promise.all([getActiveMetalTypes(), getSchemes()]);
+      setMetals(m);
+      setList(s);
     } catch (e) {
-        console.error(e);
+      console.error(e);
     }
   };
 
@@ -44,22 +48,23 @@ export default function SchemesPages() {
     setInterestType(s.interest_type);
     setFeeType(s.processing_fee_type);
     setFeeValue(s.processing_fee_value || "");
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ✅ FIX: Do NOT clear metalId here, so the table stays visible
   const resetForm = () => {
     setEditingId(null);
-    setName(""); 
-    setLoanPct(""); 
-    setInterestRate(""); 
-    setFeeValue(""); 
-    setFeeType(""); 
-    // setMetalId("");  <-- REMOVED THIS LINE
+    setName("");
+    setLoanPct("");
+    setInterestRate("");
+    setFeeValue("");
+    setFeeType("");
   };
 
   const submit = async () => {
-    if (!metalId || !name || !loanPct || !interestRate || !feeType) return alert("Missing fields");
+
+    if (!metalId || !name || !loanPct || !interestRate || !feeType) {
+      return alert(t("missing_fields"));
+    }
 
     const payload = {
       id: editingId,
@@ -77,36 +82,41 @@ export default function SchemesPages() {
     try {
       if (editingId) {
         await updateScheme(payload);
-        // alert("Scheme updated successfully"); // Optional: Remove alert for smoother flow
       } else {
         await createScheme(payload);
-        // alert("Scheme created successfully");
       }
-      resetForm(); // Clears inputs but keeps Metal Type selected
-      load();      // Refreshes table data
-    } catch (e) { alert(e); }
+
+      resetForm();
+      load();
+
+    } catch (e) {
+      alert(e);
+    }
+
   };
 
-  // Filter list based on Metal Dropdown
-  const filteredList = metalId 
-    ? list.filter(s => s.metal_type_id === Number(metalId)) 
+  const filteredList = metalId
+    ? list.filter((s) => s.metal_type_id === Number(metalId))
     : [];
 
   return (
     <div className="scheme-page">
-      <h2 className="page-title">{editingId ? "Edit Scheme" : "Create New Scheme"}</h2>
+
+      <h2 className="page-title">
+        {editingId ? t("edit_scheme") : t("create_scheme")}
+      </h2>
 
       <div className="scheme-form">
-       {/* Metal Dropdown */}
-       <select 
-         value={metalId} 
-         onChange={(e) => {
-             setMetalId(e.target.value);
-             resetForm(); // Clear inputs when switching categories manually
-         }}
-       >
-           <option value="">Select Metal Type</option>
-           {metals.map((m) => (
+
+        <select
+          value={metalId}
+          onChange={(e) => {
+            setMetalId(e.target.value);
+            resetForm();
+          }}
+        >
+          <option value="">{t("select_metal_type")}</option>
+          {metals.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
             </option>
@@ -114,25 +124,25 @@ export default function SchemesPages() {
         </select>
 
         <input
-          placeholder="Scheme Name"
+          placeholder={t("scheme_name")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
         <input
-          placeholder="Loan %"
+          placeholder={t("loan_percentage")}
           value={loanPct}
           onChange={(e) => setLoanPct(e.target.value)}
         />
 
         <input
-          placeholder="Price Program"
+          placeholder={t("price_program")}
           value={priceProgram}
           onChange={(e) => setPriceProgram(e.target.value)}
         />
 
         <input
-          placeholder="Interest %"
+          placeholder={t("interest_rate")}
           value={interestRate}
           onChange={(e) => setInterestRate(e.target.value)}
         />
@@ -141,91 +151,145 @@ export default function SchemesPages() {
           value={interestType}
           onChange={(e) => setInterestType(e.target.value)}
         >
-          <option value="MONTHLY">Monthly</option>
-          <option value="YEARLY">Yearly</option>
+          <option value="MONTHLY">{t("monthly")}</option>
+          <option value="YEARLY">{t("yearly")}</option>
         </select>
 
-        <select value={feeType} onChange={(e) => setFeeType(e.target.value)}>
-          <option value="" disabled>Choose Processing Fees Type</option>
-          <option value="MANUAL">Manual</option>
-          <option value="FIXED">Fixed Amount</option>
-          <option value="PERCENTAGE">Flat %</option>
+        <select
+          value={feeType}
+          onChange={(e) => setFeeType(e.target.value)}
+        >
+          <option value="" disabled>{t("choose_processing_fee")}</option>
+          <option value="MANUAL">{t("manual")}</option>
+          <option value="FIXED">{t("fixed_amount")}</option>
+          <option value="PERCENTAGE">{t("percentage")}</option>
         </select>
 
         {feeType !== "" && (
           <input
-            placeholder={feeType === 'PERCENTAGE' ? "Enter %" : "Enter Amount"}
+            placeholder={
+              feeType === "PERCENTAGE"
+                ? t("enter_percentage")
+                : t("enter_amount")
+            }
             value={feeValue}
             onChange={(e) => setFeeValue(e.target.value)}
           />
         )}
 
         <div className="scheme-form-actions">
-           {editingId && <button onClick={resetForm} className="btn-secondary">Cancel</button>}
-           <button className="btn-primary" onClick={submit}>
-             {editingId ? "Update Scheme" : "Add Scheme"}
-           </button>
+          {editingId && (
+            <button onClick={resetForm} className="btn-secondary">
+              {t("cancel")}
+            </button>
+          )}
+
+          <button className="btn-primary" onClick={submit}>
+            {editingId ? t("update_scheme") : t("add_scheme")}
+          </button>
         </div>
+
       </div>
 
       <div className="table-container">
+
         {!metalId ? (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
-                <h3>Please select a metal category to view its Scheme details</h3>
-            </div>
+          <div className="empty-box">
+            {t("select_metal_scheme")}
+          </div>
+
         ) : filteredList.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
-                No schemes found for this metal type.
-            </div>
+          <div className="empty-box">
+            {t("no_schemes")}
+          </div>
+
         ) : (
-            <table className="scheme-table">
+
+          <table className="scheme-table">
+
             <thead>
-                <tr>
-                <th>Metal Type</th>
-                <th>Scheme Name</th>
-                <th>Loan %</th>
-                <th>Interest</th>
-                <th>Processing Fee</th>
-                <th>Price Program</th>
-                <th className="text-center">Status</th>
-                <th className="text-center">Action</th>
-                </tr>
+              <tr>
+                <th>{t("metal_type")}</th>
+                <th>{t("scheme_name")}</th>
+                <th>{t("loan_percentage")}</th>
+                <th>{t("interest")}</th>
+                <th>{t("processing_fee")}</th>
+                <th>{t("price_program")}</th>
+                <th>{t("status")}</th>
+                <th>{t("action")}</th>
+              </tr>
             </thead>
+
             <tbody>
-                {filteredList.map((s) => (
+
+              {filteredList.map((s) => (
                 <tr key={s.id}>
-                    <td>{s.metal_name}</td>
-                    <td className="font-medium">{s.scheme_name}</td>
-                    <td>{s.loan_percentage}%</td>
-                    <td>{s.interest_rate}% <span className="text-muted">/{s.interest_type.substring(0,1)}</span></td>
-                    <td>
-                        {s.processing_fee_type === 'MANUAL' 
-                            ? "Manual" 
-                            : `${s.processing_fee_value} ${s.processing_fee_type === 'PERCENTAGE' ? '%' : ''}`}
-                    </td>
-                    <td>{s.price_program}</td>
-                    <td className="text-center">
-                    <span className={`pill ${s.is_active ? "pill-active" : "pill-disabled"}`}>
-                        {s.is_active ? "Active" : "Disabled"}
+
+                  <td>{s.metal_name}</td>
+                  <td className="font-medium">{s.scheme_name}</td>
+
+                  <td>{s.loan_percentage}%</td>
+
+                  <td>
+                    {s.interest_rate}% 
+                    <span className="text-muted">
+                      /{s.interest_type.substring(0, 1)}
                     </span>
-                    </td>
-                    <td className="text-center">
+                  </td>
+
+                  <td>
+                    {s.processing_fee_type === "MANUAL"
+                      ? t("manual")
+                      : `${s.processing_fee_value} ${
+                          s.processing_fee_type === "PERCENTAGE" ? "%" : ""
+                        }`}
+                  </td>
+
+                  <td>{s.price_program}</td>
+
+                  <td>
+                    <span className={`pill ${s.is_active ? "pill-active" : "pill-disabled"}`}>
+                      {s.is_active ? t("active") : t("disabled")}
+                    </span>
+                  </td>
+
+                  <td>
                     <div className="action-buttons">
-                        <button className="btn-edit" onClick={() => handleEdit(s)}>Edit</button>
-                        <button 
+
+                      <button
+                        className="btn-edit"
+                        onClick={() => handleEdit(s)}
+                      >
+                        {t("edit")}
+                      </button>
+
+                      <button
                         className={`btn-toggle ${s.is_active ? "btn-danger" : "btn-success"}`}
-                        onClick={() => toggleScheme({ schemeId: s.id, isActive: !s.is_active, actorUserId: user.user_id }).then(load)}
-                        >
-                        {s.is_active ? "Disable" : "Enable"}
-                        </button>
+                        onClick={() =>
+                          toggleScheme({
+                            schemeId: s.id,
+                            isActive: !s.is_active,
+                            actorUserId: user.user_id,
+                          }).then(load)
+                        }
+                      >
+                        {s.is_active ? t("disable") : t("enable")}
+                      </button>
+
                     </div>
-                    </td>
+                  </td>
+
                 </tr>
-                ))}
+              ))}
+
             </tbody>
-            </table>
+
+          </table>
+
         )}
+
       </div>
+
     </div>
   );
 }

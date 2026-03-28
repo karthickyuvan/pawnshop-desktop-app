@@ -1,37 +1,28 @@
+import { useLanguage } from "../../context/LanguageContext";
+
 export default function PledgeSummaryCards({ summary }) {
+  const { t } = useLanguage();
+
+  const cards = [
+    { label: t("total_pledges"), value: summary.total_pledges, icon: "📋", type: "blue" },
+    { label: t("total_amount"), value: `₹${summary.total_amount.toLocaleString()}`, icon: "₹", type: "gold" },
+    { label: t("active"), value: summary.active_count, icon: "⏱️", type: "green" },
+    { label: t("overdue"), value: summary.overdue_count, icon: "⚠️", type: "red" },
+  ];
+
   return (
     <div className="summary-grid">
-      <div className="summary-card">
-        <div className="summary-info">
-          <h4>Total Pledges</h4>
-          <h2>{summary.total_pledges}</h2>
+      {cards.map((card, index) => (
+        <div className="summary-card" key={index}>
+          <div className="summary-info">
+          <span className="summary-label">{card.label}</span>
+          </div>
+          {/* <div className={`icon-box icon-${card.type}`}>
+            {card.icon}
+          </div> */}
+          <h2 className="summary-value">{card.value}</h2>
         </div>
-        <div className="icon-box icon-blue">$</div>
-      </div>
-
-      <div className="summary-card">
-        <div className="summary-info">
-          <h4>Total Amount</h4>
-          <h2>₹{summary.total_amount.toLocaleString()}</h2>
-        </div>
-        <div className="icon-box icon-gold">₹</div>
-      </div>
-
-      <div className="summary-card">
-        <div className="summary-info">
-          <h4>Active</h4>
-          <h2>{summary.active_count}</h2>
-        </div>
-        <div className="icon-box icon-green">📅</div>
-      </div>
-
-      <div className="summary-card">
-        <div className="summary-info">
-          <h4>Overdue</h4>
-          <h2>{summary.overdue_count}</h2>
-        </div>
-        <div className="icon-box icon-red">📅</div>
-      </div>
+      ))}
     </div>
   );
 }

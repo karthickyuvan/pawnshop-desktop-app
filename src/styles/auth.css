@@ -562,3 +562,23 @@
    
    .text-right { text-align: right; }
    .center     { text-align: center; }
+
+
+
+
+   .auth-logo {
+    width: 60px;
+    height: 60px;
+    background: #1f3a5f;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px auto;
+  }
+  
+  .auth-logo img {
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
+  }

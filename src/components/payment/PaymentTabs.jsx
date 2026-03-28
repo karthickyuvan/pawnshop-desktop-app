@@ -1,18 +1,21 @@
+import { useLanguage } from "../../context/LanguageContext";
 export default function PaymentTabs({ activeTab, setActiveTab }) {
+  const { t } = useLanguage();
+
     return (
       <div className="payment-tabs">
         <button
           className={`tab-btn ${activeTab === "collect" ? "active" : ""}`}
           onClick={() => setActiveTab("collect")}
         >
-          Collect Payment
+          {t("collect_payment")}
         </button>
   
         <button
           className={`tab-btn ${activeTab === "history" ? "active" : ""}`}
           onClick={() => setActiveTab("history")}
         >
-          Payment History
+          {t("payment_history")}
         </button>
       </div>
     );

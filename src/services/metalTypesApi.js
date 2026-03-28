@@ -16,3 +16,8 @@ export const toggleMetalType = ({ metalTypeId, isActive, actorUserId }) =>
     isActive,
     actorUserId,
   });
+
+
+  export const getActiveMetalTypes = async () => {
+    return await invoke("get_active_metal_types_cmd");
+  };

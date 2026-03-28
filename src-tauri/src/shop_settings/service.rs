@@ -1,13 +1,5 @@
 // src/shop_settings/service.rs
-//
-// Matches the project's Db pattern exactly:
-//   crate::db::connection::Db  →  Db(pub Mutex<Connection>)
-//   access: db.0.lock().unwrap()
-//
-// Cargo.toml deps needed:
-//   argon2 = "0.5"
-//   base64 = "0.21"
-//   serde = { version = "1", features = ["derive"] }
+
 
 use crate::db::connection::Db;
 use rusqlite::params;

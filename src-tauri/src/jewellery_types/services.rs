@@ -7,7 +7,6 @@ pub struct JewelleryType {
     pub metal_type_id: i64,
     pub metal_name: String,
     pub name: String,
-    pub description: Option<String>,
     pub is_active: bool,
 }
 
@@ -16,14 +15,13 @@ pub fn create_jewellery_type(
     db: &Db,
     metal_type_id: i64,
     name: &str,
-    description: Option<&str>,
 ) -> Result<(), String> {
     let conn = db.0.lock().unwrap();
 
     conn.execute(
-        "INSERT INTO jewellery_types (metal_type_id, name, description)
-         VALUES (?1, ?2, ?3)",
-        params![metal_type_id, name, description],
+        "INSERT INTO jewellery_types (metal_type_id, name)
+         VALUES (?1, ?2)",
+        params![metal_type_id, name],
     )
     .map_err(|e| e.to_string())?;
 
@@ -38,7 +36,7 @@ pub fn get_jewellery_types(db: &Db) -> Result<Vec<JewelleryType>, String> {
         .prepare(
             "
             SELECT jt.id, jt.metal_type_id, mt.name, jt.name,
-                   jt.description, jt.is_active
+                    jt.is_active
             FROM jewellery_types jt
             JOIN metal_types mt ON mt.id = jt.metal_type_id
             ORDER BY jt.id DESC
@@ -53,8 +51,7 @@ pub fn get_jewellery_types(db: &Db) -> Result<Vec<JewelleryType>, String> {
                 metal_type_id: r.get(1)?,
                 metal_name: r.get(2)?,
                 name: r.get(3)?,
-                description: r.get(4)?,
-                is_active: r.get::<_, i64>(5)? == 1,
+                is_active: r.get::<_, i64>(4)? == 1,
             })
         })
         .map_err(|e| e.to_string())?;

@@ -17,6 +17,7 @@ pub struct PaymentHistoryItem {
     pub payment_mode: String,
     pub amount: f64,
     pub collected_by: String,
+    pub transaction_ref: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -61,20 +62,26 @@ pub fn get_today_payment_history(db: State<Db>) -> Result<PaymentHistoryResponse
         .prepare(
             "
         SELECT 
-            COALESCE(p.receipt_no, CAST(p.id AS TEXT)) as receipt_no,
-            strftime('%H:%M', p.paid_at),
-            pl.pledge_no,
-            c.name,
-            p.payment_type,
-            p.payment_mode,
-            p.amount,
-            u.username
-        FROM pledge_payments p
-        JOIN pledges pl ON p.pledge_id = pl.id
-        JOIN customers c ON pl.customer_id = c.id
-        JOIN users u ON p.created_by = u.id
-        WHERE date(p.paid_at) = ?
-        ORDER BY p.paid_at DESC
+        COALESCE(pp.receipt_no, CAST(pp.id AS TEXT)) as receipt_no,
+        strftime('%H:%M', pp.paid_at),
+        pl.pledge_no,
+        c.name,
+        pp.payment_type,
+        pp.payment_mode,
+        pp.amount,
+        u.username,
+        ft.transaction_ref                          -- ← ADD (index 8)
+    FROM pledge_payments pp
+    JOIN pledges pl ON pp.pledge_id = pl.id
+    JOIN customers c ON pl.customer_id = c.id
+    JOIN users u ON pp.created_by = u.id
+    LEFT JOIN fund_transactions ft                  -- ← ADD JOIN
+        ON ft.module_id = pp.pledge_id
+        AND ft.module_type IN ('PAYMENT','INTEREST','CLOSURE')
+        AND DATE(ft.created_at) = DATE(pp.paid_at)
+        AND ft.payment_method = pp.payment_mode
+    WHERE date(pp.paid_at) = ?
+    ORDER BY pp.paid_at DESC
         ",
         )
         .map_err(|e| e.to_string())?;
@@ -90,6 +97,7 @@ pub fn get_today_payment_history(db: State<Db>) -> Result<PaymentHistoryResponse
                 payment_mode: row.get::<_, String>(5)?,
                 amount: row.get::<_, f64>(6)?,
                 collected_by: row.get::<_, String>(7)?,
+                transaction_ref: row.get::<_, Option<String>>(8)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -217,11 +225,17 @@ pub fn get_payment_history(
             pp.payment_type,
             pp.payment_mode,
             pp.amount,
-            u.username
+            u.username,
+            ft.transaction_ref                         -- ← ADD (index 8)
         FROM pledge_payments pp
         JOIN pledges pl ON pp.pledge_id = pl.id
         JOIN customers c ON pl.customer_id = c.id
         JOIN users u ON pp.created_by = u.id
+        LEFT JOIN fund_transactions ft                 -- ← ADD JOIN
+            ON ft.module_id = pp.pledge_id
+            AND ft.module_type IN ('PAYMENT','INTEREST','CLOSURE')
+            AND DATE(ft.created_at) = DATE(pp.paid_at)
+            AND ft.payment_method = pp.payment_mode
         WHERE 1=1
     "
     .to_string();
@@ -253,6 +267,7 @@ pub fn get_payment_history(
                 payment_mode: row.get::<_, String>(5)?,
                 amount: row.get::<_, f64>(6)?,
                 collected_by: row.get::<_, String>(7)?,
+                transaction_ref: row.get::<_, Option<String>>(8)?,
             })
         })
         .map_err(|e| e.to_string())?;

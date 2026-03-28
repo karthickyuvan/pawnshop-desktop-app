@@ -39,6 +39,7 @@
 .dashboard-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  /* border-color: #1f3a5f; */
 }
 
 /* Header: Icon and Title Side-by-Side */
@@ -48,6 +49,9 @@
   gap: 0.75rem;
   width: 100%;
   background: transparent !important;
+}
+.card-header h3{
+  color: #c9a84c !important;
 }
 
 .card-icon {
@@ -124,13 +128,22 @@
 
 .stock-grid {
   margin-top: 1rem;
-  display: flex;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
   width: 100%;
 }
-
-.stock-section { flex: 1; }
-.stock-divider { width: 1px; background: #23040b; }
+.stock-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.stock-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 10px 0;
+  width: 100%;
+}
 
 .stock-label {
   font-size: 0.875rem;
@@ -148,9 +161,12 @@
 .stock-values {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 4px;
 }
-
+.stock-grid > .stock-section:first-child {
+  border-right: 1px solid #e5e7eb;
+  padding-right: 10px;
+}
 .stock-value {
   display: flex;
   justify-content: space-between;
@@ -172,3 +188,15 @@
 
 /* Staggered animation */
 .dashboard-card:nth-child(n) { animation-delay: calc(0.05s * var(--i, 1)); }
+
+
+.dashboard-overview {
+  margin-top: 10px;
+}
+
+.dashboard-overview-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #1e293b;
+}

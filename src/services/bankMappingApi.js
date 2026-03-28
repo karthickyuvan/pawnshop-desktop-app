@@ -11,49 +11,48 @@ export async function getPledgeByNumber(pledgeNo) {
 }
 
 export async function mapBankToPledge(data) {
+  
+  console.log("📥 bankMappingApi.js received data:", data);
+  console.log("📥 data.denominations:", data.denominations);
 
-  const denominationsArray = data.denominations
-    ? Object.entries(data.denominations)
-        .filter(([_, qty]) => qty > 0)
-        .map(([denom, qty]) => ({
-          denomination: parseInt(denom),
-          quantity: qty,
-        }))
-    : null;
+  // ✅ FIX: Don't transform - it's already an array from BankMappingPage.jsx!
+  const denominationsArray = data.denominations || null;
+
+  console.log("🔄 Using denominations (already an array):", denominationsArray);
+
+  const payload = {
+    pledge_id: data.pledgeId,
+    bank_id: data.bankId,
+    bank_loan_amount: data.bankLoanAmount,
+    actual_received: data.actualReceived,
+    bank_charges: data.bankCharges,
+    payment_method: data.paymentMethod,
+    reference_number: data.referenceNumber ?? null,
+    denominations: denominationsArray,  // ✅ Already in correct format
+    actor_user_id: data.actorUserId,
+  };
+
+  console.log("📤 Sending to Tauri (Rust backend):");
+  console.log(JSON.stringify(payload, null, 2));
 
   try {
-    const result = await invoke("map_bank_to_pledge", { 
-      req: {                          // ← was "request", must be "req"
-        pledge_id: data.pledgeId,
-        bank_id: data.bankId,
-        bank_loan_amount: data.bankLoanAmount,
-        actual_received: data.actualReceived,
-        bank_charges: data.bankCharges,
-        payment_method: data.paymentMethod,
-        reference_number: data.referenceNumber ?? null,
-        denominations: denominationsArray,
-        actor_user_id: data.actorUserId,
-      }
-    });
+    const result = await invoke("map_bank_to_pledge", { req: payload });
+    console.log("✅ Tauri response:", result);
     return result;
   } catch (error) {
-    console.error("Map bank error:", error);
+    console.error("❌ Map bank error:", error);
     throw new Error(error);
   }
 }
 
 export async function unmapBankFromPledge(data) {
-  const denominationsArray = data.denominations
-    ? Object.entries(data.denominations)
-        .filter(([_, qty]) => qty > 0)
-        .map(([denom, qty]) => ({
-          denomination: parseInt(denom),
-          quantity: qty,
-        }))
-    : null;
+  
+  // ✅ FIX: Same issue here - don't transform, it's already an array
+  const denominationsArray = data.denominations || null;
+
   try {
-    const result = await invoke("unmap_bank_from_pledge", {  // ← also remove "_cmd" suffix
-      req: {                          // ← was "request", must be "req"
+    const result = await invoke("unmap_bank_from_pledge", {
+      req: {
         mapping_id: data.mappingId,
         pledge_id: data.pledgeId,
         customer_payment: data.customerPayment,
@@ -62,7 +61,7 @@ export async function unmapBankFromPledge(data) {
         customer_interest: data.customerInterest,
         payment_method: data.paymentMethod,
         reference_number: data.referenceNumber ?? null,
-        denominations: denominationsArray,
+        denominations: denominationsArray,  
         actor_user_id: data.actorUserId,
       }
     });

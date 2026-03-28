@@ -1,8 +1,10 @@
 import { useState, useMemo ,useEffect} from "react";
 import { deleteExpense } from "../../services/expenseApi";
 import {formatDateTimeIST} from "../../utils/timeFormatter";
-
+import { useLanguage } from "../../context/LanguageContext";
 export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
+
+  const {t} = useLanguage();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
@@ -112,12 +114,12 @@ export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
 
       {/* HEADER */}
       <div className="table-header">
-        <h3>Expense Transactions List</h3>
+        <h3>{t("expense_transaction_list")}</h3>
 
         <div className="table-filters">
           <input
             type="text"
-            placeholder="Search code, description..."
+            placeholder={t("search_expense")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -126,7 +128,7 @@ export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
-            <option value="ALL">All Categories</option>
+            <option value="ALL">{t("all_categories")}</option>
             {categoryOptions.map((cat, index) => (
               <option key={index} value={cat}>
                 {cat}
@@ -138,7 +140,7 @@ export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
             value={selectedMode}
             onChange={(e) => setSelectedMode(e.target.value)}
           >
-            <option value="ALL">All Modes</option>
+            <option value="ALL">{t("all_modes")}</option>
             <option value="CASH">CASH</option>
             <option value="BANK_TRANSFER">BANK_TRANSFER</option>
             <option value="UPI">UPI</option>
@@ -147,10 +149,10 @@ export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
           value={dateFilterType}
           onChange={(e) => setDateFilterType(e.target.value)}
         >
-          <option value="ALL">All Dates</option>
-          <option value="MONTH">Month</option>
-          <option value="YEAR">Year</option>
-          <option value="CUSTOM">Custom Range</option>
+          <option value="ALL">{t("all_dates")}</option>
+          <option value="MONTH">{t("month")}</option>
+          <option value="YEAR">{t("year")}</option>
+          <option value="CUSTOM">{t("custom_range")}</option>
         </select>
 
         {dateFilterType === "MONTH" && (
@@ -213,14 +215,15 @@ export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
       <table className="expense-table">
         <thead>
           <tr>
-            <th>Code</th>
-            <th>Date</th>
-            <th>Category</th>
-            <th>Description</th>
-            <th>Mode</th>
-            <th>Amount</th>
-            <th>Role</th>
-            {user?.role === "OWNER" && <th>Action</th>}
+          <th>{t("code")}</th>
+<th>{t("date")}</th>
+<th>{t("category")}</th>
+<th>{t("description")}</th>
+<th>{t("mode")}</th>
+<th>{t("amount")}</th>
+<th>{t("role")}</th>
+
+            {user?.role === "OWNER" && <th>{t("action")}</th>}
           </tr>
         </thead>
 
@@ -228,7 +231,7 @@ export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
           {filteredExpenses.length === 0 ? (
             <tr>
               <td colSpan="8" style={{ textAlign: "center", padding: "20px" }}>
-                No expenses found
+              {t("no_expenses_found")}
               </td>
             </tr>
           ) : (
@@ -248,7 +251,7 @@ export default function ExpenseTable({ expenses, user, reload ,onFilter }) {
                       className="delete-btn"
                       onClick={() => handleDelete(exp.id)}
                     >
-                      Delete
+                     {t("delete")}
                     </button>
                   </td>
                 )}

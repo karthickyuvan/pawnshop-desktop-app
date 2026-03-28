@@ -1,25 +1,3 @@
-// export default function ExpenseCharts() {
-//     return (
-//       <div className="charts-grid">
-  
-//         <div className="chart-card">
-//           <h3>Monthly Expense Trend</h3>
-//           <div className="chart-placeholder">
-//             Chart will appear here
-//           </div>
-//         </div>
-  
-//         <div className="chart-card">
-//           <h3>Expense by Category</h3>
-//           <div className="chart-placeholder">
-//             Pie chart will appear here
-//           </div>
-//         </div>
-  
-//       </div>
-//     );
-//   }
-  
 
 
 import {
@@ -35,7 +13,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-
+import { useLanguage } from "../../context/LanguageContext";
 const COLORS = [
   "#3b82f6",
   "#10b981",
@@ -50,7 +28,7 @@ export default function ExpenseCharts({ expenses = [] }) {
      MONTHLY EXPENSE AGGREGATION
   =============================== */
   const monthlyMap = {};
-
+const {t}=useLanguage();
   expenses.forEach((exp) => {
     const monthKey = new Date(exp.expense_date).toLocaleString("default", {
       month: "short",
@@ -87,7 +65,7 @@ export default function ExpenseCharts({ expenses = [] }) {
     <div className="charts-grid">
       {/* Monthly Trend */}
       <div className="chart-card">
-        <h3>Monthly Expense Trend</h3>
+      <h3>{t("monthly_expense_trend")}</h3>
 
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={monthlyData}>
@@ -106,7 +84,7 @@ export default function ExpenseCharts({ expenses = [] }) {
 
       {/* Category Pie */}
       <div className="chart-card">
-        <h3>Expense by Category</h3>
+      <h3>{t("expense_by_category")}</h3>
 
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
