@@ -797,6 +797,63 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
     // ✅ CASH handling for fund transactions
+    // if req.payment_mode == "CASH" {
+    //     let is_closure = req.payment_type == "CLOSURE" || (total_payable - req.amount) <= 0.0;
+
+    //     let module_type = if is_closure { "CLOSURE" } else { "PAYMENT" };
+    //     let reference_text = if is_closure {
+    //         format!("Pledge Closure {}", pledge_data.pledge.pledge_no)
+    //     } else {
+    //         format!("Payment for Pledge {}", pledge_data.pledge.pledge_no)
+    //     };
+
+    //     tx.execute(
+    //         "INSERT INTO fund_transactions 
+    //          (type, total_amount, module_type, module_id, reference, description, payment_method,transaction_ref,  created_by)
+    //          VALUES ('ADD', ?1, ?2, ?3, ?4, ?5, 'CASH', ?6,?7)",
+    //         params![
+    //             req.amount,
+    //             module_type,
+    //             req.pledge_id,
+    //             pledge_data.pledge.pledge_no,
+    //             reference_text,
+    //             req.reference,
+    //             req.created_by
+    //         ],
+    //     ).map_err(|e| e.to_string())?;} else {
+    //         // UPI / Bank — add fund transaction with transaction_ref
+    //         tx.execute(
+    //             "INSERT INTO fund_transactions 
+    //              (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_by)
+    //              VALUES ('ADD', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+    //             params![
+    //                 req.amount,
+    //                 if req.payment_type == "CLOSURE" { "CLOSURE" } else { "PAYMENT" },
+    //                 req.pledge_id,
+    //                 pledge_data.pledge.pledge_no,
+    //                 format!("Payment for Pledge {}", pledge_data.pledge.pledge_no),
+    //                 req.payment_mode,
+    //                 req.reference,      // ← UPI ref number saved here
+    //                 req.created_by
+    //             ],
+    //         )
+    //     .map_err(|e| e.to_string())?;
+
+    //     let fund_tx_id = tx.last_insert_rowid();
+
+    //     if let Some(ref denoms) = req.denominations {
+    //         for (note, qty) in denoms {
+    //             tx.execute(
+    //                 "INSERT INTO fund_denominations
+    //                  (fund_transaction_id, denomination, quantity, amount)
+    //                  VALUES (?1, ?2, ?3, ?4)",
+    //                 params![fund_tx_id, note, qty, (*note as f64) * (*qty as f64)],
+    //             )
+    //             .map_err(|e| e.to_string())?;
+    //         }
+    //     }
+    // }
+    // ✅ CASH handling for fund transactions
     if req.payment_mode == "CASH" {
         let is_closure = req.payment_type == "CLOSURE" || (total_payable - req.amount) <= 0.0;
 
@@ -820,25 +877,9 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
                 req.reference,
                 req.created_by
             ],
-        ).map_err(|e| e.to_string())?;} else {
-            // UPI / Bank — add fund transaction with transaction_ref
-            tx.execute(
-                "INSERT INTO fund_transactions 
-                 (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_by)
-                 VALUES ('ADD', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-                params![
-                    req.amount,
-                    if req.payment_type == "CLOSURE" { "CLOSURE" } else { "PAYMENT" },
-                    req.pledge_id,
-                    pledge_data.pledge.pledge_no,
-                    format!("Payment for Pledge {}", pledge_data.pledge.pledge_no),
-                    req.payment_mode,
-                    req.reference,      // ← UPI ref number saved here
-                    req.created_by
-                ],
-            )
-        .map_err(|e| e.to_string())?;
+        ).map_err(|e| e.to_string())?;
 
+        // 🚨 FIX: Moved the denomination insertion inside the CASH block
         let fund_tx_id = tx.last_insert_rowid();
 
         if let Some(ref denoms) = req.denominations {
@@ -852,6 +893,24 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
                 .map_err(|e| e.to_string())?;
             }
         }
+
+    } else {
+        // UPI / Bank — add fund transaction with transaction_ref
+        tx.execute(
+            "INSERT INTO fund_transactions 
+             (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_by)
+             VALUES ('ADD', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            params![
+                req.amount,
+                if req.payment_type == "CLOSURE" { "CLOSURE" } else { "PAYMENT" },
+                req.pledge_id,
+                pledge_data.pledge.pledge_no,
+                format!("Payment for Pledge {}", pledge_data.pledge.pledge_no),
+                req.payment_mode,
+                req.reference,      // ← UPI ref number saved here
+                req.created_by
+            ],
+        ).map_err(|e| e.to_string())?;
     }
 
     // ✅ Record interest payment with generated receipt
