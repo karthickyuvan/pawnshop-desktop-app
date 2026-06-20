@@ -11,10 +11,32 @@ export default function App() {
   const [ownerExists, setOwnerExists] = useState(null);
   const user = useAuthStore((s) => s.user);
 
-  useEffect(() => {
-    checkOwner().then(setOwnerExists);
-  }, []);
+  // useEffect(() => {
+  //   checkOwner().then(setOwnerExists);
+  // }, []);
+useEffect(() => {
+  const init = async () => {
+    try {
+      const result = await checkOwner();
 
+      console.log("OWNER EXISTS:", result);
+
+      // Browser fallback
+      if (result === null || result === undefined) {
+        setOwnerExists(false);
+      } else {
+        setOwnerExists(result);
+      }
+    } catch (err) {
+      console.error(err);
+
+      // Prevent infinite loading
+      setOwnerExists(false);
+    }
+  };
+
+  init();
+}, []);
   // 🔍 DEBUG (TEMPORARY)
   console.log("AUTH USER:", user);
 

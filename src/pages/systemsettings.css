@@ -1,39 +1,126 @@
+/* ==========================================================================
+   Page Layout & Main Card
+   ========================================================================== */
+
 .settings-container {
-    padding: 24px;
-  }
-  
-  .settings-card {
-    background: white;
-    padding: 24px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    max-width: 500px;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 16px;
-  }
-  
-  .form-group label {
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-  
-  .form-group select,
-  .form-group input {
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-  }
-  
-  .save-btn {
-    padding: 10px 16px;
-    background-color: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  
+  padding: 24px;
+}
+
+.settings-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.form-group select,
+.form-group input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.settings-divider {
+  margin: 24px 0;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   Interactive Controls & Status Alerts
+   ========================================================================== */
+
+.save-btn {
+  padding: 10px 16px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.status-message {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.status-message.success {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.status-message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* ==========================================================================
+   Dynamic Information Banners & Hints
+   ========================================================================== */
+
+.mode-info-banner {
+  background: var(--color-background-info, #eff6ff);
+  border: 1px solid var(--color-border-info, #93c5fd);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.mode-info-title {
+  font-weight: 500;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--color-text-info, #1d4ed8);
+}
+
+.mode-info-description {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.mode-info-example {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.label-hint-span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin-left: 8px;
+}
+
+.form-group-helper-text {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+  line-height: 1.6;
+}

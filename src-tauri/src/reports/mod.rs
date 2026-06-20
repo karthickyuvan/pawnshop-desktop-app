@@ -12,3 +12,10 @@ pub mod stock_report;
 pub mod customer_ledger;
 pub mod interest_analytics;
 pub mod fund_ledger_report;
+
+pub mod metal_movement_report;
+
+pub mod auction_report;
+
+pub mod investor_report;
+pub mod staff_salary_report;

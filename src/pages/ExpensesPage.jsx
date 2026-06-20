@@ -1,3 +1,76 @@
+
+// import { useEffect, useState } from "react";
+// import "./expense.css";
+// import ExpenseHeader from "../components/expense/Expenseheader";
+// import ExpenseStatsCards from "../components/expense/ExpenseStatscard";
+// import ExpenseCharts from "../components/expense/ExpenseCharts";
+// import ExpenseTableLayout from "../components/expense/ExpenseTable";
+// import { getExpenses, getExpenseStats } from "../services/expenseApi";
+
+// export default function ExpensesPage({ user }) {
+//   const [expenses, setExpenses] = useState([]);
+//   const [stats, setStats] = useState(null);
+//   const [filteredExpenses, setFilteredExpenses] = useState([]);
+
+
+//   const loadStats = async () => {
+//     try {
+//       const data = await getExpenseStats();
+//       setStats(data);
+//     } catch (err) {
+//       console.error("Failed to load stats", err);
+//     }
+//   };
+
+//   const loadExpenses = async () => {
+//     try {
+//       const data = await getExpenses();
+//       setExpenses(data);
+//       setFilteredExpenses(data); // ✅ initialize
+//     } catch (err) {
+//       console.error("Failed to load expenses", err);
+//     }
+//   };
+
+//   useEffect(() => {
+//     loadStats();
+//     loadExpenses();
+//   }, []);
+
+//   return (
+//     <div className="expense-container">
+//       <ExpenseHeader
+//         user={user}
+//         reload={() => {
+//           loadExpenses();
+//           loadStats();
+//         }}
+//       />
+
+//       <ExpenseStatsCards stats={stats} />
+
+//       <ExpenseTableLayout
+//         expenses={expenses}               
+//         user={user}
+//         reload={() => {
+//           loadExpenses();
+//           loadStats();
+//         }}
+//         onFilter={setFilteredExpenses}     // send filtered data up
+//       />
+
+//       <ExpenseCharts expenses={filteredExpenses} /> {/* charts update */}
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+// src/pages/ExpensesPage.jsx
+
 import { useEffect, useState } from "react";
 import "./expense.css";
 import ExpenseHeader from "../components/expense/Expenseheader";
@@ -5,16 +78,13 @@ import ExpenseStatsCards from "../components/expense/ExpenseStatscard";
 import ExpenseCharts from "../components/expense/ExpenseCharts";
 import ExpenseTableLayout from "../components/expense/ExpenseTable";
 import { getExpenses, getExpenseStats } from "../services/expenseApi";
-import CashDenominationInput,{calcDenomTotal,
-  emptyDenominations,} from "../constants/CashDenominationInput";
-
 
 export default function ExpensesPage({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [stats, setStats] = useState(null);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
-  const [denominations, setDenominations] = useState(emptyDenominations());
-const totalCash = calcDenomTotal(denominations);
+
+  const isStaff = user?.role === "STAFF"; // ✅ Evaluates user role
 
   const loadStats = async () => {
     try {
@@ -29,7 +99,7 @@ const totalCash = calcDenomTotal(denominations);
     try {
       const data = await getExpenses();
       setExpenses(data);
-      setFilteredExpenses(data); // ✅ initialize
+      setFilteredExpenses(data); // initialize
     } catch (err) {
       console.error("Failed to load expenses", err);
     }
@@ -42,7 +112,6 @@ const totalCash = calcDenomTotal(denominations);
 
   return (
     <div className="expense-container">
-
       <ExpenseHeader
         user={user}
         reload={() => {
@@ -51,7 +120,8 @@ const totalCash = calcDenomTotal(denominations);
         }}
       />
 
-      <ExpenseStatsCards stats={stats} />
+      {/* ✅ HIDE: Protect aggregate company stats outlays from staff */}
+      {!isStaff && <ExpenseStatsCards stats={stats} />}
 
       <ExpenseTableLayout
         expenses={expenses}               
@@ -63,7 +133,8 @@ const totalCash = calcDenomTotal(denominations);
         onFilter={setFilteredExpenses}     // send filtered data up
       />
 
-      <ExpenseCharts expenses={filteredExpenses} /> {/* charts update */}
+      {/* ✅ HIDE: Protect aggregate charting outlays from staff */}
+      {!isStaff && <ExpenseCharts expenses={filteredExpenses} />}
     </div>
   );
 }

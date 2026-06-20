@@ -55,6 +55,7 @@ export const createPledge = async (pledgeData) => {
     pledgeId: Number(createdPledge.id),
   });
   console.log("📄 Full pledge details:", fullDetails);
+  console.log("FULL PLEDGE =", fullDetails.pledge);
   console.log("🎫 Receipt number:", fullDetails.pledge.receipt_number);
   // Step 5: Return everything the frontend needs
   return {

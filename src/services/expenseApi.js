@@ -1,33 +1,3 @@
-// import { invoke } from "@tauri-apps/api/core";
-
-// export const createExpense = async (data) => {
-//   return await invoke("create_expense", { req: data });
-// };
-
-// export const getExpenses = async () => {
-//   return await invoke("get_expenses");
-// };
-
-// export const deleteExpense = async (expense_id, actor_user_id) => {
-//   return await invoke("delete_expense", {
-//     expense_id,
-//     actor_user_id
-//   });
-// };
-
-
-// export const getExpenseCategories = async () => {
-//   return await invoke("get_expense_categories");
-// };
-
-
-// export const getExpenseStats = async () => {
-//   return await invoke("get_expense_stats");
-// };
-
-
-
-
 import { invoke } from "@tauri-apps/api/core";
 
 export const createExpense = async (data) => {
@@ -48,11 +18,12 @@ export const getExpenses = async () => {
   }
 };
 
-export const deleteExpense = async (expense_id, actor_user_id) => {
+export const deleteExpense = async (expenseId, actorUserId) => {
   try {
     return await invoke("delete_expense", {
-      expense_id,
-      actor_user_id,
+      // FIX: Changed from snake_case to camelCase
+      expenseId: Number(expenseId),
+      actorUserId: Number(actorUserId),
     });
   } catch (error) {
     console.error("Delete Expense Error:", error);
@@ -87,7 +58,6 @@ export const createExpenseCategory = async (name) => {
   }
 };
 
-
 export const updateExpenseCategory = async (id, name) => {
   return await invoke("update_expense_category", { id, name });
 };
@@ -95,6 +65,7 @@ export const updateExpenseCategory = async (id, name) => {
 export const toggleExpenseCategoryStatus = async (id, is_active) => {
   return await invoke("toggle_expense_category_status", {
     id,
-    is_active,
+    // FIX: Changed to camelCase because Rust parameter is `is_active`
+    isActive: is_active, 
   });
 };

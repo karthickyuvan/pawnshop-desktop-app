@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT CHECK(role IN ('OWNER','STAFF')) NOT NULL,
+    full_name TEXT,
+    monthly_salary REAL DEFAULT 0,
+    joining_date TEXT,
     is_active INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -167,9 +170,16 @@ CREATE TABLE IF NOT EXISTS pledges (
     is_overlimit INTEGER DEFAULT 0,
     actual_loan_percentage REAL DEFAULT 0.0,
     receipt_number TEXT,
+    parked_interest REAL DEFAULT 0.0,
+    last_interest_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     status TEXT CHECK(status IN ('ACTIVE','CLOSED','AUCTIONED')) DEFAULT 'ACTIVE',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER NOT NULL,
+    pledge_date TEXT,
+    closed_at DATETIME,
+    auctioned_at TEXT,
+    auction_amount REAL DEFAULT 0,
+    auction_notes TEXT,
     FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
 
@@ -219,6 +229,10 @@ ON pledge_payments(pledge_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_receipt
 ON pledge_payments(receipt_number) WHERE receipt_number IS NOT NULL;
 
+-- Index for payment receipt numbers
+CREATE INDEX IF NOT EXISTS idx_payments_receipt_no
+ON pledge_payments(receipt_no COLLATE NOCASE) WHERE receipt_no IS NOT NULL;
+
 -- BANK MAPPING
 CREATE TABLE IF NOT EXISTS bank_mappings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -248,10 +262,13 @@ CREATE TABLE IF NOT EXISTS system_settings (
         )
     ) NOT NULL DEFAULT 'SLAB_WITH_HALF',
     grace_days INTEGER DEFAULT 5,
+    auction_after_months INTEGER NOT NULL DEFAULT 36,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT OR IGNORE INTO system_settings (id) VALUES (1);
+
+
 
 -- SHOP SETTINGS
 CREATE TABLE IF NOT EXISTS shop_settings (
@@ -282,7 +299,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     expense_code TEXT UNIQUE NOT NULL,
     category_id INTEGER NOT NULL,
     description TEXT,
-    payment_mode TEXT CHECK(payment_mode IN ('CASH','BANK_TRANSFER','UPI')) NOT NULL,
+    payment_mode TEXT CHECK(payment_mode IN ('CASH','BANK','UPI')) NOT NULL,
     amount REAL NOT NULL,
     transaction_ref TEXT,
     expense_date DATETIME NOT NULL,
@@ -290,6 +307,133 @@ CREATE TABLE IF NOT EXISTS expenses (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES expense_categories(id),
     FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+
+-- STAFF SALARY ADVANCES
+CREATE TABLE IF NOT EXISTS staff_salary_advances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    advance_date TEXT NOT NULL,
+    amount REAL NOT NULL,
+    payment_mode TEXT CHECK(payment_mode IN ('CASH', 'BANK', 'BANK_TRANSFER', 'UPI')) NOT NULL,
+    transaction_ref TEXT,
+    remarks TEXT,
+    created_by INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    salary_payment_id INTEGER,
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(created_by) REFERENCES users(id),
+    FOREIGN KEY(salary_payment_id) REFERENCES staff_salary_payments(id)
+);
+
+
+CREATE TABLE IF NOT EXISTS staff_salary_payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    user_id INTEGER NOT NULL,
+
+    salary_month TEXT NOT NULL,
+
+    gross_salary REAL NOT NULL,
+
+    advance_amount REAL NOT NULL,
+
+    net_salary REAL NOT NULL,
+
+    payment_mode TEXT NOT NULL,
+
+    transaction_ref TEXT,
+
+    remarks TEXT,
+
+    created_by INTEGER NOT NULL,
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+
+CREATE TABLE IF NOT EXISTS investors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    investor_code TEXT NOT NULL UNIQUE,
+
+    investor_name TEXT NOT NULL,
+
+    mobile TEXT,
+
+    address TEXT,
+
+    notes TEXT,
+
+    is_active INTEGER NOT NULL DEFAULT 1,
+
+    created_by INTEGER,
+
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TEXT,
+
+    fixed_interest_percentage REAL DEFAULT 0,
+
+    interest_paid_upto TEXT
+
+
+);
+
+CREATE TABLE IF NOT EXISTS investor_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    investor_id INTEGER NOT NULL,
+
+    fund_transaction_id INTEGER NOT NULL,
+
+    transaction_type TEXT CHECK(
+        transaction_type IN (
+            'INVESTMENT',
+            'WITHDRAWAL',
+            'PROFIT_PAYMENT'
+        )
+    ) NOT NULL,
+
+    remarks TEXT,
+
+    created_by INTEGER,
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY(investor_id)
+        REFERENCES investors(id),
+
+    FOREIGN KEY(fund_transaction_id)
+        REFERENCES fund_transactions(id)
+);
+
+
+CREATE TABLE IF NOT EXISTS investor_profit_payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    investor_id INTEGER NOT NULL,
+
+    fund_transaction_id INTEGER NOT NULL,
+
+    profit_amount REAL NOT NULL,
+
+    payment_date TEXT NOT NULL,
+
+    remarks TEXT,
+
+    created_by INTEGER NOT NULL,
+
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (investor_id)
+        REFERENCES investors(id),
+
+    FOREIGN KEY (fund_transaction_id)
+        REFERENCES fund_transactions(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_expenses_category

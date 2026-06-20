@@ -1,4 +1,5 @@
 
+
 // bank_mapping/service.rs
 use crate::db::connection::Db;
 use rusqlite::{params, Result as SqlResult};
@@ -20,10 +21,11 @@ pub struct PledgeDetails {
     pub created_at: String,
     pub is_bank_mapped: bool,
     pub bank_mapping_id: Option<i64>,
-    pub bank_loan_amount: Option<f64>, // ← Amount from bank_mappings.amount (what bank gave us)
+    pub bank_loan_amount: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")] // ✅ Added to automatically map camelCase keys from JS
 pub struct BankMappingRequest {
     pub pledge_id: i64,
     pub bank_id: i64,
@@ -37,6 +39,7 @@ pub struct BankMappingRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")] // ✅ Added to automatically map camelCase keys from JS
 pub struct BankUnmappingRequest {
     pub mapping_id: i64,
     pub pledge_id: i64,
@@ -52,10 +55,21 @@ pub struct BankUnmappingRequest {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // get_pledge_by_number
-// Added index 8 → bank_loan_amount (SELECT amount FROM bank_mappings WHERE ACTIVE)
 // ─────────────────────────────────────────────────────────────────────────────
 pub fn get_pledge_by_number(db: &Db, pledge_no: &str) -> Result<PledgeDetails, String> {
+    eprintln!("🔍 get_pledge_by_number called with: '{}'", pledge_no);
+    eprintln!("   search_pattern: '%{}%'", pledge_no.trim().to_uppercase());
+
     let conn = db.0.lock().unwrap();
+
+    let count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM pledges WHERE UPPER(pledge_no) LIKE ?1 AND status != 'CLOSED'",
+        params![format!("%{}%", pledge_no.trim().to_uppercase())],
+        |row| row.get(0),
+    ).unwrap_or(0);
+    eprintln!("   matching rows: {}", count);
+
+    let search_pattern = format!("%{}%", pledge_no.trim().to_uppercase());
 
     let mut stmt = conn
         .prepare(
@@ -77,12 +91,15 @@ pub fn get_pledge_by_number(db: &Db, pledge_no: &str) -> Result<PledgeDetails, S
                 (SELECT amount FROM bank_mappings WHERE pledge_id = p.id AND status = 'ACTIVE' LIMIT 1) AS bank_loan_amount
             FROM pledges p
             JOIN customers c ON p.customer_id = c.id
-            WHERE p.pledge_no = ?1",
+            WHERE UPPER(p.pledge_no) LIKE ?1
+              AND p.status != 'CLOSED'
+            ORDER BY p.created_at DESC
+            LIMIT 1",
         )
         .map_err(|e| e.to_string())?;
 
     let pledge = stmt
-        .query_row(params![pledge_no], |row| {
+        .query_row(params![search_pattern], |row| {
             Ok(PledgeDetails {
                 pledge_id:       row.get(0)?,
                 customer_name:   row.get(1)?,
@@ -92,7 +109,7 @@ pub fn get_pledge_by_number(db: &Db, pledge_no: &str) -> Result<PledgeDetails, S
                 created_at:      row.get(5)?,
                 is_bank_mapped:  row.get::<_, i64>(6)? == 1,
                 bank_mapping_id: row.get(7).ok(),
-                bank_loan_amount: row.get(8).ok(), // ← NEW
+                bank_loan_amount: row.get(8).ok(),
             })
         })
         .map_err(|e| format!("Pledge not found: {}", e))?;
@@ -101,13 +118,12 @@ pub fn get_pledge_by_number(db: &Db, pledge_no: &str) -> Result<PledgeDetails, S
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// map_bank_to_pledge  (unchanged logic, kept as-is)
+// map_bank_to_pledge
 // ─────────────────────────────────────────────────────────────────────────────
 pub fn map_bank_to_pledge(
     db: &Db,
     request: &BankMappingRequest,
 ) -> Result<i64, String> {
-
     eprintln!("🏦 Bank mapping request received:");
     eprintln!("   pledge_id: {}", request.pledge_id);
     eprintln!("   bank_loan_amount: {}", request.bank_loan_amount);
@@ -118,7 +134,6 @@ pub fn map_bank_to_pledge(
     let mut conn = db.0.lock().unwrap();
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-    // 1. Check pledge not already mapped
     let existing: Option<i64> = tx
         .query_row(
             "SELECT id FROM bank_mappings WHERE pledge_id = ?1 AND status = 'ACTIVE'",
@@ -131,7 +146,6 @@ pub fn map_bank_to_pledge(
         return Err("Pledge is already mapped to a bank".to_string());
     }
 
-    // 2. Get pledge loan amount
     let pledge_loan: f64 = tx
         .query_row(
             "SELECT loan_amount FROM pledges WHERE id = ?1",
@@ -140,11 +154,8 @@ pub fn map_bank_to_pledge(
         )
         .map_err(|e| format!("Failed to fetch pledge: {}", e))?;
 
-    // 3. Calculate net amount after bank charges
     let net_from_bank = request.actual_received - request.bank_charges;
-    let _difference = net_from_bank - pledge_loan;
 
-    // 4. Insert bank_mappings row
     tx.execute(
         "INSERT INTO bank_mappings
             (pledge_id, bank_id, amount, bank_charges, net_amount, mapped_date, status)
@@ -161,14 +172,12 @@ pub fn map_bank_to_pledge(
 
     let mapping_id = tx.last_insert_rowid();
 
-    // 5. Record cash received from bank (INFLOW)
-    // This should be the ACTUAL amount received, not the bank loan amount
     tx.execute(
         "INSERT INTO fund_transactions
             (type, total_amount, module_type, module_id, reference, description, payment_method, created_by, created_at)
          VALUES ('ADD', ?1, 'BANK_MAPPING', ?2, ?3, ?4, ?5, ?6, datetime('now'))",
          params![
-            request.actual_received,  // ✅ The actual cash received (₹84,000)
+            request.actual_received,
             mapping_id,
             format!("Bank loan received for Pledge #{}", request.pledge_id),
             format!("Bank loan received for Pledge #{}", request.pledge_id),
@@ -183,13 +192,12 @@ pub fn map_bank_to_pledge(
     
     insert_denominations(&tx, bank_inflow_tx_id, &request.denominations, request.actual_received)?;
 
-
-
     tx.commit().map_err(|e| e.to_string())?;
     Ok(mapping_id)
 }
+
 // ─────────────────────────────────────────────────────────────────────────────
-// unmap_bank_from_pledge  (unchanged logic, kept as-is)
+// unmap_bank_from_pledge
 // ─────────────────────────────────────────────────────────────────────────────
 pub fn unmap_bank_from_pledge(
     db: &Db,
@@ -198,7 +206,6 @@ pub fn unmap_bank_from_pledge(
     let mut conn = db.0.lock().unwrap();
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-    // 1. Verify mapping exists and is active
     let (_bank_net_amount, _bank_original_amount): (f64, f64) = tx
         .query_row(
             "SELECT net_amount, amount FROM bank_mappings WHERE id = ?1 AND status = 'ACTIVE'",
@@ -207,14 +214,12 @@ pub fn unmap_bank_from_pledge(
         )
         .map_err(|_| "Bank mapping not found or already unmapped".to_string())?;
 
-    // 2. Mark bank mapping as REVERSED
     tx.execute(
         "UPDATE bank_mappings SET status = 'REVERSED' WHERE id = ?1",
         params![request.mapping_id],
     )
     .map_err(|e| e.to_string())?;
 
-    // 3. Record bank repayment paid out (OUTFLOW from drawer)
     tx.execute(
         "INSERT INTO fund_transactions
             (type, total_amount, module_type, module_id, reference, payment_method, created_by, created_at)
@@ -232,18 +237,12 @@ pub fn unmap_bank_from_pledge(
     let bank_repay_tx_id = tx.last_insert_rowid();
     insert_denominations(&tx, bank_repay_tx_id, &request.denominations, request.bank_repayment)?;
 
-    // NOTE: Pledge is NOT closed here.
-    // After unmapping, the pledge returns to normal ACTIVE state.
-    // Customer must pay via the normal Payment panel to close the pledge.
-    // The bank_mappings status = 'REVERSED' means the closure block in
-    // add_pledge_payment will now allow closure (WHERE status = 'ACTIVE' returns 0).
-
     tx.commit().map_err(|e| e.to_string())?;
     Ok(())
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// get_bank_mappings  (unchanged)
+// get_bank_mappings
 // ─────────────────────────────────────────────────────────────────────────────
 pub fn get_bank_mappings(db: &Db) -> Result<Vec<serde_json::Value>, String> {
     let conn = db.0.lock().unwrap();
@@ -303,11 +302,11 @@ pub fn get_bank_mappings(db: &Db) -> Result<Vec<serde_json::Value>, String> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // search_pledges_for_mapping
-// Added index 8 → bank_loan_amount (same subquery as get_pledge_by_number)
 // ─────────────────────────────────────────────────────────────────────────────
 pub fn search_pledges_for_mapping(db: &Db, query: &str) -> Result<Vec<PledgeDetails>, String> {
     let conn = db.0.lock().unwrap();
-    let search_pattern = format!("%{}%", query);
+    
+    let search_pattern = format!("%{}%", query.trim().to_uppercase());
 
     let mut stmt = conn
         .prepare(
@@ -329,7 +328,7 @@ pub fn search_pledges_for_mapping(db: &Db, query: &str) -> Result<Vec<PledgeDeta
                 (SELECT amount FROM bank_mappings WHERE pledge_id = p.id AND status = 'ACTIVE' LIMIT 1) AS bank_loan_amount
             FROM pledges p
             JOIN customers c ON p.customer_id = c.id
-            WHERE p.pledge_no LIKE ?1
+            WHERE UPPER(p.pledge_no) LIKE ?1
               AND p.status != 'CLOSED'
             ORDER BY p.created_at DESC
             LIMIT 10",
@@ -337,7 +336,7 @@ pub fn search_pledges_for_mapping(db: &Db, query: &str) -> Result<Vec<PledgeDeta
         .map_err(|e| e.to_string())?;
 
     let results = stmt
-        .query_map(rusqlite::params![search_pattern], |row| {
+        .query_map(params![search_pattern], |row| {
             Ok(PledgeDetails {
                 pledge_id:        row.get(0)?,
                 customer_name:    row.get(1)?,
@@ -347,7 +346,7 @@ pub fn search_pledges_for_mapping(db: &Db, query: &str) -> Result<Vec<PledgeDeta
                 created_at:       row.get(5)?,
                 is_bank_mapped:   row.get::<_, i64>(6)? == 1,
                 bank_mapping_id:  row.get(7).ok(),
-                bank_loan_amount: row.get(8).ok(), // ← NEW
+                bank_loan_amount: row.get(8).ok(),
             })
         })
         .map_err(|e| e.to_string())?
@@ -358,10 +357,7 @@ pub fn search_pledges_for_mapping(db: &Db, query: &str) -> Result<Vec<PledgeDeta
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// insert_denominations — FIXED VERSION
-// ─────────────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// insert_denominations  (FIXED - comprehensive pattern matching)
+// insert_denominations
 // ─────────────────────────────────────────────────────────────────────────────
 fn insert_denominations(
     tx: &rusqlite::Transaction,
@@ -369,15 +365,13 @@ fn insert_denominations(
     denominations: &Option<Vec<DenominationEntry>>,
     _fallback_amount: f64,
 ) -> Result<(), String> {
-    
-    // ✅ Add debug logging
     eprintln!("📝 insert_denominations called:");
     eprintln!("   fund_tx_id: {}", fund_tx_id);
     eprintln!("   denominations: {:?}", denominations);
     
     match denominations {
         Some(denoms) if !denoms.is_empty() => {
-            eprintln!("   ✅ Found {} denomination entries", denoms.len());
+            eprintln!("   ... Found {} denomination entries", denoms.len());
             
             for entry in denoms {
                 if entry.quantity > 0 {
@@ -393,22 +387,21 @@ fn insert_denominations(
                         params![fund_tx_id, entry.denomination, entry.quantity, amount],
                     )
                     .map_err(|e| {
-                        eprintln!("❌ Failed to insert denomination: {}", e);
+                        eprintln!("... Failed to insert denomination: {}", e);
                         format!("Failed to insert denomination: {}", e)
                     })?;
                 }
             }
-            eprintln!("   ✅ All denominations inserted successfully");
+            eprintln!("   ... All denominations inserted successfully");
         }
         Some(denoms) if denoms.is_empty() => {
-            eprintln!("   ⚠️  Empty denominations vector provided");
+            eprintln!("   ... Empty denominations vector provided");
         }
         None => {
-            eprintln!("   ⚠️  No denominations provided (None)");
+            eprintln!("   ... No denominations provided (None)");
         }
-        // ✅ This covers the &Some(_) case that was missing
         Some(_) => {
-            eprintln!("   ⚠️  Unexpected denomination state");
+            eprintln!("   ... Unexpected denomination state");
         }
     }
     

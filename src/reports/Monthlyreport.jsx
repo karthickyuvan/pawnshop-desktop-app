@@ -1,5 +1,315 @@
-import React, { useState } from 'react';
+// // version 3 
+
+// import React, { useEffect, useState } from "react";
+// import { invoke } from "@tauri-apps/api/core";
+// import { useLanguage } from "../context/LanguageContext"; // ✅ Imported custom language hook
+// import "./MonthlyReport.css";
+
+// function StatCard({ icon, label, value, color }) {
+//   return (
+//     <div className={`stat-card ${color}`}>
+//       <div className="stat-card-icon">{icon}</div>
+//       <div className="stat-card-body">
+//         <div className="stat-card-value">{value}</div>
+//         <div className="stat-card-label">{label}</div>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default function MonthlyReportPage() {
+//   const { t } = useLanguage(); // ✅ Initialized translation hook
+//   const currentMonthStr = new Date().toISOString().slice(0, 7);
+
+//   const [month, setMonth] = useState(currentMonthStr);
+//   const [report, setReport] = useState(null);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+
+//   useEffect(() => {
+//     loadMonthlyReport();
+//   }, []);
+
+//   async function loadMonthlyReport() {
+//     setLoading(true);
+//     setError(null);
+//     try {
+//       const data = await invoke("get_monthly_report_cmd", { month: month });
+//       setReport(data);
+//     } catch (err) {
+//       console.error("Monthly report load error:", err);
+//       setError(err.toString());
+//     }
+//     setLoading(false);
+//   }
+
+//   const formatCurrency = (amt) => {
+//     return `₹${(amt || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+//   };
+
+//   const formatWeight = (grams) => {
+//     return `${Number(grams || 0).toFixed(2)} g`;
+//   };
+
+//   const auctionSurplus = report ? report.total_auction_surplus_deficit : 0;
+//   const totalRevenue = report 
+//     ? (report.interest_collected + report.processing_fees + report.other_income + auctionSurplus) 
+//     : 0;
+//   const netProfit = report ? (totalRevenue - report.expenses) : 0;
+//   const isProfit = netProfit >= 0;
+
+//   return (
+//     <div className="monthly-report-page">
+//       {/* ── Header ── */}
+//       <div className="report-header">
+//         <div>
+//           <h2>{t("monthly_business_report")}</h2>
+//           <p>{t("monthly_business_report_desc")}</p>
+//         </div>
+//         <div className="report-controls">
+//           <input
+//             type="month"
+//             value={month}
+//             max={currentMonthStr}
+//             onChange={(e) => setMonth(e.target.value)}
+//           />
+//           <button onClick={loadMonthlyReport}>{t("load_report_btn", "Load Report")}</button>
+//         </div>
+//       </div>
+
+//       {loading && <p className="loading-text">{t("generating_statement_msg", "Generating Monthly Statement...")}</p>}
+//       {error && <p className="error-text">{t("operation_failed")}: {error}</p>}
+
+//       {report && !loading && (
+//         <>
+//           {/* ── Stat Cards Grid ── */}
+//           <div className="stats-grid">
+//             <StatCard icon="🗂" label={t("total_pockets_lbl", "Total Pockets")} value={report.total_pockets} color="card-blue" />
+//             <StatCard icon="🟢" label={t("active_pockets_lbl", "Active Pockets")} value={report.active_pockets} color="card-green" />
+//             <StatCard icon="🔒" label={t("closed_pockets_lbl", "Closed Pockets")} value={report.closed_pockets} color="card-slate" />
+//             <StatCard icon="🔨" label={t("auctioned_pockets_lbl", "Auctioned Pockets")} value={report.auctioned_pockets} color="card-orange" />
+
+//             <StatCard icon="🏦" label={t("opening_balance")} value={formatCurrency(report.opening_balance)} color="card-blue" />
+//             <StatCard icon="📤" label={t("loans_issued_lbl", "Loans Issued")} value={formatCurrency(report.loans_issued)} color="card-rose" />
+//             <StatCard icon="📥" label={t("loan_repayments_lbl", "Loan Repayments")} value={formatCurrency(report.loan_repayments)} color="card-green" />
+//             <StatCard icon="📅" label={t("todays_interest")} value={formatCurrency(report.interest_collected)} color="card-teal" />
+//             <StatCard icon="🏷️" label={t("processing_fee")} value={formatCurrency(report.processing_fees)} color="card-purple" />
+//             <StatCard icon="💹" label={t("other_income_lbl", "Other Income")} value={formatCurrency(report.other_income)} color="card-yellow" />
+//             <StatCard icon="🧾" label={t("total_expense")} value={formatCurrency(report.expenses)} color="card-orange" />
+//             <StatCard icon="📈" label={t("total_inflow")} value={formatCurrency(report.total_inflow)} color="card-green" />
+//             <StatCard icon="📉" label={t("total_outflow")} value={formatCurrency(report.total_outflow)} color="card-rose" />
+//             <StatCard icon="💰" label={t("net_cash_flow_lbl", "Net Cash Flow")} value={formatCurrency(report.net_cash_flow)} color={report.net_cash_flow >= 0 ? "card-teal" : "card-orange"} />
+//             <StatCard icon="🏧" label={t("cash_in_hand")} value={formatCurrency(report.closing_balance)} color="card-blue" />
+
+//             <StatCard icon="📥" label={t("metal_in_gross_lbl", "Metal In Gross")} value={formatWeight(report.metal_in_gross)} color="card-green" />
+//             <StatCard icon="📥" label={t("metal_in_net_lbl", "Metal In Net")} value={formatWeight(report.metal_in_net)} color="card-teal" />
+//             <StatCard icon="📤" label={t("metal_out_gross_lbl", "Metal Out Gross")} value={formatWeight(report.metal_out_gross)} color="card-orange" />
+//             <StatCard icon="📤" label={t("metal_out_net_lbl", "Metal Out Net")} value={formatWeight(report.metal_out_net)} color="card-rose" />
+//           </div>
+
+//           {/* ── NEW SECTION: Bank Refinancing & Mapping Audit Trail (Highly Visible) ── */}
+//           <div className="pnl-section-card" style={{ marginTop: "30px", borderLeft: "5px solid #2563eb" }}>
+//             <div className="pnl-section-header">
+//               <h3 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+//                 <span>🏛️</span> {t("bank_refinancing_report", "Bank Refinancing & Mapping Summary")}
+//               </h3>
+//               <span className="pnl-period-badge" style={{ backgroundColor: "#dbeafe", color: "#1e40af" }}>
+//                 {t("refinancing_audit_lbl", "Funding & Leverage Ledger")}
+//               </span>
+//             </div>
+//             <p style={{ fontSize: "13px", color: "#555", margin: "-10px 0 20px 0", paddingLeft: "4px" }}>
+//               {t("refinancing_summary_desc", "This panel monitors capital flows received from bank mappings versus funding payments returned to the banks.")}
+//             </p>
+//             <table className="pnl-statement-table">
+//               <thead>
+//                 <tr>
+//                   <th>{t("transaction_type_lbl", "Transaction Category")}</th>
+//                   <th className="text-right">{t("amount_lbl", "Amount")}</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 <tr>
+//                   <td className="pnl-indent-item" style={{ fontWeight: "500" }}>
+//                     📥 {t("bank_loans_received_lbl", "Capital Sourced From Bank Mappings")} (Inflow)
+//                   </td>
+//                   <td className="text-right text-success" style={{ fontWeight: "600" }}>
+//                     {formatCurrency(report.bank_refinance_inflow)}
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td className="pnl-indent-item" style={{ fontWeight: "500" }}>
+//                     📤 {t("bank_repayments_paid_lbl", "Funding Capital Returned to Banks")} (Outflow)
+//                   </td>
+//                   <td className="text-right text-danger" style={{ fontWeight: "600" }}>
+//                     ({formatCurrency(report.bank_refinance_outflow)})
+//                   </td>
+//                 </tr>
+//                 <tr className="pnl-subtotal-row" style={{ backgroundColor: "#f8fafc" }}>
+//                   <td style={{ fontWeight: "700" }}>
+//                     ⚖️ {t("net_refinancing_surplus_lbl", "Net Refinancing Spread / Surplus")}
+//                   </td>
+//                   <td className="text-right" style={{ fontWeight: "700", color: report.bank_refinance_surplus >= 0 ? "#0d9488" : "#ea580c" }}>
+//                     {formatCurrency(report.bank_refinance_surplus)}
+//                   </td>
+//                 </tr>
+//               </tbody>
+//             </table>
+//           </div>
+
+//           {/* ── Section: Profit & Loss Statement ── */}
+//           <div className="pnl-section-card" style={{ marginTop: "30px" }}>
+//             <div className="pnl-section-header">
+//               <h3>{t("profit_loss_report")}</h3>
+//               <span className="pnl-period-badge">{t("statement_period_lbl", "Statement Period")}: {month}</span>
+//             </div>
+//             <table className="pnl-statement-table">
+//               <thead>
+//                 <tr>
+//                   <th>{t("particulars_lbl", "Particulars")}</th>
+//                   <th className="text-right">{t("amount_lbl", "Amount")}</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 <tr className="pnl-group-header">
+//                   <td colSpan="2">{t("operational_revenue_hdr", "Operational Revenue / Income")}</td>
+//                 </tr>
+//                 <tr>
+//                   <td className="pnl-indent-item">{t("interest_collected_lbl", "Interest Collected")}</td>
+//                   <td className="text-right text-success">{formatCurrency(report.interest_collected)}</td>
+//                 </tr>
+//                 <tr>
+//                   <td className="pnl-indent-item">{t("processing_fees_lbl", "Processing Fees")}</td>
+//                   <td className="text-right text-success">{formatCurrency(report.processing_fees)}</td>
+//                 </tr>
+//                 <tr>
+//                   <td className="pnl-indent-item">{t("auction_margin_lbl", "Auction Surplus/Deficit Margin")}</td>
+//                   <td className={`text-right ${auctionSurplus >= 0 ? "text-success" : "text-danger"}`}>
+//                     {formatCurrency(auctionSurplus)}
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td className="pnl-indent-item">{t("misc_income_lbl", "Other Miscellaneous Income")}</td>
+//                   <td className="text-right text-success">{formatCurrency(report.other_income)}</td>
+//                 </tr>
+//                 <tr className="pnl-subtotal-row">
+//                   <td>{t("total_gross_revenue_lbl", "Total Gross Revenue (A)")}</td>
+//                   <td className="text-right font-bold">{formatCurrency(totalRevenue)}</td>
+//                 </tr>
+
+//                 <tr className="pnl-group-header">
+//                   <td colSpan="2">{t("operating_expenses_hdr", "Operating Expenses")}</td>
+//                 </tr>
+//                 <tr>
+//                   <td className="pnl-indent-item">{t("branch_expenses_lbl", "Branch Expenses")}</td>
+//                   <td className="text-right text-danger">({formatCurrency(report.expenses)})</td>
+//                 </tr>
+//                 <tr className="pnl-subtotal-row">
+//                   <td>{t("total_operating_expenses_lbl", "Total Operating Expenses (B)")}</td>
+//                   <td className="text-right text-danger font-bold">({formatCurrency(report.expenses)})</td>
+//                 </tr>
+
+//                 <tr className={`pnl-summary-final-row ${isProfit ? "profit-tint" : "loss-tint"}`}>
+//                   <td><strong>{t("net_profit_loss_lbl", "Net Profit / Loss (A - B)")}</strong></td>
+//                   <td className="text-right">
+//                     <strong className={isProfit ? "text-success" : "text-danger"}>
+//                       {formatCurrency(netProfit)}
+//                     </strong>
+//                   </td>
+//                 </tr>
+//               </tbody>
+//             </table>
+//           </div>
+
+//           {/* ── SECTION: Monthly Auction Items Breakdown ── */}
+//           <div className="metal-movement-section" style={{ marginTop: "30px" }}>
+//             <h3>{t("auctions_realized_this_month_title", "Auctions Realized This Month")} ({report.monthly_auctions?.length || 0})</h3>
+//             <table className="metal-movement-table">
+//               <thead>
+//                 <tr>
+//                   <th>{t("pledge_no")}</th>
+//                   <th>{t("customer")}</th>
+//                   <th>{t("loan_principal_hdr", "Loan Principal")}</th>
+//                   <th>{t("interest_pending_lbl", "Interest Pending")}</th>
+//                   <th>{t("total_outstanding_hdr", "Total Outstanding")}</th>
+//                   <th>{t("auction_amount_label", "Auction Amount")}</th>
+//                   <th>{t("profit_loss_hdr", "PROFIT / LOSS")}</th>
+//                   <th>{t("gross_weight_hdr", "Gross Wt")}</th>
+//                   <th>{t("net_weight_hdr", "Net Wt")}</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {report.monthly_auctions?.map((a, index) => {
+//                   const pureMargin = a.auction_amount - a.total_outstanding;
+//                   return (
+//                     <tr key={index}>
+//                       <td className="font-bold">{a.pledge_no}</td>
+//                       <td>{a.customer_name}</td>
+//                       <td>{formatCurrency(a.loan_amount)}</td>
+//                       <td className="text-danger">{formatCurrency(a.interest_pending)}</td>
+//                       <td className="font-bold">{formatCurrency(a.total_outstanding)}</td>
+//                       <td className="text-success font-bold">{formatCurrency(a.auction_amount)}</td>
+//                       <td>
+//                         <span className={`pnl-badge ${pureMargin >= 0 ? "profit-badge" : "loss-badge"}`}>
+//                           {pureMargin >= 0 ? `${t("profit", "Profit")} ` : `${t("loss", "Loss")} `}
+//                           {formatCurrency(Math.abs(pureMargin))}
+//                         </span>
+//                       </td>
+//                       <td>{formatWeight(a.gross_weight)}</td>
+//                       <td>{formatWeight(a.net_weight)}</td>
+//                     </tr>
+//                   );
+//                 })}
+//                 {report.monthly_auctions?.length === 0 && (
+//                   <tr>
+//                     <td colSpan="9" style={{ textAlign: "center", color: "#888", padding: "15px" }}>
+//                       {t("no_auctions_logged_desc", "No inventory pledges were sent to open public auction during this calendar window.")}
+//                     </td>
+//                   </tr>
+//                 )}
+//               </tbody>
+//             </table>
+//           </div>
+
+//           {/* ── Section: Commodity Table Breakdown ── */}
+//           <div className="metal-movement-section">
+//             <h3>{t("metal_movement_breakdown_title", "Metal Movement Breakdown (Includes Auction Outflows)")}</h3>
+//             <table className="metal-movement-table">
+//               <thead>
+//                 <tr>
+//                   <th>{t("metal")}</th>
+//                   <th>{t("in_gross_tbl_hdr", "In Gross")}</th>
+//                   <th>{t("in_net_tbl_hdr", "In Net")}</th>
+//                   <th>{t("out_gross_tbl_hdr", "Out Gross")}</th>
+//                   <th>{t("out_net_tbl_hdr", "Out Net")}</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {report.metal_movements?.map((m, index) => (
+//                   <tr key={index}>
+//                     <td className="metal-name-cell">{m.metal === "Gold" ? t("gold") : m.metal === "Silver" ? t("silver") : m.metal}</td>
+//                     <td>{formatWeight(m.in_gross)}</td>
+//                     <td>{formatWeight(m.in_net)}</td>
+//                     <td>{formatWeight(m.out_gross)}</td>
+//                     <td>{formatWeight(m.out_net)}</td>
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
+//         </>
+//       )}
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+import React, { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useLanguage } from "../context/LanguageContext";
 import "./MonthlyReport.css";
 
 function StatCard({ icon, label, value, color }) {
@@ -14,145 +324,349 @@ function StatCard({ icon, label, value, color }) {
   );
 }
 
-const MonthlyReport = () => {
-  const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7)
-  );
-  const [monthlyData, setMonthlyData] = useState(null);
-  const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState(null);
+export default function MonthlyReportPage() {
+  const { t } = useLanguage();
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
 
-  const fetchMonthlyReport = async () => {
+  const [month, setMonth] = useState(currentMonthStr);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadMonthlyReport();
+  }, []);
+
+  async function loadMonthlyReport() {
     setLoading(true);
     setError(null);
     try {
-      const data = await invoke('get_monthly_report_cmd', { month: selectedMonth });
-      setMonthlyData(data);
+      const data = await invoke("get_monthly_report_cmd", { month: month });
+      setReport(data);
     } catch (err) {
+      console.error("Monthly report load error:", err);
       setError(err.toString());
-      console.error('Error fetching monthly report:', err);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
+  }
+
+  const formatCurrency = (amt) => {
+    return `₹${(amt || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
   };
 
-  const formatCurrency = (amount) =>
-    new Intl.NumberFormat('en-IN', {
-      style: 'currency', currency: 'INR', minimumFractionDigits: 2,
-    }).format(amount);
-
-  const formatMonth = (monthStr) => {
-    const [year, month] = monthStr.split('-');
-    return new Date(year, month - 1).toLocaleDateString('en-IN', {
-      year: 'numeric', month: 'long',
-    });
+  const formatWeight = (grams) => {
+    return `${Number(grams || 0).toFixed(2)} g`;
   };
 
-  const isProfit = (monthlyData?.net_profit || 0) >= 0;
+  const auctionSurplus = report ? report.total_auction_surplus_deficit : 0;
+  const totalRevenue = report 
+    ? (report.interest_collected + report.processing_fees + report.other_income + auctionSurplus) 
+    : 0;
+  const netProfit = report ? (totalRevenue - report.expenses) : 0;
+  const isProfit = netProfit >= 0;
 
   return (
-    <div className="report-container">
-
+    <div className="monthly-report-page">
       {/* ── Header ── */}
-      <div className="report-header no-print">
+      <div className="report-header">
         <div>
-          <h2>Monthly Report</h2>
-          <p>Monthly financial performance summary</p>
+          <h2>{t("monthly_business_report")}</h2>
+          <p>{t("monthly_business_report_desc")}</p>
         </div>
-        <div className="date-selector">
-          <label htmlFor="month-select">Report Month:</label>
+        <div className="report-controls">
           <input
             type="month"
-            id="month-select"
-            value={selectedMonth}
-            onChange={e => setSelectedMonth(e.target.value)}
-            max={new Date().toISOString().slice(0, 7)}
+            value={month}
+            max={currentMonthStr}
+            onChange={(e) => setMonth(e.target.value)}
           />
-          <button onClick={fetchMonthlyReport} className="btn-generate">
-            Generate Report
-          </button>
+          <button onClick={loadMonthlyReport}>{t("load_report_btn", "Load Report")}</button>
         </div>
       </div>
 
-      {/* ── Loading ── */}
-      {loading && (
-        <div className="loading-spinner">
-          <div className="spinner" />
-          <p>Generating Monthly Report...</p>
-        </div>
-      )}
+      {loading && <p className="loading-text">{t("generating_statement_msg", "Generating Monthly Statement...")}</p>}
+      {error && <p className="error-text">{t("operation_failed")}: {error}</p>}
 
-      {/* ── Error ── */}
-      {error && (
-        <div className="error-message">
-          <h3>Error Loading Report</h3>
-          <p>{error}</p>
-          <button onClick={fetchMonthlyReport}>Retry</button>
-        </div>
-      )}
-
-      {monthlyData && (
-        <div className="report-content">
-
-          {/* ── Stat cards ── */}
+      {report && !loading && (
+        <>
+          {/* ── Stat Cards Grid ── */}
           <div className="stats-grid">
-            <StatCard icon="📤" label="Total Loans Issued"   value={formatCurrency(monthlyData.total_loans_issued)}      color="card-rose"   />
-            <StatCard icon="📥" label="Total Repayments"     value={formatCurrency(monthlyData.total_loan_repayments)}   color="card-green"  />
-            <StatCard icon="📅" label="Interest Collected"   value={formatCurrency(monthlyData.total_interest_collected)} color="card-teal"  />
-            <StatCard icon="🧾" label="Operating Expenses"   value={formatCurrency(monthlyData.total_expenses)}          color="card-orange" />
-            <StatCard
-              icon={isProfit ? "📈" : "📉"}
-              label="Net Profit"
-              value={formatCurrency(monthlyData.net_profit)}
-              color={isProfit ? "card-green" : "card-orange"}
-            />
+            <StatCard icon="🗂" label={t("total_pockets_lbl", "Total Pockets")} value={report.total_pockets} color="card-blue" />
+            <StatCard icon="🟢" label={t("active_pockets_lbl", "Active Pockets")} value={report.active_pockets} color="card-green" />
+            <StatCard icon="🔒" label={t("closed_pockets_lbl", "Closed Pockets")} value={report.closed_pockets} color="card-slate" />
+            <StatCard icon="🔨" label={t("auctioned_pockets_lbl", "Auctioned Pockets")} value={report.auctioned_pockets} color="card-orange" />
+
+            <StatCard icon="🏦" label={t("opening_balance")} value={formatCurrency(report.opening_balance)} color="card-blue" />
+            <StatCard icon="📤" label={t("loans_issued_lbl", "Loans Issued")} value={formatCurrency(report.loans_issued)} color="card-rose" />
+            <StatCard icon="📥" label={t("loan_repayments_lbl", "Loan Repayments")} value={formatCurrency(report.loan_repayments)} color="card-green" />
+            <StatCard icon="📅" label={t("todays_interest")} value={formatCurrency(report.interest_collected)} color="card-teal" />
+            <StatCard icon="🏷️" label={t("processing_fee")} value={formatCurrency(report.processing_fees)} color="card-purple" />
+            <StatCard icon="💹" label={t("other_income_lbl", "Other Income")} value={formatCurrency(report.other_income)} color="card-yellow" />
+            <StatCard icon="🧾" label={t("total_expense")} value={formatCurrency(report.expenses)} color="card-orange" />
+            <StatCard icon="📈" label={t("total_inflow")} value={formatCurrency(report.total_inflow)} color="card-green" />
+            <StatCard icon="📉" label={t("total_outflow")} value={formatCurrency(report.total_outflow)} color="card-rose" />
+            <StatCard icon="💰" label={t("net_cash_flow_lbl", "Net Cash Flow")} value={formatCurrency(report.net_cash_flow)} color={report.net_cash_flow >= 0 ? "card-teal" : "card-orange"} />
+            <StatCard icon="🏧" label={t("cash_in_hand")} value={formatCurrency(report.closing_balance)} color="card-blue" />
+
+            <StatCard icon="📥" label={t("metal_in_gross_lbl", "Metal In Gross")} value={formatWeight(report.metal_in_gross)} color="card-green" />
+            <StatCard icon="📥" label={t("metal_in_net_lbl", "Metal In Net")} value={formatWeight(report.metal_in_net)} color="card-teal" />
+            <StatCard icon="📤" label={t("metal_out_gross_lbl", "Metal Out Gross")} value={formatWeight(report.metal_out_gross)} color="card-orange" />
+            <StatCard icon="📤" label={t("metal_out_net_lbl", "Metal Out Net")} value={formatWeight(report.metal_out_net)} color="card-rose" />
           </div>
 
-          {/* ── P&L Statement ── */}
-          <div className="card">
-            <div className="card-header">
-              <h3>Profit &amp; Loss Statement</h3>
-              <span className="report-date-badge">{formatMonth(monthlyData.month)}</span>
+          {/* ── NEW SECTION: Investor Capital Activity & Financing ── */}
+          <div className="pnl-section-card" style={{ marginTop: "30px", borderLeft: "5px solid #10b981" }}>
+            <div className="pnl-section-header">
+              <h3 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>👥</span> Investor Capital Activity Summary
+              </h3>
+              <span className="pnl-period-badge" style={{ backgroundColor: "#d1fae5", color: "#065f46" }}>
+                Investor Financing Ledger
+              </span>
             </div>
-
-            <div className="flow-section">
-              <h4 className="section-title">
-                <span className="indicator positive" /> Revenue
-              </h4>
-              <div className="flow-item">
-                <span className="item-label">Interest Income</span>
-                <span className="item-value positive">
-                  {formatCurrency(monthlyData.total_interest_collected)}
-                </span>
-              </div>
-            </div>
-
-            <div className="flow-section">
-              <h4 className="section-title">
-                <span className="indicator negative" /> Expenses
-              </h4>
-              <div className="flow-item">
-                <span className="item-label">Operating Expenses</span>
-                <span className="item-value negative">
-                  {formatCurrency(monthlyData.total_expenses)}
-                </span>
-              </div>
-            </div>
-
-            <div className="reconciliation">
-              <div className="recon-row total">
-                <span>Net Profit</span>
-                <span className={isProfit ? "positive" : "negative"}>
-                  {formatCurrency(monthlyData.net_profit)}
-                </span>
-              </div>
-            </div>
+            <p style={{ fontSize: "13px", color: "#555", margin: "-10px 0 20px 0", paddingLeft: "4px" }}>
+              Monitors equity inflows and withdrawals made by active investors alongside total interest payouts.
+            </p>
+            <table className="pnl-statement-table">
+              <thead>
+                <tr>
+                  <th>Investor Activity Category</th>
+                  <th className="text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="pnl-indent-item" style={{ fontWeight: "500" }}>
+                    📥 Investor Investments (Add Fund Inflow)
+                  </td>
+                  <td className="text-right text-success" style={{ fontWeight: "600" }}>
+                    {formatCurrency(report.investor_investments)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="pnl-indent-item" style={{ fontWeight: "500" }}>
+                    📤 Investor Capital Withdrawals (Outflow)
+                  </td>
+                  <td className="text-right text-danger" style={{ fontWeight: "600" }}>
+                    ({formatCurrency(report.investor_withdrawals)})
+                  </td>
+                </tr>
+                <tr>
+                  <td className="pnl-indent-item" style={{ fontWeight: "500" }}>
+                    📤 Investor Interest Payments Paid Out (Expense Outflow)
+                  </td>
+                  <td className="text-right text-danger" style={{ fontWeight: "600" }}>
+                    ({formatCurrency(report.investor_interest_paid)})
+                  </td>
+                </tr>
+                <tr className="pnl-subtotal-row" style={{ backgroundColor: "#f8fafc" }}>
+                  <td style={{ fontWeight: "700" }}>
+                    ⚖️ Net Equity Capital Flow
+                  </td>
+                  <td className="text-right" style={{ fontWeight: "700", color: (report.investor_investments - report.investor_withdrawals - report.investor_interest_paid) >= 0 ? "#0d9488" : "#ea580c" }}>
+                    {formatCurrency(report.investor_investments - report.investor_withdrawals - report.investor_interest_paid)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-        </div>
+          {/* ── Section: Bank Refinancing & Mapping Summary ── */}
+          <div className="pnl-section-card" style={{ marginTop: "30px", borderLeft: "5px solid #2563eb" }}>
+            <div className="pnl-section-header">
+              <h3 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>🏛️</span> {t("bank_refinancing_report", "Bank Refinancing & Mapping Summary")}
+              </h3>
+              <span className="pnl-period-badge" style={{ backgroundColor: "#dbeafe", color: "#1e40af" }}>
+                {t("refinancing_audit_lbl", "Funding & Leverage Ledger")}
+              </span>
+            </div>
+            <p style={{ fontSize: "13px", color: "#555", margin: "-10px 0 20px 0", paddingLeft: "4px" }}>
+              {t("refinancing_summary_desc", "This panel monitors capital flows received from bank mappings versus funding payments returned to the banks.")}
+            </p>
+            <table className="pnl-statement-table">
+              <thead>
+                <tr>
+                  <th>{t("transaction_type_lbl", "Transaction Category")}</th>
+                  <th className="text-right">{t("amount_lbl", "Amount")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="pnl-indent-item" style={{ fontWeight: "500" }}>
+                    📥 {t("bank_loans_received_lbl", "Capital Sourced From Bank Mappings")} (Inflow)
+                  </td>
+                  <td className="text-right text-success" style={{ fontWeight: "600" }}>
+                    {formatCurrency(report.bank_refinance_inflow)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="pnl-indent-item" style={{ fontWeight: "500" }}>
+                    📤 {t("bank_repayments_paid_lbl", "Funding Capital Returned to Banks")} (Outflow)
+                  </td>
+                  <td className="text-right text-danger" style={{ fontWeight: "600" }}>
+                    ({formatCurrency(report.bank_refinance_outflow)})
+                  </td>
+                </tr>
+                <tr className="pnl-subtotal-row" style={{ backgroundColor: "#f8fafc" }}>
+                  <td style={{ fontWeight: "700" }}>
+                    ⚖️ {t("net_refinancing_surplus_lbl", "Net Refinancing Spread / Surplus")}
+                  </td>
+                  <td className="text-right" style={{ fontWeight: "700", color: report.bank_refinance_surplus >= 0 ? "#0d9488" : "#ea580c" }}>
+                    {formatCurrency(report.bank_refinance_surplus)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Section: Profit & Loss Statement ── */}
+          <div className="pnl-section-card" style={{ marginTop: "30px" }}>
+            <div className="pnl-section-header">
+              <h3>{t("profit_loss_report")}</h3>
+              <span className="pnl-period-badge">{t("statement_period_lbl", "Statement Period")}: {month}</span>
+            </div>
+            <table className="pnl-statement-table">
+              <thead>
+                <tr>
+                  <th>{t("particulars_lbl", "Particulars")}</th>
+                  <th className="text-right">{t("amount_lbl", "Amount")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="pnl-group-header">
+                  <td colSpan="2">{t("operational_revenue_hdr", "Operational Revenue / Income")}</td>
+                </tr>
+                <tr>
+                  <td className="pnl-indent-item">{t("interest_collected_lbl", "Interest Collected")}</td>
+                  <td className="text-right text-success">{formatCurrency(report.interest_collected)}</td>
+                </tr>
+                <tr>
+                  <td className="pnl-indent-item">{t("processing_fees_lbl", "Processing Fees")}</td>
+                  <td className="text-right text-success">{formatCurrency(report.processing_fees)}</td>
+                </tr>
+                <tr>
+                  <td className="pnl-indent-item">{t("auction_margin_lbl", "Auction Surplus/Deficit Margin")}</td>
+                  <td className={`text-right ${auctionSurplus >= 0 ? "text-success" : "text-danger"}`}>
+                    {formatCurrency(auctionSurplus)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="pnl-indent-item">{t("misc_income_lbl", "Other Miscellaneous Income")}</td>
+                  <td className="text-right text-success">{formatCurrency(report.other_income)}</td>
+                </tr>
+                <tr className="pnl-subtotal-row">
+                  <td>{t("total_gross_revenue_lbl", "Total Gross Revenue (A)")}</td>
+                  <td className="text-right font-bold">{formatCurrency(totalRevenue)}</td>
+                </tr>
+
+                <tr className="pnl-group-header">
+                  <td colSpan="2">{t("operating_expenses_hdr", "Operating Expenses")}</td>
+                </tr>
+                <tr>
+                  <td className="pnl-indent-item">{t("branch_expenses_lbl", "Branch Expenses")}</td>
+                  <td className="text-right text-danger">({formatCurrency(report.expenses)})</td>
+                </tr>
+                {/* ✅ Added Investor Interest Payout as a Financing Expense */}
+                <tr>
+                  <td className="pnl-indent-item">Investor Interest/Profit Payouts</td>
+                  <td className="text-right text-danger">({formatCurrency(report.investor_interest_paid)})</td>
+                </tr>
+                <tr className="pnl-subtotal-row">
+                  <td>{t("total_operating_expenses_lbl", "Total Operating Expenses (B)")}</td>
+                  <td className="text-right text-danger font-bold">({formatCurrency(report.expenses + report.investor_interest_paid)})</td>
+                </tr>
+
+                <tr className={`pnl-summary-final-row ${isProfit ? "profit-tint" : "loss-tint"}`}>
+                  <td><strong>{t("net_profit_loss_lbl", "Net Profit / Loss (A - B)")}</strong></td>
+                  <td className="text-right">
+                    <strong className={(totalRevenue - (report.expenses + report.investor_interest_paid)) >= 0 ? "text-success" : "text-danger"}>
+                      {formatCurrency(totalRevenue - (report.expenses + report.investor_interest_paid))}
+                    </strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── SECTION: Monthly Auction Items Breakdown ── */}
+          <div className="metal-movement-section" style={{ marginTop: "30px" }}>
+            <h3>{t("auctions_realized_this_month_title", "Auctions Realized This Month")} ({report.monthly_auctions?.length || 0})</h3>
+            <table className="metal-movement-table">
+              <thead>
+                <tr>
+                  <th>{t("pledge_no")}</th>
+                  <th>{t("customer")}</th>
+                  <th>{t("loan_principal_hdr", "Loan Principal")}</th>
+                  <th>{t("interest_pending_lbl", "Interest Pending")}</th>
+                  <th>{t("total_outstanding_hdr", "Total Outstanding")}</th>
+                  <th>{t("auction_amount_label", "Auction Amount")}</th>
+                  <th>{t("profit_loss_hdr", "PROFIT / LOSS")}</th>
+                  <th>{t("gross_weight_hdr", "Gross Wt")}</th>
+                  <th>{t("net_weight_hdr", "Net Wt")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.monthly_auctions?.map((a, index) => {
+                  const pureMargin = a.auction_amount - a.total_outstanding;
+                  return (
+                    <tr key={index}>
+                      <td className="font-bold">{a.pledge_no}</td>
+                      <td>{a.customer_name}</td>
+                      <td>{formatCurrency(a.loan_amount)}</td>
+                      <td className="text-danger">{formatCurrency(a.interest_pending)}</td>
+                      <td className="font-bold">{formatCurrency(a.total_outstanding)}</td>
+                      <td className="text-success font-bold">{formatCurrency(a.auction_amount)}</td>
+                      <td>
+                        <span className={`pnl-badge ${pureMargin >= 0 ? "profit-badge" : "loss-badge"}`}>
+                          {pureMargin >= 0 ? `${t("profit", "Profit")} ` : `${t("loss", "Loss")} `}
+                          {formatCurrency(Math.abs(pureMargin))}
+                        </span>
+                      </td>
+                      <td>{formatWeight(a.gross_weight)}</td>
+                      <td>{formatWeight(a.net_weight)}</td>
+                    </tr>
+                  );
+                })}
+                {report.monthly_auctions?.length === 0 && (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: "center", color: "#888", padding: "15px" }}>
+                      {t("no_auctions_logged_desc", "No inventory pledges were sent to open public auction during this calendar window.")}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Section: Commodity Table Breakdown ── */}
+          <div className="metal-movement-section">
+            <h3>{t("metal_movement_breakdown_title", "Metal Movement Breakdown (Includes Auction Outflows)")}</h3>
+            <table className="metal-movement-table">
+              <thead>
+                <tr>
+                  <th>{t("metal")}</th>
+                  <th>{t("in_gross_tbl_hdr", "In Gross")}</th>
+                  <th>{t("in_net_tbl_hdr", "In Net")}</th>
+                  <th>{t("out_gross_tbl_hdr", "Out Gross")}</th>
+                  <th>{t("out_net_tbl_hdr", "Out Net")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.metal_movements?.map((m, index) => (
+                  <tr key={index}>
+                    <td className="metal-name-cell">{m.metal === "Gold" ? t("gold") : m.metal === "Silver" ? t("silver") : m.metal}</td>
+                    <td>{formatWeight(m.in_gross)}</td>
+                    <td>{formatWeight(m.in_net)}</td>
+                    <td>{formatWeight(m.out_gross)}</td>
+                    <td>{formatWeight(m.out_net)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
-};
-
-export default MonthlyReport;
+}

@@ -1,3 +1,7 @@
+/* ==========================================================================
+   Bank Mapping Layout & Containers
+   ========================================================================== */
+
 .mapping-container {
   padding: 2rem;
   max-width: 1200px;
@@ -62,12 +66,16 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
-/* SEARCH */
+/* ==========================================================================
+   Search & Live Filtering UI
+   ========================================================================== */
+
 .search-section {
   margin-bottom: 1rem;
 }
 
 .search-input-group {
+  position: relative;
   display: flex;
   gap: 0.5rem;
 }
@@ -98,7 +106,58 @@
   cursor: not-allowed;
 }
 
-/* PLEDGE DETAILS */
+/* Auto-complete suggestions list */
+.search-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 90px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.search-result-row {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-result-row:hover {
+  background: #f8fafc;
+}
+
+.result-primary-text {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.result-sub-text {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.badge-inline-status {
+  font-size: 0.7rem;
+  background: #fef3c7;
+  color: #d97706;
+  padding: 2px 8px;
+  borderRadius: 20px;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Pledge Summary Card
+   ========================================================================== */
+
 .pledge-details-card {
   background: #f7fafc;
   border: 2px solid #e2e8f0;
@@ -199,6 +258,35 @@
   font-size: 1.1rem;
 }
 
+.bank-amt-banner {
+  margin-top: 12px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bank-banner-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bank-banner-title {
+  font-weight: 600;
+  color: #92400e;
+  font-size: 0.9rem;
+}
+
+.bank-banner-value {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #b45309;
+}
+
 .details-actions {
   display: flex;
   gap: 0.75rem;
@@ -207,40 +295,10 @@
   border-top: 1px solid #e2e8f0;
 }
 
-.btn-cancel, .btn-confirm {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
+/* ==========================================================================
+   Form Fields & Grids
+   ========================================================================== */
 
-.btn-cancel {
-  background: #fff;
-  color: #718096;
-  border: 1px solid #cbd5e0;
-}
-
-.btn-cancel:hover {
-  background: #f7fafc;
-  border-color: #a0aec0;
-}
-
-.btn-confirm {
-  background: #48bb78;
-  color: white;
-}
-
-.btn-confirm:hover {
-  background: #38a169;
-  transform: translateY(-1px);
-}
-
-/* MAPPING GRID */
 .mapping-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -252,6 +310,14 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.input-group-margined {
+  margin-top: 12px;
+}
+
+.input-group-top-padded {
+  margin-top: 20px;
 }
 
 .input-group label {
@@ -293,7 +359,103 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* CALCULATION SUMMARY */
+.reference-input {
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+/* ==========================================================================
+   Cash Denominations Section
+   ========================================================================== */
+
+.denom-section {
+  margin-top: 1.25rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.denom-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.denom-count-label {
+  color: #16a34a;
+  font-weight: 700;
+  background: #dcfce7;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+
+.denom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.denom-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  transition: border-color 0.15s;
+}
+
+.denom-item:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.denom-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #334155;
+  min-width: 40px;
+}
+
+.denom-input {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  outline: none;
+  font-size: 0.9rem;
+  text-align: center;
+  background: #f8fafc;
+  padding: 4px 6px;
+  color: #1e293b;
+  transition: border-color 0.15s;
+}
+
+.denom-input:focus {
+  border-color: #3b82f6;
+  background: #fff;
+}
+
+.denom-input::-webkit-outer-spin-button,
+.denom-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.denom-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* ==========================================================================
+   Reporting & Financial Math Summaries
+   ========================================================================== */
+
 .calculation-summary {
   background: #f7fafc;
   border: 1px solid #e2e8f0;
@@ -338,7 +500,8 @@
 }
 
 .calc-row .positive {
-  color: #48bb78;
+  color: #16a34a;
+  font-weight: 600;
 }
 
 .calc-row .net-amount {
@@ -362,16 +525,6 @@
   gap: 0.5rem;
 }
 
-.calc-row .profit-amt {
-  color: #2f855a;
-  font-size: 1.15rem;
-}
-
-.calc-row .loss-amt {
-  color: #e53e3e;
-  font-size: 1.15rem;
-}
-
 .method-badge {
   background: #667eea;
   color: white;
@@ -381,37 +534,94 @@
   font-weight: 600;
 }
 
-/* ALERT WARNING */
-.alert-warning {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+.denom-match-status {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
 }
 
-.alert-warning svg {
-  color: #856404;
-  flex-shrink: 0;
-  margin-top: 0.125rem;
+.denom-match-status.matched {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #86efac;
 }
 
-.alert-warning strong {
-  display: block;
-  color: #856404;
-  margin-bottom: 0.25rem;
+.denom-match-status.unmatched {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
 }
 
-.alert-warning p {
-  margin: 0;
-  color: #856404;
-  font-size: 0.9rem;
+/* Red Unmap Ledger Box */
+.unmap-total-box {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 8px;
 }
 
-/* FOOTER */
+.unmap-total-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #9f1239;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.unmap-total-amount {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #e11d48;
+  margin-bottom: 4px;
+}
+
+.unmap-total-sub {
+  font-size: 0.85rem;
+  color: #be123c;
+}
+
+/* ==========================================================================
+   Action & Control Interface Elements
+   ========================================================================== */
+
+.btn-cancel, .btn-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-cancel {
+  background: #fff;
+  color: #718096;
+  border: 1px solid #cbd5e0;
+}
+
+.btn-cancel:hover {
+  background: #f7fafc;
+  border-color: #a0aec0;
+}
+
+.btn-confirm {
+  background: #48bb78;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background: #38a169;
+  transform: translateY(-1px);
+}
+
 .mapping-footer {
   display: flex;
   justify-content: flex-end;
@@ -473,17 +683,71 @@
   cursor: not-allowed;
 }
 
-/* RESPONSIVE */
+/* Modal Popup Overlays */
+.overlay-fixed-confirm {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content-confirm {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 32px;
+  maxWidth: 400px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-text-confirm {
+  margin: 0 0 24px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.modal-actions-confirm {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-confirm-cancel {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.btn-confirm-submit {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
 @media (max-width: 768px) {
   .mapping-container {
     padding: 1rem;
   }
 
-  .mapping-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .details-grid {
+  .mapping-grid, .details-grid, .denom-grid {
     grid-template-columns: 1fr;
   }
 
@@ -509,198 +773,4 @@
   .search-btn {
     width: 100%;
   }
-}
-
-
-/* ─── Add these rules to your existing bankMapping.css ─────────────────────── */
-
-/* Cash Denominations */
-.denominations-wrapper {
-  margin-top: 1.25rem;
-  background: #f0f4f8;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.25rem;
-}
-
-.denom-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.denom-title {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #1e293b;
-}
-
-.denom-total {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #2563eb;
-  background: #dbeafe;
-  padding: 3px 12px;
-  border-radius: 20px;
-}
-
-.denom-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-}
-
-.denom-item {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 0.6rem 0.85rem;
-  transition: border-color 0.15s;
-}
-
-.denom-item:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-}
-
-.denom-label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #334155;
-  min-width: 40px;
-}
-
-.denom-input {
-  width: 60px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  outline: none;
-  font-size: 0.9rem;
-  text-align: center;
-  background: #f8fafc;
-  padding: 4px 6px;
-  color: #1e293b;
-  transition: border-color 0.15s;
-}
-
-.denom-input:focus {
-  border-color: #3b82f6;
-  background: #fff;
-}
-
-/* Hide number input spinners */
-.denom-input::-webkit-outer-spin-button,
-.denom-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.denom-input[type=number] {
-  -moz-appearance: textfield;
-}
-
-/* Reference Number Input */
-.reference-wrapper {
-  margin-top: 1.25rem;
-  background: #f0f4f8;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.25rem;
-}
-
-.reference-input {
-  font-family: monospace;
-  letter-spacing: 0.05em;
-}
-
-/* Calculation summary extras */
-.calc-row .positive {
-  color: #16a34a;
-  font-weight: 600;
-}
-
-
-
-/* ── Unmap Total Box (big red banner) ── */
-.unmap-total-box {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 8px;
-}
-.unmap-total-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #9f1239;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-.unmap-total-amount {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #e11d48;
-  margin-bottom: 4px;
-}
-.unmap-total-sub {
-  font-size: 0.85rem;
-  color: #be123c;
-}
-
-/* ── Unmap Section Blocks ── */
-.unmap-section-block {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px;
-  margin-top: 16px;
-}
-.unmap-section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #374151;
-  margin-bottom: 12px;
-}
-
-/* ── Denom Section inside blocks ── */
-.denom-section { margin-top: 12px; }
-.denom-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #374151;
-  margin-bottom: 10px;
-}
-.denom-count-label {
-  color: #16a34a;
-  font-weight: 700;
-}
-
-/* ── Match Status ── */
-.denom-match-status {
-  margin-top: 10px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-align: center;
-}
-.denom-match-status.matched {
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #86efac;
-}
-.denom-match-status.unmatched {
-  background: #fff1f2;
-  color: #e11d48;
-  border: 1px solid #fecdd3;
 }

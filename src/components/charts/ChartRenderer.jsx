@@ -5,6 +5,7 @@ import {
     Bar,
     PieChart,
     Pie,
+    Cell,
     XAxis,
     YAxis,
     Tooltip,
@@ -13,6 +14,22 @@ import {
     Legend
   } from "recharts";
   
+  const getMetalColor = (metal) => {
+  switch ((metal || "").toUpperCase()) {
+    case "GOLD":
+      return "#FFD700"; // Gold
+
+    case "SILVER":
+      return "#C0C0C0"; // Silver
+
+    case "PLATINUM":
+      return "#E5E4E2"; // Platinum
+
+    default:
+      return "#1976d2";
+  }
+};
+
   export default function ChartRenderer({
     type,
     data,
@@ -58,14 +75,20 @@ import {
           <PieChart>
             <Tooltip />
             <Legend />
-            <Pie
-              data={data}
-              dataKey={dataKey}
-              nameKey={xKey}
-              outerRadius={100}
-              fill="#1976d2"
-              label
-            />
+<Pie
+  data={data}
+  dataKey={dataKey}
+  nameKey={xKey}
+  outerRadius={100}
+  label
+>
+  {data.map((entry, index) => (
+    <Cell
+      key={`cell-${index}`}
+      fill={getMetalColor(entry.metal)}
+    />
+  ))}
+</Pie>
           </PieChart>
         </ResponsiveContainer>
       );

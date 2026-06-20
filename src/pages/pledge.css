@@ -347,7 +347,10 @@
   
   .form-select-clean {
     width: 100%;
-    padding: 9px 34px 9px 12px;
+     min-height: 43px; /* ✅ இதை புதிதாகச் சேர்த்துள்ளோம் (உயரம்) */
+  line-height: 1.5; /* ✅ எழுத்துக்கள் மையத்தில் இருக்க */
+  display: block;   /* ✅ முழு அகலத்தையும் எடுக்க */
+    padding: 8px 34px 9px 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     font-size: 14px;
@@ -1398,3 +1401,18 @@
     border: 1px solid var(--warning-border);
     color: var(--warning);
   }
+
+
+  /* Status Badge Styling for Auctioned Items in Pledges Table */
+.status-badge.auctioned, 
+.badge-status-auctioned {
+  background-color: #eff6ff; /* Soft blue layout background */
+  color: #1e40af;            /* Dark deep blue text accent */
+  border: 1px solid #bfdbfe; /* Clean container borders */
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-block;
+}

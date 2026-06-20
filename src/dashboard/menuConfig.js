@@ -14,6 +14,7 @@ export const ownerMenu = [
       { titleKey: "banks", key: "banks" },
       { titleKey: "bank_mapping", key: "bank-mapping" },
       { titleKey: "fund_management", key: "fund-management" },
+      { titleKey: "investors", key: "investors" },
       { titleKey: "interest_settings", key: "interest-settings" },
       { titleKey: "expense_categories", key: "expense-categories" }
     ],
@@ -49,6 +50,7 @@ export const ownerMenu = [
       { titleKey: "transactions", key: "transactions" },
       { titleKey: "expenses", key: "expenses" },
       { titleKey: "daybook", key: "daybook" },
+       { titleKey: "cash_drawer", key: "cash-drawer" },
     ],
   },
 

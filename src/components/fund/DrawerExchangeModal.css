@@ -1,0 +1,283 @@
+/* src/components/fund/DrawerExchangeModal.css */
+
+.exchange-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45); /* Soft dark overlay */
+  backdrop-filter: blur(4px); /* Modern frosted-glass blur */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: exchangeFadeIn 0.2s ease-out;
+}
+
+.exchange-modal-card {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  animation: exchangeSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exchange-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.exchange-modal-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.exchange-modal-header .close-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.exchange-modal-header .close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.exchange-modal-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 24px;
+}
+
+.exchange-column-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.exchange-column-card.inward {
+  border-top: 4px solid #10b981; /* Green Inward Accent */
+}
+
+.exchange-column-card.outward {
+  border-top: 4px solid #3b82f6; /* Blue Outward Accent */
+}
+
+.exchange-column-title {
+  margin: 0 0 16px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.exchange-denom-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exchange-denom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.exchange-denom-row:hover {
+  background: #f8fafc;
+}
+
+.exchange-denom-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  width: 50px;
+}
+
+.exchange-denom-multiply {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.exchange-denom-input {
+  width: 70px;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  text-align: right;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.exchange-denom-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+/* Remove default numeric spinners */
+.exchange-denom-input::-webkit-outer-spin-button,
+.exchange-denom-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.exchange-denom-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.exchange-denom-equals {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.exchange-denom-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+  text-align: right;
+  width: 80px;
+}
+
+.exchange-column-total {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+}
+
+.exchange-column-total.inward {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.exchange-column-total.outward {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.exchange-column-total span:first-child {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.exchange-column-total span:last-child {
+  font-size: 1.05rem;
+}
+
+.exchange-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.exchange-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.exchange-status-badge.matched {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.exchange-status-badge.mismatched {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.exchange-footer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.exchange-btn-secondary {
+  padding: 8px 18px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.exchange-btn-secondary:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.exchange-btn-primary {
+  padding: 8px 18px;
+  background: #2563eb;
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.exchange-btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.exchange-btn-primary:disabled {
+  background: #94a3b8;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@keyframes exchangeFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes exchangeSlideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

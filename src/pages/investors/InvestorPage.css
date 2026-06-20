@@ -1,0 +1,319 @@
+/* ==========================================================================
+   Investor Page Base Layout
+   ========================================================================== */
+
+.investor-page {
+  padding: 20px;
+}
+
+.investor-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.investor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.investor-search {
+  width: 350px;
+  padding: 10px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+}
+
+.investor-search:focus {
+  border-color: #1d4e89;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.add-investor-btn {
+  background: #1d4e89;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.add-investor-btn:hover {
+  background: #143760;
+}
+
+.edit-btn {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.status-btn {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.toggle-status-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.ledger-btn {
+  background: #0ea5e9;
+  color: white;
+}
+
+.pay-interest-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.pay-interest-btn:hover {
+  background: #1d4ed8;
+}
+
+/* ==========================================================================
+   Tables & Data Containers
+   ========================================================================== */
+
+.table-container {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.due-report-container {
+  margin-top: 12px;
+  margin-bottom: 28px;
+}
+
+.due-report-title {
+  margin-bottom: 16px;
+  color: #1e293b;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead {
+  background: #f8fafc;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 14px;
+  font-weight: 600;
+}
+
+.data-table td {
+  padding: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.data-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.due-report-table {
+  border-left: 4px solid #eab308;
+}
+
+.investor-name-cell {
+  font-weight: 600;
+}
+
+.months-pending {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.interest-due {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   States (Empty / Alerts)
+   ========================================================================== */
+
+.empty-state {
+  text-align: center;
+  color: #667085;
+  padding: 30px;
+}
+
+.report-empty-state {
+  padding: 18px 24px;
+  background: #f8fafc;
+  color: #64748b;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   Modals
+   ========================================================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-card {
+  width: 600px;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-card h3 {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #1d4e89;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.save-btn {
+  background: #1d4e89;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #111827;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Toast Alerts
+   ========================================================================== */
+
+.page-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 360px;
+  animation: toast-in 0.2s ease;
+}
+
+.page-toast--success {
+  background: #e6f4ea;
+  color: #1a6e2e;
+  border: 1px solid #b7dfbf;
+}
+
+.page-toast--error {
+  background: #fdecea;
+  color: #b3261e;
+  border: 1px solid #f5c6c3;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

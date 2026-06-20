@@ -1,11 +1,13 @@
+
 // // src-tauri/src/repledge/service.rs
 
 // use crate::db::connection::Db;
-// use crate::pledge::service::PledgeDetails;
+// // use crate::pledge::service::PledgeDetails;
 // use chrono::Local;
 // use rusqlite::params;
 // use serde::{Deserialize, Serialize};
-
+// // use crate::receipt::generator::generate_next_receipt_no;
+// use crate::pledge::service as pledge_service;
 // // ─────────────────────────────────────────────────────────────────────────────
 // // Structs — matching your PledgeDetails / PledgeListItem naming conventions
 // // ─────────────────────────────────────────────────────────────────────────────
@@ -28,9 +30,9 @@
 //     pub price_per_gram: f64,
 //     pub created_at: String,
 //     pub loan_duration_months: i32,
-//     pub max_repledge_amount: f64,   // full estimated value
+//     pub max_repledge_amount: f64,   // 80% of estimated value (was full value)
 //     pub loan_to_value_pct: f64,     // loan_amount / estimated_value * 100
-//     pub is_overlimit: bool,         // true when loan_to_value_pct > 90%
+//     pub is_overlimit: bool,         // true when loan_to_value_pct > 80%
 //     pub pending_interest: f64,
 //     pub is_bank_mapped: bool,
 // }
@@ -78,65 +80,89 @@
 // }
 
 // // ─────────────────────────────────────────────────────────────────────────────
+// // CONFIGURATION: LTV Limits
+// // ─────────────────────────────────────────────────────────────────────────────
+// const MAX_LTV_PERCENTAGE: f64 = 80.0;  // Maximum allowed LTV for repledge
+// const OVERLIMIT_THRESHOLD: f64 = 80.0; // Threshold to mark as overlimit
+
+// // ─────────────────────────────────────────────────────────────────────────────
 // // Helper: calculate pending interest for a pledge using centralized engine
 // // This ensures consistency with system settings (MONTHLY, SLAB_WITH_15, etc.)
+// // ─────────────────────────────────────────────────────────────────────────────
+// // fn calc_pending_interest(
+// //     db: &Db,
+// //     pledge_id: i64,
+// //     loan_amount: f64,
+// //     interest_rate: f64,
+// //     created_at: &str,
+// // ) -> Result<f64, String> {
+// //     // Get system settings
+// //     let settings = crate::settings::service::get_system_settings(db)?;
+    
+// //     // Build a minimal PledgeDetails struct for the interest engine
+// //     let pledge_details = PledgeDetails {
+// //         pledge_no: String::new(),
+// //         receipt_number: String::new(),
+// //         pocket_number: None,
+// //         status: String::from("ACTIVE"),
+// //         created_at: created_at.to_string(),
+// //         duration_months: 0,
+// //         customer_code: String::new(),
+// //         customer_name: String::new(),
+// //         relation_type: None,
+// //         relation_name: None,
+// //         phone: String::new(),
+// //         address: String::new(),
+// //         photo_path: None,
+// //         loan_type: String::new(),
+// //         scheme_name: String::new(),
+// //         interest_rate,
+// //         price_per_gram: 0.0,
+// //         principal_amount: loan_amount,
+// //         total_gross_weight: 0.0,
+// //         total_net_weight: 0.0,
+// //         total_value: 0.0,
+// //         is_bank_mapped: false,
+// //         parked_interest: 0.0,
+// //         last_interest_date: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+// //     };
+
+// //     // Calculate total interest paid so far
+// //     let conn = db.0.lock().unwrap();
+// //     let interest_paid: f64 = conn
+// //         .query_row(
+// //             "SELECT COALESCE(SUM(amount), 0.0) FROM pledge_payments
+// //              WHERE pledge_id = ?1 AND payment_type = 'INTEREST' AND status = 'COMPLETED'",
+// //             params![pledge_id],
+// //             |row| row.get(0),
+// //         )
+// //         .unwrap_or(0.0);
+// //     drop(conn);
+
+// //     // Use the centralized interest engine
+// //     let breakdown = crate::interest::engine::calculate_interest(
+// //         &pledge_details,
+// //         &settings,
+// //         interest_paid,
+// //     );
+
+// //     Ok(breakdown.interest_pending)
+// // }
+// // ─────────────────────────────────────────────────────────────────────────────
+// // Helper: calculate pending interest for a pledge using centralized engine
+// // ✅ CORRECTED: This now calls the main get_single_pledge function.
 // // ─────────────────────────────────────────────────────────────────────────────
 // fn calc_pending_interest(
 //     db: &Db,
 //     pledge_id: i64,
-//     loan_amount: f64,
-//     interest_rate: f64,
-//     created_at: &str,
 // ) -> Result<f64, String> {
-//     // Get system settings
-//     let settings = crate::settings::service::get_system_settings(db)?;
     
-//     // Build a minimal PledgeDetails struct for the interest engine
-//     let pledge_details = PledgeDetails {
-//         pledge_no: String::new(),
-//         status: String::from("ACTIVE"),
-//         created_at: created_at.to_string(),
-//         duration_months: 0,
-//         customer_code: String::new(),
-//         customer_name: String::new(),
-//         relation_type: None,
-//     relation_name: None,
-//         phone: String::new(),
-//         address: String::new(),
-//         photo_path: None,
-//         loan_type: String::new(),
-//         scheme_name: String::new(),
-//         interest_rate,
-//         price_per_gram: 0.0,
-//         principal_amount: loan_amount,
-//         total_gross_weight: 0.0,
-//         total_net_weight: 0.0,
-//         total_value: 0.0,
-//         is_bank_mapped: false,
-//     };
+//     // Call the single source of truth to get the pledge's real-time financial state
+//     let pledge_response = pledge_service::get_single_pledge(db, pledge_id)?;
 
-//     // Calculate total interest paid so far
-//     let conn = db.0.lock().unwrap();
-//     let interest_paid: f64 = conn
-//         .query_row(
-//             "SELECT COALESCE(SUM(amount), 0.0) FROM pledge_payments
-//              WHERE pledge_id = ?1 AND payment_type = 'INTEREST' AND status = 'COMPLETED'",
-//             params![pledge_id],
-//             |row| row.get(0),
-//         )
-//         .unwrap_or(0.0);
-//     drop(conn);
-
-//     // Use the centralized interest engine
-//     let breakdown = crate::interest::engine::calculate_interest(
-//         &pledge_details,
-//         &settings,
-//         interest_paid,
-//     );
-
-//     Ok(breakdown.interest_pending)
+//     // Return the perfectly calculated pending interest
+//     Ok(pledge_response.interest_pending)
 // }
-
 // // ─────────────────────────────────────────────────────────────────────────────
 // // get_eligible_pledges_for_repledge
 // // Returns ACTIVE pledges that are NOT bank-mapped, supporting live search
@@ -228,18 +254,20 @@
 //             price_per_gram, created_at, loan_duration_months, is_bank_mapped_i64,
 //         ) = row_data;
 
-//         let max_repledge_amount = total_estimated_value.floor();
+//         // ✅ CRITICAL FIX: Max repledge amount is 80% of estimated value
+//         let max_repledge_amount = (total_estimated_value * MAX_LTV_PERCENTAGE / 100.0).floor();
+        
 //         let loan_to_value_pct = if total_estimated_value > 0.0 {
 //             (loan_amount / total_estimated_value) * 100.0
 //         } else {
 //             0.0
 //         };
-//         let is_overlimit = loan_to_value_pct > 80.0;
+        
+//         // ✅ CRITICAL FIX: Mark as overlimit if LTV > 80%
+//         let is_overlimit = loan_to_value_pct > OVERLIMIT_THRESHOLD;
         
 //         // Use centralized interest calculation
-//         let pending_interest = calc_pending_interest(
-//             db, id, loan_amount, interest_rate, &created_at,
-//         )?;
+//         let pending_interest = calc_pending_interest(db, id)?;
 
 //         list.push(RepledgeListItem {
 //             id,
@@ -338,13 +366,17 @@
 //         price_per_gram, created_at, loan_duration_months, is_bank_mapped_i64,
 //     ) = pledge;
 
-//     let max_repledge_amount = total_estimated_value.floor();
+//     // ✅ CRITICAL FIX: Max repledge amount is 80% of estimated value
+//     let max_repledge_amount = (total_estimated_value * MAX_LTV_PERCENTAGE / 100.0).floor();
+    
 //     let loan_to_value_pct = if total_estimated_value > 0.0 {
 //         (loan_amount / total_estimated_value) * 100.0
 //     } else {
 //         0.0
 //     };
-//     let is_overlimit = loan_to_value_pct > 80.0;
+    
+//     // ✅ CRITICAL FIX: Mark as overlimit if LTV > 80%
+//     let is_overlimit = loan_to_value_pct > OVERLIMIT_THRESHOLD;
 
 //     // ── Items — same JOIN as get_single_pledge ───────────────────────────────
 //     let mut stmt = conn
@@ -387,9 +419,7 @@
 //     drop(conn);
 
 //     // Use centralized interest calculation
-//     let pending_interest = calc_pending_interest(
-//         db, id, loan_amount, interest_rate, &created_at,
-//     )?;
+//     let pending_interest = calc_pending_interest(db, id)?;
 
 //     let pledge_item = RepledgeListItem {
 //         id,
@@ -423,16 +453,7 @@
 
 // // ─────────────────────────────────────────────────────────────────────────────
 // // execute_repledge
-// // In one transaction:
-// //   1. Guard: reject if bank-mapped (same guard as add_pledge_payment)
-// //   2. Calculate pending interest using centralized engine
-// //   3. Insert INTEREST + CLOSURE payments on old pledge
-// //   4. Set old pledge status = 'CLOSED'
-// //   5. Generate new pledge_no
-// //   6. INSERT new pledge row
-// //   7. Copy pledge_items to new pledge
-// //   8. Record fund_transaction for processing fee and first interest
-// //   9. Record fund_transaction for cash difference
+// // ✅ CRITICAL FIX: Added LTV validation to prevent repledging above 80%
 // // ─────────────────────────────────────────────────────────────────────────────
 // pub fn execute_repledge(
 //     db: &Db,
@@ -452,8 +473,8 @@
 //         old_gross,
 //         old_net,
 //         old_estimated,
-//         old_created_at,
-//         old_interest_rate,
+//         _old_created_at,
+//         _old_interest_rate,
 //     ) = tx
 //         .query_row(
 //             "SELECT
@@ -487,32 +508,38 @@
 //         )
 //         .map_err(|e| format!("Old pledge not found or not active: {}", e))?;
 
+//     // ✅ CRITICAL VALIDATION: Check if new loan amount exceeds 80% LTV
+//     let max_allowed_amount = (old_estimated * MAX_LTV_PERCENTAGE / 100.0).floor();
+//     let new_ltv = if old_estimated > 0.0 {
+//         (req.new_loan_amount / old_estimated) * 100.0
+//     } else {
+//         0.0
+//     };
 
-        
+//     if req.new_loan_amount > max_allowed_amount {
+//         return Err(format!(
+//             "❌ Repledge rejected: New loan amount ₹{:.2} exceeds maximum allowed ₹{:.2} ({}% of estimated value ₹{:.2}). Current LTV would be {:.1}%.",
+//             req.new_loan_amount,
+//             max_allowed_amount,
+//             MAX_LTV_PERCENTAGE,
+//             old_estimated,
+//             new_ltv
+//         ));
+//     }
 
-//     // ── 2. Calculate pending interest using centralized engine ───────────────
-//     // IMPORTANT: Interest should be calculated on the CURRENT outstanding principal,
-//     // not the original loan amount. If customer has made principal payments,
-//     // we need to account for that.
+//     // ── 2. Calculate pending interest ───────────────
 //     drop(tx);
 //     drop(conn);
     
-//     let pending_interest = calc_pending_interest(
-//         db, req.old_pledge_id, old_loan_amount, old_interest_rate, &old_created_at,
-//     )?;
+//     let pending_interest = calc_pending_interest(db, req.old_pledge_id)?;
 
 //     let mut conn = db.0.lock().unwrap();
 //     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
 //     // ── 3. Close old pledge: write INTEREST payment if any pending ───────────
-//     let year = Local::now().format("%Y").to_string();
-
 //     if pending_interest > 0.0 {
-//         let receipt_no = format!(
-//             "RCP-{}-{}-INT",
-//             year,
-//             Local::now().timestamp_subsec_millis()
-//         );
+//         let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+        
 //         tx.execute(
 //             "INSERT INTO pledge_payments
 //                 (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by)
@@ -520,14 +547,13 @@
 //             params![
 //                 req.old_pledge_id,
 //                 req.payment_method,
-//                 req.reference.clone().unwrap_or(receipt_no),
+//                 receipt_no.clone(),
 //                 pending_interest,
 //                 req.created_by
 //             ],
 //         )
 //         .map_err(|e| e.to_string())?;
 
-//         // Fund transaction: interest income (ADD)
 //         tx.execute(
 //             "INSERT INTO fund_transactions
 //                 (type, total_amount, module_type, module_id, reference, payment_method, created_by)
@@ -535,7 +561,7 @@
 //             params![
 //                 pending_interest,
 //                 req.old_pledge_id,
-//                 format!("Interest settled on repledge of {}", old_pledge_no),
+//                 format!("Interest settled on repledge of {} - {}", old_pledge_no, receipt_no),
 //                 req.payment_method,
 //                 req.created_by
 //             ],
@@ -543,12 +569,9 @@
 //         .map_err(|e| e.to_string())?;
 //     }
 
-//     // ── 4. CLOSURE payment on old pledge (principal) ─────────────────────────
-//     let closure_receipt = format!(
-//         "RCP-{}-{}-CLO",
-//         year,
-//         Local::now().timestamp_subsec_millis()
-//     );
+//     // ── 4. CLOSURE payment on old pledge ─────────────────────────
+//     let closure_receipt = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+    
 //     tx.execute(
 //         "INSERT INTO pledge_payments
 //             (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by)
@@ -556,7 +579,7 @@
 //         params![
 //             req.old_pledge_id,
 //             req.payment_method,
-//             req.reference.clone().unwrap_or(closure_receipt),
+//             closure_receipt,
 //             old_loan_amount,
 //             req.created_by
 //         ],
@@ -571,6 +594,7 @@
 //     .map_err(|e| e.to_string())?;
 
 //     // ── 6. Generate new pledge_no ─────────────────────────────────────────────
+//     let year = Local::now().format("%Y").to_string();
 //     let pattern = format!("PLG-{}-%", year);
 //     let last_no: rusqlite::Result<String> = tx.query_row(
 //         "SELECT pledge_no FROM pledges
@@ -590,18 +614,22 @@
 //         Err(_) => 1,
 //     };
 
-//     let new_pledge_no = format!("PLG-{}-{:05}", year, next_seq);
+//     let new_pledge_no = format!("PLG-{}-{:05}", year, next_seq);  // ✅ Move this OUTSIDE the block
 
-//     // ── 7. INSERT new pledge ──────────────────────────────────────────────────
+//     // ── 7. Generate receipt for new pledge ────────────────────────────────────
+//     let new_pledge_receipt = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+
+//     // ── 8. INSERT new pledge ──────────────────────────────────────────────────
 //     tx.execute(
 //         "INSERT INTO pledges (
-//             pledge_no, customer_id, scheme_name, loan_type, interest_rate,
+//             pledge_no, receipt_number, customer_id, scheme_name, loan_type, interest_rate,
 //             loan_duration_months, price_per_gram,
 //             total_gross_weight, total_net_weight,
 //             total_estimated_value, loan_amount, created_by
-//          ) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
+//          ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
 //         params![
-//             new_pledge_no,
+//             new_pledge_no.clone(),  // ✅ Use clone here
+//             new_pledge_receipt,
 //             old_customer_id,
 //             req.new_scheme_name,
 //             old_loan_type,
@@ -619,7 +647,7 @@
 
 //     let new_pledge_id = tx.last_insert_rowid();
 
-//     // ── 8. Copy pledge_items ──────────────────────────────────────────────────
+//     // ── 9. Copy pledge_items ──────────────────────────────────────────────────
 //     tx.execute(
 //         "INSERT INTO pledge_items
 //             (pledge_id, jewellery_type_id, purity, gross_weight, net_weight, item_value, image_path)
@@ -630,7 +658,7 @@
 //     )
 //     .map_err(|e| e.to_string())?;
 
-//     // ── 9. Processing Fee for new pledge (income) ────────────────────────────
+//     // ── 10. Processing Fee for new pledge ────────────────────────────────────
 //     if req.processing_fee_amount > 0.01 {
 //         tx.execute(
 //             "INSERT INTO fund_transactions
@@ -639,7 +667,7 @@
 //             params![
 //                 req.processing_fee_amount,
 //                 new_pledge_id,
-//                 format!("Processing Fee {}", new_pledge_no),
+//                 format!("Processing Fee {}", new_pledge_no.clone()),  // ✅ Use clone
 //                 req.payment_method,
 //                 req.created_by
 //             ],
@@ -647,13 +675,9 @@
 //         .map_err(|e| e.to_string())?;
 //     }
 
-//     // ── 10. First Interest for new pledge ────────────────────────────────────
+//     // ── 11. First Interest for new pledge ────────────────────────────────────
 //     if req.first_interest_amount > 0.01 {
-//         let interest_receipt = format!(
-//             "INIT-{}-{}",
-//             year,
-//             new_pledge_no
-//         );
+//         // ✅ Reuse new_pledge_receipt — same receipt number as the new pledge itself
 //         tx.execute(
 //             "INSERT INTO pledge_payments
 //                 (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by)
@@ -661,13 +685,13 @@
 //             params![
 //                 new_pledge_id,
 //                 req.payment_method,
-//                 req.reference.clone().unwrap_or(interest_receipt),
+//                 new_pledge_receipt,               
 //                 req.first_interest_amount,
 //                 req.created_by
 //             ],
 //         )
 //         .map_err(|e| e.to_string())?;
-
+ 
 //         tx.execute(
 //             "INSERT INTO fund_transactions
 //                 (type, total_amount, module_type, module_id, reference, payment_method, created_by)
@@ -675,7 +699,7 @@
 //             params![
 //                 req.first_interest_amount,
 //                 new_pledge_id,
-//                 format!("First Interest {}", new_pledge_no),
+//                 format!("First Interest {}", new_pledge_receipt),   // ← same receipt
 //                 req.payment_method,
 //                 req.created_by
 //             ],
@@ -683,7 +707,7 @@
 //         .map_err(|e| e.to_string())?;
 //     }
 
-//     // ── 11. Fund transaction for cash difference ──────────────────────────────
+//     // ── 12. Fund transaction for cash difference ──────────────────────────────
 //     let cash_diff = req.new_loan_amount - old_loan_amount;
 
 //     if cash_diff.abs() > 0.01 {
@@ -697,7 +721,7 @@
 //                     params![
 //                         cash_diff,
 //                         new_pledge_id,
-//                         format!("Repledge extra disbursement: {} → {}", old_pledge_no, new_pledge_no),
+//                         format!("Repledge extra disbursement: {} → {}", old_pledge_no, new_pledge_no.clone()),  // ✅ Use clone
 //                         req.created_by
 //                     ],
 //                 )
@@ -705,7 +729,6 @@
 
 //                 let fund_tx_id = tx.last_insert_rowid();
 
-//                 // Record denominations if provided
 //                 if let Some(ref denoms) = req.denominations {
 //                     for (note, qty) in denoms {
 //                         if *qty > 0 {
@@ -728,7 +751,7 @@
 //                     params![
 //                         cash_diff,
 //                         new_pledge_id,
-//                         format!("Repledge extra disbursement: {} → {}", old_pledge_no, new_pledge_no),
+//                         format!("Repledge extra disbursement: {} → {}", old_pledge_no, new_pledge_no.clone()),  // ✅ Use clone
 //                         req.payment_method,
 //                         req.created_by
 //                     ],
@@ -745,7 +768,7 @@
 //                     params![
 //                         cash_diff.abs(),
 //                         req.old_pledge_id,
-//                         format!("Repledge shortfall collected: {} → {}", old_pledge_no, new_pledge_no),
+//                         format!("Repledge shortfall collected: {} → {}", old_pledge_no, new_pledge_no.clone()),  // ✅ Use clone
 //                         req.created_by
 //                     ],
 //                 )
@@ -753,7 +776,6 @@
 
 //                 let fund_tx_id = tx.last_insert_rowid();
 
-//                 // Record denominations if provided
 //                 if let Some(ref denoms) = req.denominations {
 //                     for (note, qty) in denoms {
 //                         if *qty > 0 {
@@ -776,7 +798,7 @@
 //                     params![
 //                         cash_diff.abs(),
 //                         req.old_pledge_id,
-//                         format!("Repledge shortfall collected: {} → {}", old_pledge_no, new_pledge_no),
+//                         format!("Repledge shortfall collected: {} → {}", old_pledge_no, new_pledge_no.clone()),  // ✅ Use clone
 //                         req.payment_method,
 //                         req.created_by
 //                     ],
@@ -790,7 +812,7 @@
 
 //     Ok(RepledgeResult {
 //         old_pledge_no,
-//         new_pledge_no,
+//         new_pledge_no,  // ✅ Now in scope
 //         new_pledge_id,
 //         cash_difference: cash_diff,
 //         pending_interest_settled: pending_interest,
@@ -800,14 +822,17 @@
 
 
 
+
+
+
+
 // src-tauri/src/repledge/service.rs
 
 use crate::db::connection::Db;
-use crate::pledge::service::PledgeDetails;
 use chrono::Local;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
-use crate::receipt::generator::generate_next_receipt_no;
+use crate::pledge::service as pledge_service;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Structs — matching your PledgeDetails / PledgeListItem naming conventions
@@ -831,7 +856,7 @@ pub struct RepledgeListItem {
     pub price_per_gram: f64,
     pub created_at: String,
     pub loan_duration_months: i32,
-    pub max_repledge_amount: f64,   // 80% of estimated value (was full value)
+    pub max_repledge_amount: f64,   // 80% of estimated value
     pub loan_to_value_pct: f64,     // loan_amount / estimated_value * 100
     pub is_overlimit: bool,         // true when loan_to_value_pct > 80%
     pub pending_interest: f64,
@@ -888,64 +913,13 @@ const OVERLIMIT_THRESHOLD: f64 = 80.0; // Threshold to mark as overlimit
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: calculate pending interest for a pledge using centralized engine
-// This ensures consistency with system settings (MONTHLY, SLAB_WITH_15, etc.)
 // ─────────────────────────────────────────────────────────────────────────────
 fn calc_pending_interest(
     db: &Db,
     pledge_id: i64,
-    loan_amount: f64,
-    interest_rate: f64,
-    created_at: &str,
 ) -> Result<f64, String> {
-    // Get system settings
-    let settings = crate::settings::service::get_system_settings(db)?;
-    
-    // Build a minimal PledgeDetails struct for the interest engine
-    let pledge_details = PledgeDetails {
-        pledge_no: String::new(),
-        receipt_number: String::new(),
-        pocket_number: None,
-        status: String::from("ACTIVE"),
-        created_at: created_at.to_string(),
-        duration_months: 0,
-        customer_code: String::new(),
-        customer_name: String::new(),
-        relation_type: None,
-        relation_name: None,
-        phone: String::new(),
-        address: String::new(),
-        photo_path: None,
-        loan_type: String::new(),
-        scheme_name: String::new(),
-        interest_rate,
-        price_per_gram: 0.0,
-        principal_amount: loan_amount,
-        total_gross_weight: 0.0,
-        total_net_weight: 0.0,
-        total_value: 0.0,
-        is_bank_mapped: false,
-    };
-
-    // Calculate total interest paid so far
-    let conn = db.0.lock().unwrap();
-    let interest_paid: f64 = conn
-        .query_row(
-            "SELECT COALESCE(SUM(amount), 0.0) FROM pledge_payments
-             WHERE pledge_id = ?1 AND payment_type = 'INTEREST' AND status = 'COMPLETED'",
-            params![pledge_id],
-            |row| row.get(0),
-        )
-        .unwrap_or(0.0);
-    drop(conn);
-
-    // Use the centralized interest engine
-    let breakdown = crate::interest::engine::calculate_interest(
-        &pledge_details,
-        &settings,
-        interest_paid,
-    );
-
-    Ok(breakdown.interest_pending)
+    let pledge_response = pledge_service::get_single_pledge(db, pledge_id)?;
+    Ok(pledge_response.interest_pending)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1021,7 +995,6 @@ pub fn get_eligible_pledges_for_repledge(
         })
         .map_err(|e| e.to_string())?;
 
-    // Collect rows into a Vec before dropping connections
     let mut collected_rows = Vec::new();
     for row in rows {
         collected_rows.push(row.map_err(|e| e.to_string())?);
@@ -1039,7 +1012,6 @@ pub fn get_eligible_pledges_for_repledge(
             price_per_gram, created_at, loan_duration_months, is_bank_mapped_i64,
         ) = row_data;
 
-        // ✅ CRITICAL FIX: Max repledge amount is 80% of estimated value
         let max_repledge_amount = (total_estimated_value * MAX_LTV_PERCENTAGE / 100.0).floor();
         
         let loan_to_value_pct = if total_estimated_value > 0.0 {
@@ -1048,13 +1020,9 @@ pub fn get_eligible_pledges_for_repledge(
             0.0
         };
         
-        // ✅ CRITICAL FIX: Mark as overlimit if LTV > 80%
         let is_overlimit = loan_to_value_pct > OVERLIMIT_THRESHOLD;
         
-        // Use centralized interest calculation
-        let pending_interest = calc_pending_interest(
-            db, id, loan_amount, interest_rate, &created_at,
-        )?;
+        let pending_interest = calc_pending_interest(db, id)?;
 
         list.push(RepledgeListItem {
             id,
@@ -1086,7 +1054,6 @@ pub fn get_eligible_pledges_for_repledge(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // get_repledge_detail
-// Full pledge info + jewellery items — same JOIN pattern as get_single_pledge
 // ─────────────────────────────────────────────────────────────────────────────
 pub fn get_repledge_detail(
     db: &Db,
@@ -1094,7 +1061,6 @@ pub fn get_repledge_detail(
 ) -> Result<RepledgeDetailResponse, String> {
     let conn = db.0.lock().unwrap();
 
-    // ── Pledge row ──────────────────────────────────────────────────────────
     let pledge = conn
         .query_row(
             "SELECT
@@ -1153,7 +1119,6 @@ pub fn get_repledge_detail(
         price_per_gram, created_at, loan_duration_months, is_bank_mapped_i64,
     ) = pledge;
 
-    // ✅ CRITICAL FIX: Max repledge amount is 80% of estimated value
     let max_repledge_amount = (total_estimated_value * MAX_LTV_PERCENTAGE / 100.0).floor();
     
     let loan_to_value_pct = if total_estimated_value > 0.0 {
@@ -1162,10 +1127,8 @@ pub fn get_repledge_detail(
         0.0
     };
     
-    // ✅ CRITICAL FIX: Mark as overlimit if LTV > 80%
     let is_overlimit = loan_to_value_pct > OVERLIMIT_THRESHOLD;
 
-    // ── Items — same JOIN as get_single_pledge ───────────────────────────────
     let mut stmt = conn
         .prepare(
             "SELECT
@@ -1205,10 +1168,7 @@ pub fn get_repledge_detail(
     drop(stmt);
     drop(conn);
 
-    // Use centralized interest calculation
-    let pending_interest = calc_pending_interest(
-        db, id, loan_amount, interest_rate, &created_at,
-    )?;
+    let pending_interest = calc_pending_interest(db, id)?;
 
     let pledge_item = RepledgeListItem {
         id,
@@ -1242,7 +1202,6 @@ pub fn get_repledge_detail(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // execute_repledge
-// ✅ CRITICAL FIX: Added LTV validation to prevent repledging above 80%
 // ─────────────────────────────────────────────────────────────────────────────
 pub fn execute_repledge(
     db: &Db,
@@ -1262,8 +1221,8 @@ pub fn execute_repledge(
         old_gross,
         old_net,
         old_estimated,
-        old_created_at,
-        old_interest_rate,
+        _old_created_at,
+        _old_interest_rate,
     ) = tx
         .query_row(
             "SELECT
@@ -1297,7 +1256,6 @@ pub fn execute_repledge(
         )
         .map_err(|e| format!("Old pledge not found or not active: {}", e))?;
 
-    // ✅ CRITICAL VALIDATION: Check if new loan amount exceeds 80% LTV
     let max_allowed_amount = (old_estimated * MAX_LTV_PERCENTAGE / 100.0).floor();
     let new_ltv = if old_estimated > 0.0 {
         (req.new_loan_amount / old_estimated) * 100.0
@@ -1320,16 +1278,15 @@ pub fn execute_repledge(
     drop(tx);
     drop(conn);
     
-    let pending_interest = calc_pending_interest(
-        db, req.old_pledge_id, old_loan_amount, old_interest_rate, &old_created_at,
-    )?;
+    let pending_interest = calc_pending_interest(db, req.old_pledge_id)?;
 
     let mut conn = db.0.lock().unwrap();
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
     // ── 3. Close old pledge: write INTEREST payment if any pending ───────────
     if pending_interest > 0.0 {
-        let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+        // Pass None to use the current calendar year for real-time interest settlement
+        let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx, None)?;
         
         tx.execute(
             "INSERT INTO pledge_payments
@@ -1361,7 +1318,8 @@ pub fn execute_repledge(
     }
 
     // ── 4. CLOSURE payment on old pledge ─────────────────────────
-    let closure_receipt = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+    // Pass None to use the current calendar year for real-time closure settlement
+    let closure_receipt = crate::receipt::generator::generate_next_receipt_no(&tx, None)?;
     
     tx.execute(
         "INSERT INTO pledge_payments
@@ -1405,10 +1363,11 @@ pub fn execute_repledge(
         Err(_) => 1,
     };
 
-    let new_pledge_no = format!("PLG-{}-{:05}", year, next_seq);  // ✅ Move this OUTSIDE the block
+    let new_pledge_no = format!("PLG-{}-{:05}", year, next_seq);
 
     // ── 7. Generate receipt for new pledge ────────────────────────────────────
-    let new_pledge_receipt = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+    // Pass None to use the current calendar year for real-time receipt numbering
+    let new_pledge_receipt = crate::receipt::generator::generate_next_receipt_no(&tx, None)?;
 
     // ── 8. INSERT new pledge ──────────────────────────────────────────────────
     tx.execute(
@@ -1419,7 +1378,7 @@ pub fn execute_repledge(
             total_estimated_value, loan_amount, created_by
          ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
         params![
-            new_pledge_no.clone(),  // ✅ Use clone here
+            new_pledge_no.clone(),
             new_pledge_receipt,
             old_customer_id,
             req.new_scheme_name,
@@ -1458,7 +1417,7 @@ pub fn execute_repledge(
             params![
                 req.processing_fee_amount,
                 new_pledge_id,
-                format!("Processing Fee {}", new_pledge_no.clone()),  // ✅ Use clone
+                format!("Processing Fee {}", new_pledge_no.clone()),
                 req.payment_method,
                 req.created_by
             ],
@@ -1468,7 +1427,6 @@ pub fn execute_repledge(
 
     // ── 11. First Interest for new pledge ────────────────────────────────────
     if req.first_interest_amount > 0.01 {
-        // ✅ Reuse new_pledge_receipt — same receipt number as the new pledge itself
         tx.execute(
             "INSERT INTO pledge_payments
                 (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by)
@@ -1490,7 +1448,7 @@ pub fn execute_repledge(
             params![
                 req.first_interest_amount,
                 new_pledge_id,
-                format!("First Interest {}", new_pledge_receipt),   // ← same receipt
+                format!("First Interest {}", new_pledge_receipt),
                 req.payment_method,
                 req.created_by
             ],
@@ -1503,7 +1461,6 @@ pub fn execute_repledge(
 
     if cash_diff.abs() > 0.01 {
         if cash_diff > 0.0 {
-            // Extra disbursement to customer
             if req.payment_method == "CASH" {
                 tx.execute(
                     "INSERT INTO fund_transactions
@@ -1512,7 +1469,7 @@ pub fn execute_repledge(
                     params![
                         cash_diff,
                         new_pledge_id,
-                        format!("Repledge extra disbursement: {} → {}", old_pledge_no, new_pledge_no.clone()),  // ✅ Use clone
+                        format!("Repledge extra disbursement: {} → {}", old_pledge_no, new_pledge_no.clone()),
                         req.created_by
                     ],
                 )
@@ -1534,7 +1491,6 @@ pub fn execute_repledge(
                     }
                 }
             } else {
-                // UPI/Bank disbursement
                 tx.execute(
                     "INSERT INTO fund_transactions
                         (type, total_amount, module_type, module_id, reference, payment_method, created_by)
@@ -1542,7 +1498,7 @@ pub fn execute_repledge(
                     params![
                         cash_diff,
                         new_pledge_id,
-                        format!("Repledge extra disbursement: {} → {}", old_pledge_no, new_pledge_no.clone()),  // ✅ Use clone
+                        format!("Repledge extra disbursement: {} → {}", old_pledge_no, new_pledge_no.clone()),
                         req.payment_method,
                         req.created_by
                     ],
@@ -1550,7 +1506,6 @@ pub fn execute_repledge(
                 .map_err(|e| e.to_string())?;
             }
         } else {
-            // Customer paying back the shortfall
             if req.payment_method == "CASH" {
                 tx.execute(
                     "INSERT INTO fund_transactions
@@ -1559,7 +1514,7 @@ pub fn execute_repledge(
                     params![
                         cash_diff.abs(),
                         req.old_pledge_id,
-                        format!("Repledge shortfall collected: {} → {}", old_pledge_no, new_pledge_no.clone()),  // ✅ Use clone
+                        format!("Repledge shortfall collected: {} → {}", old_pledge_no, new_pledge_no.clone()),
                         req.created_by
                     ],
                 )
@@ -1581,7 +1536,6 @@ pub fn execute_repledge(
                     }
                 }
             } else {
-                // UPI/Bank payment
                 tx.execute(
                     "INSERT INTO fund_transactions
                         (type, total_amount, module_type, module_id, reference, payment_method, created_by)
@@ -1589,7 +1543,7 @@ pub fn execute_repledge(
                     params![
                         cash_diff.abs(),
                         req.old_pledge_id,
-                        format!("Repledge shortfall collected: {} → {}", old_pledge_no, new_pledge_no.clone()),  // ✅ Use clone
+                        format!("Repledge shortfall collected: {} → {}", old_pledge_no, new_pledge_no.clone()),
                         req.payment_method,
                         req.created_by
                     ],
@@ -1603,7 +1557,7 @@ pub fn execute_repledge(
 
     Ok(RepledgeResult {
         old_pledge_no,
-        new_pledge_no,  // ✅ Now in scope
+        new_pledge_no,
         new_pledge_id,
         cash_difference: cash_diff,
         pending_interest_settled: pending_interest,

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../auth/authStore";
 import { ownerMenu } from "./menuConfig";
@@ -8,7 +7,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function DashboardLayout({ children, onMenuChange, role }) {
-
   const logout = useAuthStore((s) => s.logout);
 
   const [active, setActive] = useState("home");
@@ -32,7 +30,6 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
 
   // Global menu change listener
   useEffect(() => {
-
     const handler = (e) => {
       setActive(e.detail);
       onMenuChange?.(e.detail);
@@ -41,12 +38,10 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
     window.addEventListener("menu-change", handler);
 
     return () => window.removeEventListener("menu-change", handler);
-
   }, [onMenuChange]);
 
   // Load shop name
   useEffect(() => {
-
     invoke("get_shop_settings")
       .then((data) => {
         if (data?.shop_name) {
@@ -54,25 +49,19 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
         }
       })
       .catch((err) => console.error("Failed to load shop name:", err));
-
   }, []);
 
   return (
     <div className="dashboard-wrapper">
-
       {/* SIDEBAR */}
       <aside className="sidebar">
-
         {/* SHOP NAME */}
         <div className="sidebar-brand">{shopName}</div>
 
         {/* MENU */}
         <div className="sidebar-menu">
-
           {menuConfig.map((menu) => (
-
             <div key={menu.titleKey}>
-
               {/* LEVEL 1 */}
               <div
                 className="menu-title clickable"
@@ -95,12 +84,10 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
               {menu.children &&
                 expandedMenu === menu.titleKey &&
                 menu.children.map((child) => {
-
                   // LEVEL 3 GROUP
                   if (child.children) {
                     return (
                       <div key={child.titleKey}>
-
                         <div
                           className="sub-group clickable"
                           onClick={() => toggleExpand(child.titleKey)}
@@ -125,7 +112,6 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
                               {t(sub.titleKey)}
                             </div>
                           ))}
-
                       </div>
                     );
                   }
@@ -142,18 +128,13 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
                       {t(child.titleKey)}
                     </div>
                   );
-
                 })}
-
             </div>
-
           ))}
-
         </div>
 
         {/* SIDEBAR FOOTER */}
         <div className="sidebar-footer">
-
           <div className="footer-text">
             Designed & Developed By <span>E3D Designs</span>
           </div>
@@ -161,16 +142,12 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
           <button className="sidebar-logout-btn" onClick={logout}>
             {t("logout")}
           </button>
-
         </div>
-
       </aside>
 
       {/* MAIN AREA */}
       <main className="main">
-
         <header className="header">
-
           <span className="header-role">{role}</span>
 
           <div className="language-switcher">
@@ -182,15 +159,10 @@ export default function DashboardLayout({ children, onMenuChange, role }) {
               <option value="ta">தமிழ்</option>
             </select>
           </div>
-
         </header>
 
-        <section className="content">
-          {children}
-        </section>
-
+        <section className="content">{children}</section>
       </main>
-
     </div>
   );
 }

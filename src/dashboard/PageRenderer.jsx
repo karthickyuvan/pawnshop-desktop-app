@@ -1,6 +1,3 @@
-
-
-
 import HomePage from "../pages/HomePage";
 import LoanTypesPage from "../pages/LoanTypesPage";
 import JewelleryTypesPage from "../pages/JewelleryTypesPage";
@@ -11,7 +8,7 @@ import StaffPage from "../pages/StaffPage";
 import CustomersPage from "../pages/CustomersPage";
 import PledgesPage from "../pages/PledgesPage";
 import RepledgesPage from "../pages/RepledgesPage.jsx";
-import OverlimitPledgesPage from "../pages/OverlimitPledgesPage"; // ✅ NEW IMPORT
+import OverlimitPledgesPage from "../pages/OverlimitPledgesPage"; 
 import TransactionsPage from "../pages/TransactionsPage";
 import ExpensesPage from "../pages/ExpensesPage";
 import DayBookPage from "../pages/DayBookPage";
@@ -38,6 +35,15 @@ import BankMappingReport from "../reports/BankMappingReport.jsx";
 import MonthlyReportPage from "../reports/Monthlyreport.jsx";
 import FundLedgerReportPage from "../reports/FundLedgerReportPage.jsx";
 import ExpenseCategoriesPage from "../pages/ExpenseCategoriesPage";
+import AuctionReportPage from "../reports/AuctionReportPage";
+import InvestorsPage from "../pages/investors/InvestorPage.jsx";
+import InvestorCapitalReportPage from "../reports/InvestorCapitalReportPage.jsx";
+import InvestorStatementReportPage from "../reports/InvestorStatementReportPage.jsx";
+import InvestorInterestDueReportPage from "../reports/InvestorInterestDueReportPage.jsx";
+import InvestorTransactionsReportPage from "../reports/InvestorTransactionsReportPage.jsx";
+import StaffSalaryReportPage from "../reports/StaffSalaryReportPage.jsx";
+
+import CashDrawerPage from "../pages/CashDrawerPage.jsx";
 
 export default function PageRenderer({ activeKey, user, setActiveMenu }) {
   if (activeKey?.startsWith("single-pledge-")) {
@@ -90,10 +96,12 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
     "banks",
     "bank-mapping",
     "fund-management",
+    "investors", 
     "interest-settings",
     "staff",
     "reports",
     "settings",
+    "expense-categories"
   ];
 
   if (user?.role === "STAFF" && restrictedForStaff.includes(activeKey)) {
@@ -107,7 +115,7 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
 
   switch (activeKey) {
     case "home":
-      return <HomePage />;
+      return <HomePage  user={user}/>;
 
     case "loan-types":
       return <LoanTypesPage />;
@@ -148,7 +156,7 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
     case "repledges":
       return <RepledgesPage />;
 
-    // ✅ NEW: Dedicated Overlimit Pledges Page
+
     case "overlimit-pledges":
       return <OverlimitPledgesPage />;
 
@@ -175,6 +183,9 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
 
     case "fund-management":
       return <FundManagement user={user} />;
+
+    case "investors":
+      return <InvestorsPage user={user} />;
 
     case "auction-list":
       return <AuctionListPage user={user} />;
@@ -213,7 +224,29 @@ export default function PageRenderer({ activeKey, user, setActiveMenu }) {
       return <MonthlyReportPage />;
 
     case "fund-ledger":
-      return <FundLedgerReportPage />
+      return <FundLedgerReportPage />;
+
+    case "auction-report":
+      return <AuctionReportPage />
+
+    // ── RENDER INVESTOR REPORT PAGES (NEW) ───────────────────────────────────
+    case "investor-capital":
+      return <InvestorCapitalReportPage setActiveMenu={setActiveMenu} />;
+
+    case "investor-statement":
+      return <InvestorStatementReportPage setActiveMenu={setActiveMenu} />;
+
+    case "investor-interest-due":
+      return <InvestorInterestDueReportPage setActiveMenu={setActiveMenu} />;
+
+    case "investor-transactions":
+      return <InvestorTransactionsReportPage setActiveMenu={setActiveMenu} />;
+
+     case "staff-salary-report":
+      return <StaffSalaryReportPage setActiveMenu={setActiveMenu} />;
+
+    case "cash-drawer": 
+      return <CashDrawerPage user={user} />;
 
     default:
       return <h3>Select a menu</h3>;

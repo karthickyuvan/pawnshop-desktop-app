@@ -741,4 +741,22 @@
   margin-bottom: 12px;
 }
 
+/* Header Status Pill Overrides */
+.status-badge.auctioned {
+  background-color: #eff6ff !important;
+  color: #1e40af !important;
+  border: 1px solid #bfdbfe !important;
+}
 
+/* Side Status Notification Alert Styling Block Overrides */
+.due-alert-box.status-auctioned {
+  background-color: #f0f9ff;
+  border-left: 4px solid #0284c7;
+}
+.due-alert-box.status-auctioned .alert-title {
+  color: #0369a1;
+  font-weight: 700;
+}
+.due-alert-box.status-auctioned .alert-sub {
+  color: #0c4a6e;
+}

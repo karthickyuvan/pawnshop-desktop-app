@@ -1,14 +1,181 @@
 
 
+// import React, { useState } from "react";
+// import { ChevronDown, ChevronUp } from "lucide-react";
+// import { useLanguage } from "../../context/LanguageContext";
+
+// export default function AuditBlock({ type, entries, transactionDenominations }) {
+//   const { t } = useLanguage();
+//   const [expandedTx, setExpandedTx] = useState({});
+
+//   const total = entries.reduce((sum, entry) => {
+//     if (entry.type_field === "ADD") {
+//       return sum + entry.amount;
+//     } else {
+//       return sum - entry.amount;
+//     }
+//   }, 0);
+
+//   const toggleExpand = (fundTxId) => {
+//     setExpandedTx((prev) => ({
+//       ...prev,
+//       [fundTxId]: !prev[fundTxId],
+//     }));
+//   };
+
+//   const getDenominationsForTx = (fundTxId) => {
+//     const detail = transactionDenominations?.find(
+//       (d) => d.fund_tx_id === fundTxId
+//     );
+//     console.log(`🔍 Denominations for fund_tx_id ${fundTxId}:`, detail);
+//     return detail?.denominations || [];
+//   };
+
+//   return (
+//     <div className={`audit-block ${total < 0 ? "block-out" : "block-in"}`}>
+//       <div className="block-header">
+//         <span className="category-title">
+//           {t(type.toLowerCase())}
+//         </span>
+//         <span className={`category-total ${total < 0 ? "red" : "green"}`}>
+//           ₹ {Math.abs(total).toLocaleString()}
+//         </span>
+//       </div>
+
+//       <div className="table-wrapper">
+//         <table>
+//           <thead>
+//             <tr>
+//               <th>{t("time")}</th>
+//               <th>{t("customer")}</th>
+//               <th>{t("reference")}</th>
+//               <th>{t("method")}</th>
+//               <th className="text-right">{t("amount")}</th>
+//               <th width="40"></th>
+//             </tr>
+//           </thead>
+
+//           <tbody>
+//             {entries.map((entry, index) => {
+//               const isOut = entry.type_field === "WITHDRAW";
+//               const denoms = getDenominationsForTx(entry.fund_tx_id);
+//               const hasDenoms =
+//                 entry.payment_method === "CASH" && denoms.length > 0;
+
+//               const isExpanded = expandedTx[entry.fund_tx_id];
+
+//               return (
+//                 <React.Fragment key={entry.fund_tx_id || index}>
+//                   <tr className={hasDenoms ? "has-details" : ""}>
+//                     {/* Render the pre-formatted time directly */}
+//                     <td className="time-cell">
+//                       {entry.time}
+//                     </td>
+
+//                     <td className="customer-cell">
+//                       {entry.customer_name ? (
+//                         <span className="customer-name">
+//                           {entry.customer_name}
+//                         </span>
+//                       ) : (
+//                         <span className="no-customer">—</span>
+//                       )}
+//                     </td>
+
+//                     <td className="reason-cell">
+//                       <span>{entry.reason}</span>
+//                       {entry.transaction_ref && entry.payment_method !== "CASH" && (
+//                         <span style={{ 
+//                           display: "block", 
+//                           fontSize: "11px", 
+//                           color: "#6b7280", 
+//                           fontFamily: "monospace",
+//                           marginTop: "2px"
+//                         }}>
+//                           {entry.transaction_ref}
+//                         </span>
+//                       )}
+//                     </td>
+
+//                     <td>
+//                       <span className="method-tag">
+//                         {entry.payment_method}
+//                       </span>
+//                     </td>
+
+//                     <td
+//                       className={`amount-cell text-right ${
+//                         isOut ? "red" : "green"
+//                       }`}
+//                     >
+//                       ₹ {Math.abs(entry.amount).toLocaleString()}
+//                     </td>
+
+//                     <td className="expand-cell">
+//                       {hasDenoms && (
+//                         <button
+//                           className="expand-btn"
+//                           onClick={() =>
+//                             toggleExpand(entry.fund_tx_id)
+//                           }
+//                         >
+//                           {isExpanded ? (
+//                             <ChevronUp size={16} />
+//                           ) : (
+//                             <ChevronDown size={16} />
+//                           )}
+//                         </button>
+//                       )}
+//                     </td>
+//                   </tr>
+
+//                   {/* Expandable Denomination Details */}
+//                   {hasDenoms && isExpanded && (
+//                     <tr className="denomination-detail-row">
+//                       <td colSpan="6">
+//                         <div className="denomination-detail">
+//                           <h5>{t("cash_breakdown")}</h5>
+//                           <div className="denom-grid">
+//                             {denoms.map((d, i) => (
+//                               <div key={i} className="denom-item">
+//                                 <span className="denom-note">
+//                                   ₹{d.denomination}
+//                                 </span>
+//                                 <span className="denom-multiply">×</span>
+//                                 <span className="denom-qty">
+//                                   {d.quantity}
+//                                 </span>
+//                                 <span className="denom-equals">=</span>
+//                                 <span className="denom-total">
+//                                   ₹{d.total.toLocaleString()}
+//                                 </span>
+//                               </div>
+//                             ))}
+//                           </div>
+//                         </div>
+//                       </td>
+//                     </tr>
+//                   )}
+//                 </React.Fragment>
+//               );
+//             })}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
 import React, { useState } from "react";
-import { formatTimeIST } from "../../utils/timeFormatter";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import toast from "react-hot-toast"; // 🚀 Imported toast
 import { useLanguage } from "../../context/LanguageContext";
 
 export default function AuditBlock({ type, entries, transactionDenominations }) {
-
   const { t } = useLanguage();
-
   const [expandedTx, setExpandedTx] = useState({});
 
   const total = entries.reduce((sum, entry) => {
@@ -19,7 +186,13 @@ export default function AuditBlock({ type, entries, transactionDenominations }) 
     }
   }, 0);
 
-  const toggleExpand = (fundTxId) => {
+  // 🚀 Updated toggle function to warn if data is missing
+  const toggleExpand = (fundTxId, hasDenoms) => {
+    if (!hasDenoms) {
+      toast.error(t("no_denomination_data_found") || "No cash breakdown available");
+      return;
+    }
+
     setExpandedTx((prev) => ({
       ...prev,
       [fundTxId]: !prev[fundTxId],
@@ -36,12 +209,10 @@ export default function AuditBlock({ type, entries, transactionDenominations }) 
 
   return (
     <div className={`audit-block ${total < 0 ? "block-out" : "block-in"}`}>
-
       <div className="block-header">
         <span className="category-title">
           {t(type.toLowerCase())}
         </span>
-
         <span className={`category-total ${total < 0 ? "red" : "green"}`}>
           ₹ {Math.abs(total).toLocaleString()}
         </span>
@@ -49,7 +220,6 @@ export default function AuditBlock({ type, entries, transactionDenominations }) 
 
       <div className="table-wrapper">
         <table>
-
           <thead>
             <tr>
               <th>{t("time")}</th>
@@ -63,21 +233,21 @@ export default function AuditBlock({ type, entries, transactionDenominations }) 
 
           <tbody>
             {entries.map((entry, index) => {
-
               const isOut = entry.type_field === "WITHDRAW";
               const denoms = getDenominationsForTx(entry.fund_tx_id);
-              const hasDenoms =
-                entry.payment_method === "CASH" && denoms.length > 0;
+              
+              // It's a cash payment method
+              const isCash = entry.payment_method === "CASH";
+              // It has actual valid details to render
+              const hasDenoms = isCash && denoms.length > 0;
 
               const isExpanded = expandedTx[entry.fund_tx_id];
 
               return (
                 <React.Fragment key={entry.fund_tx_id || index}>
-
                   <tr className={hasDenoms ? "has-details" : ""}>
-
                     <td className="time-cell">
-                      {formatTimeIST(entry.time)}
+                      {entry.time}
                     </td>
 
                     <td className="customer-cell">
@@ -91,19 +261,19 @@ export default function AuditBlock({ type, entries, transactionDenominations }) 
                     </td>
 
                     <td className="reason-cell">
-  <span>{entry.reason}</span>
-  {entry.transaction_ref && entry.payment_method !== "CASH" && (
-    <span style={{ 
-      display: "block", 
-      fontSize: "11px", 
-      color: "#6b7280", 
-      fontFamily: "monospace",
-      marginTop: "2px"
-    }}>
-      {entry.transaction_ref}
-    </span>
-  )}
-</td>
+                      <span>{entry.reason}</span>
+                      {entry.transaction_ref && entry.payment_method !== "CASH" && (
+                        <span style={{ 
+                          display: "block", 
+                          fontSize: "11px", 
+                          color: "#6b7280", 
+                          fontFamily: "monospace",
+                          marginTop: "2px"
+                        }}>
+                          {entry.transaction_ref}
+                        </span>
+                      )}
+                    </td>
 
                     <td>
                       <span className="method-tag">
@@ -120,14 +290,15 @@ export default function AuditBlock({ type, entries, transactionDenominations }) 
                     </td>
 
                     <td className="expand-cell">
-                      {hasDenoms && (
+                      {/* 🚀 Changed to 'isCash' so the button renders even if data failed to load, allowing the error toast to handle it */}
+                      {isCash && (
                         <button
                           className="expand-btn"
                           onClick={() =>
-                            toggleExpand(entry.fund_tx_id)
+                            toggleExpand(entry.fund_tx_id, hasDenoms)
                           }
                         >
-                          {isExpanded ? (
+                          {isExpanded && hasDenoms ? (
                             <ChevronUp size={16} />
                           ) : (
                             <ChevronDown size={16} />
@@ -138,41 +309,29 @@ export default function AuditBlock({ type, entries, transactionDenominations }) 
                   </tr>
 
                   {/* Expandable Denomination Details */}
-
                   {hasDenoms && isExpanded && (
                     <tr className="denomination-detail-row">
                       <td colSpan="6">
-
                         <div className="denomination-detail">
-
                           <h5>{t("cash_breakdown")}</h5>
-
                           <div className="denom-grid">
                             {denoms.map((d, i) => (
                               <div key={i} className="denom-item">
-
                                 <span className="denom-note">
                                   ₹{d.denomination}
                                 </span>
-
                                 <span className="denom-multiply">×</span>
-
                                 <span className="denom-qty">
                                   {d.quantity}
                                 </span>
-
                                 <span className="denom-equals">=</span>
-
                                 <span className="denom-total">
                                   ₹{d.total.toLocaleString()}
                                 </span>
-
                               </div>
                             ))}
                           </div>
-
                         </div>
-
                       </td>
                     </tr>
                   )}
@@ -180,10 +339,8 @@ export default function AuditBlock({ type, entries, transactionDenominations }) 
               );
             })}
           </tbody>
-
         </table>
       </div>
-
     </div>
   );
 }

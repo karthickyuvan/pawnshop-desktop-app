@@ -7,6 +7,7 @@ export default function PledgeSummaryCards({ summary }) {
     { label: t("total_pledges"), value: summary.total_pledges, icon: "📋", type: "blue" },
     { label: t("total_amount"), value: `₹${summary.total_amount.toLocaleString()}`, icon: "₹", type: "gold" },
     { label: t("active"), value: summary.active_count, icon: "⏱️", type: "green" },
+    { label: t("closed"), value: summary.closed_count || 0, icon: "✅", type: "gray" },
     { label: t("overdue"), value: summary.overdue_count, icon: "⚠️", type: "red" },
   ];
 

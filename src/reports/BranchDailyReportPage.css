@@ -140,3 +140,25 @@ th {
 .withdraw { color: #be123c; font-weight: 600; }
 
 .loading-text { padding: 24px; color: #94a3b8; }
+
+
+
+.metal-movement-section {
+  margin-top: 20px;
+}
+
+.metal-movement-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.metal-movement-table th,
+.metal-movement-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.metal-movement-table th {
+  background: #f5f5f5;
+}

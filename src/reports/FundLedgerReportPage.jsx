@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext"; // ✅ Imported custom language hook
 import { getFundLedgerReport } from "../services/fundLedgerApi";
+import { formatTransactionTimestamp } from "../utils/timeFormatter"; // ✅ Reusing the centralized formatter
 import "./FundLedgerReportPage.css";
 
 function StatCard({ icon, label, value, color }) {
@@ -7,7 +9,7 @@ function StatCard({ icon, label, value, color }) {
     <div className={`stat-card ${color}`}>
       <div className="stat-card-icon">{icon}</div>
       <div className="stat-card-body">
-        <div className="stat-card-value">₹{(value || 0).toLocaleString()}</div>
+        <div className="stat-card-value">₹{(value || 0).toLocaleString("en-IN")}</div>
         <div className="stat-card-label">{label}</div>
       </div>
     </div>
@@ -15,7 +17,7 @@ function StatCard({ icon, label, value, color }) {
 }
 
 export default function FundLedgerReportPage() {
-
+  const { t } = useLanguage(); // ✅ Initialized translation hook
   const [data,    setData]    = useState(null);
   const [filters, setFilters] = useState({
     year: "", month: "", week: "", module: "ALL",
@@ -37,109 +39,123 @@ export default function FundLedgerReportPage() {
     }
   }
 
-  if (!data) return <div className="loader">Loading Ledger...</div>;
+  if (!data) return <div className="loader">{t("updating_ledger", "Loading Ledger...")}</div>;
 
   return (
     <div className="ledger-page">
-
       {/* ── Header ── */}
       <div className="report-header">
         <div>
-          <h2>Fund Ledger Report</h2>
-          <p>Complete fund inflow, outflow and balance tracking</p>
+          <h2>{t("fund_ledger_report")}</h2>
+          <p>{t("fund_ledger_report_desc")}</p>
         </div>
 
         {/* ── Filters ── */}
         <div className="filters">
           <select value={filters.year} onChange={e => setFilters({ ...filters, year: e.target.value })}>
-            <option value="">Year</option>
+            <option value="">{t("year", "Year")}</option>
             <option value="2025">2025</option>
             <option value="2026">2026</option>
           </select>
 
           <select value={filters.month} onChange={e => setFilters({ ...filters, month: e.target.value })}>
-            <option value="">Month</option>
-            <option value="01">Jan</option><option value="02">Feb</option>
-            <option value="03">Mar</option><option value="04">Apr</option>
-            <option value="05">May</option><option value="06">Jun</option>
-            <option value="07">Jul</option><option value="08">Aug</option>
-            <option value="09">Sep</option><option value="10">Oct</option>
-            <option value="11">Nov</option><option value="12">Dec</option>
+            <option value="">{t("month", "Month")}</option>
+            <option value="01">{t("jan", "Jan")}</option>
+            <option value="02">{t("feb", "Feb")}</option>
+            <option value="03">{t("mar", "Mar")}</option>
+            <option value="04">{t("apr", "Apr")}</option>
+            <option value="05">{t("may", "May")}</option>
+            <option value="06">{t("jun", "Jun")}</option>
+            <option value="07">{t("jul", "Jul")}</option>
+            <option value="08">{t("aug", "Aug")}</option>
+            <option value="09">{t("sep", "Sep")}</option>
+            <option value="10">{t("oct", "Oct")}</option>
+            <option value="11">{t("nov", "Nov")}</option>
+            <option value="12">{t("dec", "Dec")}</option>
           </select>
 
           <select value={filters.week} onChange={e => setFilters({ ...filters, week: e.target.value })}>
-            <option value="">Week</option>
-            <option value="01">Week 1</option><option value="02">Week 2</option>
-            <option value="03">Week 3</option><option value="04">Week 4</option>
+            <option value="">{t("week_lbl", "Week")}</option>
+            <option value="01">{t("week_1_lbl", "Week 1")}</option>
+            <option value="02">{t("week_2_lbl", "Week 2")}</option>
+            <option value="03">{t("week_3_lbl", "Week 3")}</option>
+            <option value="04">{t("week_4_lbl", "Week 4")}</option>
           </select>
 
           <select value={filters.module} onChange={e => setFilters({ ...filters, module: e.target.value })}>
-            <option value="ALL">All Modules</option>
-            <option value="PLEDGE">Pledge</option>
-            <option value="EXPENSE">Expenses</option>
-            <option value="INTEREST">Interest</option>
-            <option value="CAPITAL">Capital</option>
-            <option value="BANK_MAPPING">Bank Mapping</option>
-            <option value="FEE">Fee</option>
-            <option value="CLOSURE">Closure</option>
+            <option value="ALL">{t("all_types", "All Modules")}</option>
+            <option value="PLEDGE">{t("pledge", "Pledge")}</option>
+            <option value="EXPENSE">{t("expenses", "Expenses")}</option>
+            <option value="INTEREST">{t("interest", "Interest")}</option>
+            <option value="CAPITAL">{t("owner_fund", "Capital")}</option>
+            <option value="BANK_MAPPING">{t("bank_mapping", "Bank Mapping")}</option>
+            <option value="FEE">{t("processing_fee", "Fee")}</option>
+            <option value="CLOSURE">{t("closures", "Closure")}</option>
           </select>
 
-          <button onClick={loadReport}>Apply</button>
+          <button onClick={loadReport}>{t("confirm_continue", "Apply")}</button>
         </div>
       </div>
 
       {/* ── Primary stat cards ── */}
       <div className="stats-grid">
-        <StatCard icon="📈" label="Total Money In"   value={data.total_in}        color="card-green"  />
-        <StatCard icon="📉" label="Total Money Out"  value={data.total_out}       color="card-rose"   />
-        <StatCard icon="💰" label="Closing Balance"  value={data.closing_balance} color={data.closing_balance >= 0 ? "card-blue" : "card-orange"} />
+        <StatCard icon="📈" label={t("money_in")}   value={data.total_in}        color="card-green"  />
+        <StatCard icon="📉" label={t("money_out")}  value={data.total_out}       color="card-rose"   />
+        <StatCard icon="💰" label={t("closing_balance", "Closing Balance")}  value={data.closing_balance} color={data.closing_balance >= 0 ? "card-blue" : "card-orange"} />
       </div>
 
       {/* ── Payment method breakdown ── */}
       <div className="stats-grid">
-        <StatCard icon="💵" label="Cash In"    value={data.cash_in}   color="card-teal"   />
-        <StatCard icon="💸" label="Cash Out"   value={data.cash_out}  color="card-rose"   />
-        <StatCard icon="📱" label="UPI In"     value={data.upi_in}    color="card-teal"   />
-        <StatCard icon="📲" label="UPI Out"    value={data.upi_out}   color="card-rose"   />
-        <StatCard icon="🏦" label="Bank In"    value={data.bank_in}   color="card-teal"   />
-        <StatCard icon="🏦" label="Bank Out"   value={data.bank_out}  color="card-rose"   />
+        <StatCard icon="💵" label={`${t("cash", "Cash")} ${t("money_in")}`}    value={data.cash_in}   color="card-teal"   />
+        <StatCard icon="💸" label={`${t("cash", "Cash")} ${t("money_out")}`}   value={data.cash_out}  color="card-rose"   />
+        <StatCard icon="📱" label={`${t("upi", "UPI")} ${t("money_in")}`}     value={data.upi_in}    color="card-teal"   />
+        <StatCard icon="📲" label={`${t("upi", "UPI")} ${t("money_out")}`}    value={data.upi_out}   color="card-rose"   />
+        <StatCard icon="🏦" label={`${t("bank", "Bank")} ${t("money_in")}`}    value={data.bank_in}   color="card-teal"   />
+        <StatCard icon="🏦" label={`${t("bank", "Bank")} ${t("money_out")}`}   value={data.bank_out}  color="card-rose"   />
       </div>
 
       {/* ── Ledger table ── */}
       <div className="table-section">
-        <div className="section-title">Transaction Ledger</div>
+        <div className="section-title">{t("fund_ledger", "Transaction Ledger")}</div>
         <table>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Module</th>
-              <th>Type</th>
-              <th>Reference</th>
-              <th>Description</th>
-              <th>Method</th>
-              <th>Debit</th>
-              <th>Credit</th>
-              <th>Balance</th>
+              <th>{t("date")}</th>
+              <th>{t("category", "Module")}</th>
+              <th>{t("type")}</th>
+              <th>{t("reference")}</th>
+              <th>{t("description")}</th>
+              <th>{t("method")}</th>
+              <th>{t("debit")}</th>
+              <th>{t("credit")}</th>
+              <th>{t("balance")}</th>
             </tr>
           </thead>
           <tbody>
-            {data.rows.map(r => (
-              <tr key={r.id}>
-                <td>{r.date}</td>
-                <td>{r.module_type}</td>
-                <td>{r.tx_type}</td>
-                <td>{r.reference}</td>
-                <td>{r.description}</td>
-                <td>{r.payment_method}</td>
-                <td className="debit">{r.debit  > 0 ? `₹ ${r.debit.toLocaleString()}`  : "—"}</td>
-                <td className="credit">{r.credit > 0 ? `₹ ${r.credit.toLocaleString()}` : "—"}</td>
-                <td><strong>₹ {r.balance.toLocaleString()}</strong></td>
+            {data.rows.length === 0 ? (
+              <tr>
+                <td colSpan="9" className="table-empty-state" style={{ textAlign: "center", padding: "20px" }}>
+                  {t("no_matching_records")}
+                </td>
               </tr>
-            ))}
+            ) : (
+              data.rows.map(r => (
+                <tr key={r.id}>
+                  <td>{formatTransactionTimestamp(r.date)}</td>
+                  <td>{r.module_type}</td>
+                  <td>{r.tx_type}</td>
+                  <td>{r.reference || "—"}</td>
+                  <td>{r.description || "—"}</td>
+                  <td>{r.payment_method}</td>
+                  <td className="debit">{r.debit  > 0 ? `₹ ${r.debit.toLocaleString("en-IN")}`  : "—"}</td>
+                  <td className="credit">{r.credit > 0 ? `₹ ${r.credit.toLocaleString("en-IN")}` : "—"}</td>
+                  <td><strong>₹ {r.balance.toLocaleString("en-IN")}</strong></td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }

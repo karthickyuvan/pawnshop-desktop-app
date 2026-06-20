@@ -26,6 +26,7 @@ export const staffMenu = [
       { titleKey: "transactions", key: "transactions" },
       { titleKey: "expenses", key: "expenses" },
       { titleKey: "daybook", key: "daybook" },
+      { titleKey: "cash_drawer", key: "cash-drawer" }, 
     ],
   },
 ];
