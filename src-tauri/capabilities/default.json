@@ -7,11 +7,19 @@
   ],
   "permissions": [
     "core:default",
+    "core:webview:default",
+    "core:event:default",
     "fs:default",
+    "fs:allow-applocaldata-read",
+    "fs:allow-applocaldata-write",
+    "fs:allow-applocaldata-meta",
+    "fs:allow-appdata-read",
+    "fs:allow-appdata-write",
     {
       "identifier": "fs:allow-read-file",
       "allow": [
         "$APPDATA/**",
+        "$LOCALDATA/**",
         "$HOME/Library/Application Support/**"
       ]
     },

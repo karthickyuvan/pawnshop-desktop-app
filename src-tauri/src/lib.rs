@@ -32,6 +32,7 @@ mod receipt;
 // ---------------- IMPORTS ----------------
 use crate::db::connection::Db;
 use tauri::{Manager, State};
+use std::fs;
 
 // Auth
 use auth::login::{login_user, LoginResponse};
@@ -123,15 +124,6 @@ use reports::investor_report::get_global_investor_transactions_cmd;
 use reports::staff_salary_report::get_staff_salary_report_cmd;
 
 
-// use investors::service::{
-//     Investor,
-//     InvestorLedgerResponse,
-//     WithdrawInvestmentRequest,
-//     UpdateInvestorRequest,
-//     ToggleInvestorStatusRequest,
-//     PayProfitRequest,
-//     InvestorInterestPreview,
-// };
 
 use investors::service::{
     InvestorLedgerResponse,
@@ -141,13 +133,11 @@ use investors::service::{
     PayProfitRequest,
 };
 
-// ---------------- AUTH COMMANDS ----------------
-// #[tauri::command]
-// fn login_cmd(db: State<Db>, username: String, password: String) -> Result<LoginResponse, String> {
-//     let result = login_user(&db, &username, &password)?;
-//     log_action(&db, result.user_id, "LOGIN");
-//     Ok(result)
-// }
+#[tauri::command]
+fn is_backend_ready(_db: State<Db>) -> bool {
+    // Db successfully state-la inject aana connection ready-nu artham.
+    true
+}
 
 #[tauri::command]
 fn check_owner(
@@ -190,15 +180,7 @@ fn logout_cmd(db: State<Db>, user_id: i64) {
     log_action(&db, user_id, "LOGOUT");
 }
 
-// #[tauri::command]
-// fn check_owner(db: State<Db>) -> bool {
-//     owner_exists(&db)
-// }
 
-// #[tauri::command]
-// fn create_owner_cmd(db: State<Db>, username: String, password: String) -> Result<(), String> {
-//     create_owner(&db, &username, &password)
-// }
 
 // ---------------- STAFF COMMANDS ----------------
 #[tauri::command]
@@ -373,7 +355,6 @@ fn toggle_metal_type_cmd(
 
 #[tauri::command]
 fn get_active_metal_types_cmd(db: State<Db>) -> Result<Vec<MetalType>, String> {
-    // metal_types::service::get_active_metal_types(&db)
     get_active_metal_types(&db)
 }
 
@@ -385,8 +366,7 @@ fn create_jewellery_type_cmd(
     name: String,
     actor_user_id: i64,
 ) -> Result<(), String> {
-    // create_jewellery_type(&db, metal_type_id, &name)?;
-    // create_jewellery_type(db, metal_type_id, name)?;
+
     create_jewellery_type(&db, metal_type_id, name)?;
     log_action(&db, actor_user_id, "JEWELLERY_TYPE_CREATED");
     Ok(())
@@ -405,8 +385,7 @@ fn toggle_jewellery_type_cmd(
     is_active: bool,
     actor_user_id: i64,
 ) -> Result<(), String> {
-    // toggle_jewellery_type(&db, jewellery_type_id, is_active)?;
-    // toggle_jewellery_type(db, jewellery_type_id, is_active)?;
+
     toggle_jewellery_type(&db, jewellery_type_id, is_active)?;
     log_action(&db, actor_user_id, "JEWELLERY_TYPE_STATUS_CHANGED");
     Ok(())
@@ -764,21 +743,6 @@ fn pay_profit_cmd(
 }
 
 
-// #[tauri::command]
-// fn get_investor_interest_preview_cmd(
-//     db: State<Db>,
-//     investor_id: i64,
-// ) -> Result<
-//     InvestorInterestPreview,
-//     String,
-// > {
-//     investors::service::get_investor_interest_preview(
-//         &db,
-//         investor_id,
-//     )
-//     .map_err(|e| e.to_string())
-// }
-
 
 #[tauri::command]
 fn get_investor_interest_preview_cmd(
@@ -789,7 +753,7 @@ fn get_investor_interest_preview_cmd(
         .map_err(|e| e.to_string())
 }
 
-// 🚀 EXPOSED: Get interest due report compiled across all active investors
+//  Get interest due report compiled across all active investors
 #[tauri::command]
 fn get_investors_interest_due_report_cmd(
     db: State<Db>,
@@ -1061,18 +1025,27 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
-            let db_path = app
-                .path()
-                .app_data_dir()
-                .expect("Failed to get app data dir")
-                .join("pawnshop.db");
-            let db = db::setup_database(db_path);
-            app.manage(db);
-            Ok(())
-        })
+    // 1. First directory path-a get panrom
+    let app_dir = app.path().app_data_dir().expect("Failed to get app data dir");
+    
+    // 🔥 IDHU DHAAN ANDHA CODELA IRUNDHA LOGIC (Folder create panrom)
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir).expect("Failed to create app data directory");
+    }
+
+    // 2. Ippo safe-a database file-a join panrom
+    let db_path = app_dir.join("pawnshop.db");
+    
+    let db = db::setup_database(db_path);
+    app.manage(db);
+    Ok(())
+})
+
         
        
         .invoke_handler(tauri::generate_handler![
+
+            is_backend_ready,
             // Auth
             check_owner,
             create_owner_cmd,
@@ -1133,7 +1106,7 @@ pub fn run() {
             withdraw_investment_cmd,
             pay_profit_cmd,
             get_investor_interest_preview_cmd,
-            // get_drawer_balance_cmd,
+
 
             // Customers
             add_customer_cmd,
