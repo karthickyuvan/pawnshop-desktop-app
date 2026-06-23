@@ -1,111 +1,51 @@
-// import { useEffect, useState } from "react";
-// import { checkOwner } from "../services/tauriApi";
-// import CreateOwner from "../auth/CreateOwner";
-// import Login from "../auth/Login";
-// import { useAuthStore } from "../auth/authStore";
-// import OwnerDashboard from "../dashboard/OwnerDashboard";
-// import StaffDashboard from "../dashboard/StaffDashboard";
-
-
-// export default function App() {
-//   const [ownerExists, setOwnerExists] = useState(null);
-//   const user = useAuthStore((s) => s.user);
-
-//   // useEffect(() => {
-//   //   checkOwner().then(setOwnerExists);
-//   // }, []);
-// useEffect(() => {
-//   const init = async () => {
-//     try {
-//       const result = await checkOwner();
-
-//       console.log("OWNER EXISTS:", result);
-
-//       // Browser fallback
-//       if (result === null || result === undefined) {
-//         setOwnerExists(false);
-//       } else {
-//         setOwnerExists(result);
-//       }
-//     } catch (err) {
-//       console.error(err);
-
-//       // Prevent infinite loading
-//       setOwnerExists(false);
-//     }
-//   };
-
-//   init();
-// }, []);
-//   // 🔍 DEBUG (TEMPORARY)
-//   console.log("AUTH USER:", user);
-
-//   if (ownerExists === null) {
-//     return <p>Loading...</p>;
-//   }
-
-//   // FIRST TIME → CREATE OWNER
-//   if (!ownerExists) {
-//     return <CreateOwner onCreated={() => setOwnerExists(true)} />;
-//   }
-
-//   // NOT LOGGED IN
-//   if (!user) {
-//     return <Login />;
-//   }
-
-//   // OWNER DASHBOARD
-//   if (user.role === "OWNER") {
-//     return <OwnerDashboard user={user}/>;
-//   }
-
-//   // STAFF DASHBOARD 
-//   if (user.role === "STAFF") {
-//     return <StaffDashboard user={user}/>;
-//   }
-// }
-
-
-
-
-
-
-import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core"; // 🔥 Tauri v2 core call-ku idhu venum boss
+// src/app/App.jsx
+import { useEffect, useState, useRef } from "react"; // Added useRef here
+import { invoke } from "@tauri-apps/api/core"; 
 import { checkOwner } from "../services/tauriApi";
 import CreateOwner from "../auth/CreateOwner";
 import Login from "../auth/Login";
 import { useAuthStore } from "../auth/authStore";
 import OwnerDashboard from "../dashboard/OwnerDashboard";
 import StaffDashboard from "../dashboard/StaffDashboard";
+import toast from "react-hot-toast";
+import { useLanguage } from "../context/LanguageContext"; // Import language hook
 
 export default function App() {
-  const [isDbReady, setIsDbReady] = useState(false); // 🔥 New state for DB verification
+  const { t } = useLanguage(); // Initialize translation hook
+  const [isDbReady, setIsDbReady] = useState(false); 
   const [ownerExists, setOwnerExists] = useState(null);
-  const [dbError, setDbError] = useState(false); // 🔥 New safety error indicator
+  const [dbError, setDbError] = useState(false); 
   const user = useAuthStore((s) => s.user);
 
-  // 1. 🔥 FIRST STEP: Handshake with Rust Backend
+  // ── Ref guard to prevent duplicate toast messages ──
+  const hasToastedRef = useRef(false);
+
+  // 1. FIRST STEP: Handshake with Rust Backend
   useEffect(() => {
     let isMounted = true;
 
     async function verifyBackendHandshake() {
       let retries = 0;
-      const maxRetries = 50; // Max 5 seconds total timeout wait
+      const maxRetries = 50; 
 
       while (retries < maxRetries && isMounted) {
         try {
-          // Namma Rust-la ezhudhiya command-a trigger panrom
           const ready = await invoke("is_backend_ready");
           if (ready) {
             setIsDbReady(true);
-            return; // Exit loop, connection successful!
+            
+            // Only fire the toast if it hasn't been shown yet
+            if (!hasToastedRef.current) {
+              toast.success(t("database_connected", "Database connected successfully!")); 
+              hasToastedRef.current = true;
+            }
+            return; 
           }
         } catch (error) {
-          console.log(`Waiting for local SQLite runtime initialization... Attempt: ${retries + 1}`,error);
+          console.log(`Waiting for local SQLite runtime initialization... Attempt: ${retries + 1}`, error);
         }
         retries++;
-        await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms slow loop delay
+        await new Promise((resolve) => setTimeout(resolve, 100)); 
       }
 
       if (isMounted && retries >= maxRetries) {
@@ -118,11 +58,11 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
-  // 2. ⚡ SECOND STEP: Existing Owner Verification (Run aagum conditionally after DB is ready)
+  // 2. SECOND STEP: Existing Owner Verification
   useEffect(() => {
-    if (!isDbReady) return; // 🛑 DB ready aagla na indha initialize trigger-e aagadhu!
+    if (!isDbReady) return; 
 
     const init = async () => {
       try {
@@ -136,14 +76,13 @@ export default function App() {
         }
       } catch (err) {
         console.error(err);
-        setOwnerExists(false); // Prevent infinite block screens
+        setOwnerExists(false); 
       }
     };
 
     init();
-  }, [isDbReady]); // 🔥 Listens directly to dynamic database ready status change!
+  }, [isDbReady]);
 
-  // 🔍 DEBUG (TEMPORARY)
   console.log("AUTH USER:", user);
 
   // Phase A: Database is securing connection hooks
@@ -155,8 +94,8 @@ export default function App() {
       }}>
         {dbError ? (
           <div style={{ textAlign: "center" }}>
-            <h2 style={{ color: "#ef4444" }}>⚠️ Secure Database Handshake Failed</h2>
-            <p style={{ color: "#9ca3af" }}>Please check local AppData folder access writes or restart the app.</p>
+            <h2 style={{ color: "#ef4444" }}>{t("secure_db_handshake_failed", "⚠️ Secure Database Handshake Failed")}</h2>
+            <p style={{ color: "#9ca3af" }}>{t("db_error_description", "Please check local AppData folder access writes or restart the app.")}</p>
           </div>
         ) : (
           <div style={{ textAlign: "center" }}>
@@ -165,8 +104,8 @@ export default function App() {
               borderRadius: "50%", borderLeftColor: "#3b82f6", animation: "spin 1s linear infinite",
               margin: "0 auto 20px auto"
             }}></div>
-            <h2>Pawnshop System Connecting...</h2>
-            <p style={{ color: "#6b7280", fontSize: "14px" }}>Configuring localized single-file environment buffers...</p>
+            <h2>{t("pawnshop_system_connecting", "Pawnshop System Connecting...")}</h2>
+            <p style={{ color: "#6b7280", fontSize: "14px" }}>{t("configuring_buffers", "Configuring localized single-file environment buffers...")}</p>
           </div>
         )}
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
@@ -181,7 +120,7 @@ export default function App() {
         display: "flex", justifyContent: "center", alignItems: "center",
         height: "100vh", backgroundColor: "#111827", color: "#ffffff", fontFamily: "sans-serif"
       }}>
-         <p>Verifying Credentials System...</p>
+         <p>{t("verifying_credentials", "Verifying Credentials System...")}</p>
       </div>
     );
   }

@@ -613,11 +613,15 @@
      2. VIEW PLEDGES PAGE  (pledge-page)
      ════════════════════════════════════════ */
   
-  .pledge-page {
-    padding: 28px 32px;
-    background: var(--bg-page);
-    min-height: 100vh;
-  }
+.pledge-page {
+  padding: 28px 32px;
+  background: var(--bg-page);
+  height: calc(100vh - 75px);      /* Subtracts the height of the top OWNER bar */
+  overflow-y: auto;                /* Triggers a single clean scrollbar within the visible bounds */
+  box-sizing: border-box;          /* Prevents padding from inflating the height */
+  padding-bottom: 80px;            /* Adds healthy spacing at the bottom so the last row is fully visible */
+}
+
   
   .page-header1 {
     margin-bottom: 20px;
@@ -759,7 +763,17 @@
   }
   
   /* ── Table container ── */
-  .table-container { background: transparent; border: none; box-shadow: none; padding: 0; }
+.table-container { 
+  background: transparent !important; 
+  border: none !important; 
+  box-shadow: none !important; 
+  padding: 0 !important; 
+  max-height: none !important;      /* Force removes any inner height limit */
+  height: auto !important;          /* Force matches the natural table height */
+  overflow: visible !important;     /* Disables any inner vertical/horizontal scrollbars */
+  overflow-y: visible !important;
+}
+  /* .table-container { background: transparent; border: none; box-shadow: none; padding: 0; } */
   
   .search-container { margin-bottom: 0; }
   

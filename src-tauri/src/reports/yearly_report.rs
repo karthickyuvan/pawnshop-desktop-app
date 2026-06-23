@@ -1,7 +1,9 @@
-// // version 3 
+// // src-tauri/src/reports/yearly_report.rs
 
 // use crate::db::connection::Db;
 // use rusqlite::params;
+// use rusqlite::Result;
+// use serde::Serialize;
 
 // #[derive(serde::Serialize)]
 // pub struct MetalSummary {
@@ -39,6 +41,11 @@
 //     pub bank_refinance_inflow: f64,
 //     pub bank_refinance_outflow: f64,
 //     pub bank_refinance_surplus: f64,
+
+//     // --- Investor Metrics (NEW) ---
+//     pub investor_investments: f64,
+//     pub investor_withdrawals: f64,
+//     pub investor_interest_paid: f64,
 // }
 
 // #[derive(serde::Serialize)]
@@ -51,9 +58,6 @@
 // pub fn get_corporate_yearly_report(db: &Db) -> Result<CorporateYearlyReport, String> {
 //     let conn = db.0.lock().map_err(|e| format!("Database lock error: {}", e))?;
 
-//     /* -------------------------------------------------------------------------
-//        AUDITING FINANCIAL LINES - SUMMARY OVER FISCAL YEARS
-//     --------------------------------------------------------------------------*/
 //     let mut stmt = conn.prepare(
 //         "
 //         WITH AllYears AS (
@@ -68,7 +72,7 @@
 //             (SELECT COUNT(id) FROM pledges WHERE strftime('%Y', COALESCE(pledge_date, created_at)) = y.year),
 //             (SELECT COALESCE(SUM(loan_amount), 0.0) FROM pledges WHERE strftime('%Y', COALESCE(pledge_date, created_at)) = y.year),
             
-//             -- 1. Standard Interest Collected + Recovered Auction Interest Component
+//             -- Interest Income
 //             (
 //                 (SELECT COALESCE(SUM(total_amount), 0.0)
 //                  FROM fund_transactions
@@ -99,7 +103,7 @@
 //                 WHERE strftime('%Y', expense_date) = y.year
 //             ),
             
-//             -- 2. Pure Auction Surplus Spread
+//             -- Auction Surplus Spread
 //             (
 //                 SELECT COALESCE(SUM(
 //                     COALESCE(auction_amount, 0.0) - (loan_amount + 28800.0)
@@ -109,7 +113,7 @@
 //                 AND strftime('%Y', auctioned_at) = y.year
 //             ),
 
-//             -- 3. Yearly Bank Mapping Inflow
+//             -- Bank Mapping Inflow
 //             (
 //                 SELECT COALESCE(SUM(total_amount), 0.0)
 //                 FROM fund_transactions
@@ -117,12 +121,39 @@
 //                 AND strftime('%Y', created_at) = y.year
 //             ),
 
-//             -- 4. Yearly Bank Mapping Outflow (Repayments)
+//             -- Bank Mapping Outflow
 //             (
 //                 SELECT COALESCE(SUM(total_amount), 0.0)
 //                 FROM fund_transactions
 //                 WHERE type='WITHDRAW' AND module_type='BANK_MAPPING'
 //                 AND strftime('%Y', created_at) = y.year
+//             ),
+
+//             -- 1. Yearly Investor Investment Inflow
+//             (
+//                 SELECT COALESCE(SUM(ft.total_amount), 0.0)
+//                 FROM investor_transactions it
+//                 JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+//                 WHERE it.transaction_type = 'INVESTMENT'
+//                 AND strftime('%Y', ft.created_at) = y.year
+//             ),
+
+//             -- 2. Yearly Investor Capital Withdrawal Outflow
+//             (
+//                 SELECT COALESCE(SUM(ft.total_amount), 0.0)
+//                 FROM investor_transactions it
+//                 JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+//                 WHERE it.transaction_type = 'WITHDRAWAL'
+//                 AND strftime('%Y', ft.created_at) = y.year
+//             ),
+
+//             -- 3. Yearly Investor Interest Paid Outflow
+//             (
+//                 SELECT COALESCE(SUM(ft.total_amount), 0.0)
+//                 FROM investor_transactions it
+//                 JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+//                 WHERE it.transaction_type = 'PROFIT_PAYMENT'
+//                 AND strftime('%Y', ft.created_at) = y.year
 //             )
 //         FROM AllYears y
 //         WHERE y.year IS NOT NULL
@@ -138,6 +169,10 @@
 //         let auction_margin: f64 = row.get(7)?;
 //         let bank_inflow: f64 = row.get(8)?;
 //         let bank_outflow: f64 = row.get(9)?;
+        
+//         let investor_inflow: f64 = row.get(10)?;
+//         let investor_outflow: f64 = row.get(11)?;
+//         let investor_interest: f64 = row.get(12)?;
 
 //         let total_revenue = interest + fees + other + auction_margin;
 
@@ -154,6 +189,9 @@
 //             bank_refinance_inflow: bank_inflow,
 //             bank_refinance_outflow: bank_outflow,
 //             bank_refinance_surplus: bank_inflow - bank_outflow,
+//             investor_investments: investor_inflow,
+//             investor_withdrawals: investor_outflow,
+//             investor_interest_paid: investor_interest,
 //         })
 //     }).map_err(|e| e.to_string())?;
 
@@ -257,6 +295,12 @@
 
 
 
+
+
+
+
+
+
 // src-tauri/src/reports/yearly_report.rs
 
 use crate::db::connection::Db;
@@ -271,6 +315,8 @@ pub struct MetalSummary {
     pub pledged_gross_weight: f64,
     pub closed_net_weight: f64,
     pub closed_gross_weight: f64,
+    pub pledged_count: i64, 
+    pub closed_count: i64,  
 }
 
 #[derive(serde::Serialize)]
@@ -301,7 +347,7 @@ pub struct YearlyReportRow {
     pub bank_refinance_outflow: f64,
     pub bank_refinance_surplus: f64,
 
-    // --- Investor Metrics (NEW) ---
+    // --- Investor Metrics ---
     pub investor_investments: f64,
     pub investor_withdrawals: f64,
     pub investor_interest_paid: f64,
@@ -499,7 +545,7 @@ pub fn get_corporate_yearly_report(db: &Db) -> Result<CorporateYearlyReport, Str
     }
 
     /* -------------------------------------------------------------------------
-       COMMODITY WEIGHT BALANCES
+       COMMODITY WEIGHT & COUNT BALANCES
     --------------------------------------------------------------------------*/
     let mut stmt = conn.prepare(
         "
@@ -508,7 +554,9 @@ pub fn get_corporate_yearly_report(db: &Db) -> Result<CorporateYearlyReport, Str
             SUM(CASE WHEN LOWER(p.status)='active' THEN pi.net_weight ELSE 0 END),
             SUM(CASE WHEN LOWER(p.status)='active' THEN pi.gross_weight ELSE 0 END),
             SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN pi.net_weight ELSE 0 END),
-            SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN pi.gross_weight ELSE 0 END)
+            SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN pi.gross_weight ELSE 0 END),
+            SUM(CASE WHEN LOWER(p.status)='active' THEN 1 ELSE 0 END) as pledged_count,             
+            SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN 1 ELSE 0 END) as closed_count 
         FROM pledge_items pi
         JOIN pledges p ON p.id = pi.pledge_id
         JOIN jewellery_types jt ON jt.id = pi.jewellery_type_id
@@ -525,6 +573,8 @@ pub fn get_corporate_yearly_report(db: &Db) -> Result<CorporateYearlyReport, Str
             pledged_gross_weight: row.get::<_, Option<f64>>(2)?.unwrap_or(0.0),
             closed_net_weight: row.get::<_, Option<f64>>(3)?.unwrap_or(0.0),
             closed_gross_weight: row.get::<_, Option<f64>>(4)?.unwrap_or(0.0),
+            pledged_count: row.get(5)?, 
+            closed_count: row.get(6)?,  
         })
     }).map_err(|e| e.to_string())?;
 

@@ -125,8 +125,8 @@ CREATE TABLE IF NOT EXISTS fund_transactions (
     type TEXT CHECK(type IN ('ADD','WITHDRAW')) NOT NULL,
     total_amount REAL NOT NULL,
     module_type TEXT CHECK(module_type IN (
-        'PLEDGE','PAYMENT','EXPENSE','CAPITAL','BANK_MAPPING','FEE','INTEREST','CLOSURE'
-    )),
+        'PLEDGE','PAYMENT','EXPENSE','CAPITAL','BANK_MAPPING','FEE','INTEREST','CLOSURE','OTHER_INCOME','SALARY'
+    )), -- <--- Inga 'OTHER_INCOME' and 'SALARY' add panniyachu!
     module_id INTEGER,
     reference TEXT,
     description TEXT,
@@ -215,7 +215,6 @@ CREATE TABLE IF NOT EXISTS pledge_payments (
     payment_type TEXT CHECK(payment_type IN ('INTEREST','PRINCIPAL','CLOSURE')) NOT NULL,
     payment_mode TEXT CHECK(payment_mode IN ('CASH','BANK','UPI')) NOT NULL,
     receipt_no TEXT,
-    receipt_number TEXT,
     amount REAL NOT NULL,
     status TEXT CHECK(status IN ('COMPLETED','REVERSED')) DEFAULT 'COMPLETED',
     paid_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -226,8 +225,7 @@ CREATE TABLE IF NOT EXISTS pledge_payments (
 CREATE INDEX IF NOT EXISTS idx_pledge_payments_pledge
 ON pledge_payments(pledge_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_receipt
-ON pledge_payments(receipt_number) WHERE receipt_number IS NOT NULL;
+
 
 -- Index for payment receipt numbers
 CREATE INDEX IF NOT EXISTS idx_payments_receipt_no
@@ -357,30 +355,18 @@ CREATE TABLE IF NOT EXISTS staff_salary_payments (
 
 CREATE TABLE IF NOT EXISTS investors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
     investor_code TEXT NOT NULL UNIQUE,
-
     investor_name TEXT NOT NULL,
-
+    investor_type TEXT NOT NULL DEFAULT 'FIXED_INTEREST', 
     mobile TEXT,
-
     address TEXT,
-
     notes TEXT,
-
     is_active INTEGER NOT NULL DEFAULT 1,
-
     created_by INTEGER,
-
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
     updated_at TEXT,
-
     fixed_interest_percentage REAL DEFAULT 0,
-
     interest_paid_upto TEXT
-
-
 );
 
 CREATE TABLE IF NOT EXISTS investor_transactions (

@@ -27,5 +27,9 @@ pub fn init_db(db_path: PathBuf) -> Db {
     conn.busy_timeout(std::time::Duration::from_millis(5000))
         .expect("Failed to set SQLite busy timeout");
 
+    // 🛡️ CRITICAL FIX 4: Enforce Foreign Key Constraints (Data Integrity Safety)
+    conn.pragma_update(None, "foreign_keys", "ON")
+        .expect("Failed to set SQLite foreign_keys to ON");
+
     Db(Mutex::new(conn))
 }

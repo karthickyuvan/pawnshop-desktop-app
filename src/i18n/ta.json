@@ -764,7 +764,7 @@
   "out_gross_tbl_hdr": "வெளிச் செலவு (Gross)",
   "out_net_tbl_hdr": "வெளிச் செலவு (Net)",
 
-  "enter_customer_code_placeholder": "வாடிக்கையாளர் குறியீட்டை உள்ளிடவும் (A0001)",
+  "enter_customer_code_placeholder": "வாடிக்கையாளர் குறியீட்டை உள்ளிடவும் ",
   "ledger_empty_prompt": "பேரேட்டைப் பார்க்க வாடிக்கையாளர் ஐடியை உள்ளிட்டு 'தேடு' பொத்தானை அழுத்தவும்",
   "top_category_lbl": "அதிகபட்ச செலவு வகை",
 
@@ -820,8 +820,8 @@
   "due_soon": "விரைவில் முடியும்",
   "pocket_tbl_hdr": "பாக்கெட் (பை)",
 
-  "loan_portfolio_lbl": "மொத்த கடன் இருப்புத்தொகை (Portfolio)",
-  "yield_lbl": "வருவாய் விழுக்காடு (Yield)",
+  "loan_portfolio_lbl": "மொத்த கடன் இருப்புத்தொகை",
+  "yield_lbl": "வருவாய் விழுக்காடு ",
   "pledged_net_hdr": "அடமான நிகர எடை",
   "pledged_gross_hdr": "அடமான உத்தேச எடை",
   "closed_net_hdr": "மீட்கப்பட்ட நிகர எடை",
@@ -903,7 +903,7 @@
   "investor_name_label": "முதலீட்டாளர் பெயர் *",
   "enter_investor_name_placeholder": "முதலீட்டாளர் பெயரை உள்ளிடவும்",
   "investor_type_label": "முதலீட்டாளர் வகை",
-  "fixed_interest_option": "நிலையான வட்டி (Fixed Interest)",
+  "fixed_interest_option": "நிலையான வட்டி ",
   "fixed_interest_percentage_label": "நிலையான வட்டி % *",
   "interest_percentage_example_placeholder": "உதாரணம்: 12",
   "select_investor_alert": "முதலீட்டாளரைத் தேர்ந்தெடுக்கவும்",
@@ -918,10 +918,10 @@
   "active_investors_lbl": "செயலில் உள்ள முதலீட்டாளர்கள்",
   "available_balance_lbl": "தற்போதைய இருப்புத் தொகை",
   "cash_exchange_title": "சில்லறை/ரூபாய் நோட்டுகள் பரிமாற்றம்",
-  "inward_cash_received_lbl": "உள்வாங்கப்பட்ட ரொக்க விவரம் (Inward)",
-  "outward_cash_given_lbl": "வெளியே வழங்கப்பட்ட ரொக்க விவரம் (Outward)",
+  "inward_cash_received_lbl": "உள்வாங்கப்பட்ட ரொக்க விவரம் ",
+  "outward_cash_given_lbl": "வெளியே வழங்கப்பட்ட ரொக்க விவரம் ",
   "process_exchange_btn": "பரிமாற்றத்தைச் சேமி",
-  "cash_drawer": "பெட்டி இருப்பு (Cash Drawer)",
+  "cash_drawer": "பெட்டி இருப்பு ",
   "cash_drawer_desc": "பெட்டி ரொக்க நோட்டுகளின் தற்போதைய இருப்பைக் கண்காணிக்கவும் மற்றும் சில்லறை பரிமாற்றங்களைச் செய்யவும்",
   "reports_available_lbl": "அறிக்கைகள் கிடைக்கின்றன",
   "investor_capital_report_lbl": "முதலீட்டாளர் மூலதன அறிக்கை",
@@ -947,7 +947,7 @@
   "net_unpaid_dues_hdr": "செலுத்த வேண்டிய நிகர நிலுவை",
   "advances_journal_title_lbl": "சம்பள முன்பண தணிக்கை நாட்குறிப்பு",
   "settlement_log_title_lbl": "சம்பளக் கொடுப்பனவு தீர்வுப் பதிவேடு",
-  "gross_salary_hdr": "மொத்த சம்பளம் (Gross)",
+  "gross_salary_hdr": "மொத்த சம்பளம் ",
   "advances_deducted_hdr": "கழிக்கப்பட்ட முன்பணம்",
 
   "payment_receipt_title": "பணம் செலுத்தியதற்கான ரசீது",
@@ -956,7 +956,7 @@
   "full_settlement_lbl": "அடமானம் மீட்டல் / முழுத் தீர்வு",
   "interest_caps": "வட்டித் தொகை",
   "part_payment_caps": "பகுதித் தொகை",
-  "closure_caps": "மீட்டல் (CLOSURE)",
+  "closure_caps": "மீட்டல் ",
   "duplicate_copy_caps": "நகல் ரசீது",
   "duplicate_caps": "நகல்",
   "customer_copy_caps": "வாடிக்கையாளர் நகல்",
@@ -1009,5 +1009,66 @@
   "CUT HERE": "இங்கு நறுக்கவும்",
   "Duplicate Receipt": "நகல் ரசீது",
   "Print": "அச்சிடு",
-  "Close": "மூடு"
+  "Close": "மூடு",
+
+
+
+  "Loan Disbursement": "கடன் விநியோகம்",
+  "Processing Fee": "நடைமுறை கட்டணம்",
+  "First Month Interest": "முதல் மாத வட்டி",
+  "Denomination Exchange (Inward)": "பணத்தாள் பரிமாற்றம் (உள்வரவு)",
+  "Denomination Exchange (Outward)": "பணத்தாள் பரிமாற்றம் (வெளிசெலவு)",
+  "[AUCTION RECOVERY]": "ஏல மீட்பு",
+  "CASH": "பணம்",
+  "UPI": "UPI",
+  "BANK": "வங்கி",
+
+  "database_connected": "தரவுத்தளம் வெற்றிகரமாக இணைக்கப்பட்டது!",
+  "secure_db_handshake_failed": "பாதுகாப்பான தரவுத்தள இணைப்பு தோல்வியடைந்தது",
+  "db_error_description": "உள்ளூர் AppData கோப்புறைக்கான அணுகல் அனுமதிகளைச் சரிபார்க்கவும் அல்லது பயன்பாட்டை மீண்டும் தொடங்கவும்.",
+  "pawnshop_system_connecting": "அடகு மேலாண்மை அமைப்பு இணைகிறது...",
+  "configuring_buffers": "உள்ளூர் சூழல் நினைவகங்கள் உள்ளமைக்கப்படுகின்றன...",
+  "verifying_credentials": "பயனாளர் நற்சான்றிதழ்கள் சரிபார்க்கப்படுகின்றன...",
+  "AUCTION RECOVERY": "ஏல மீட்பு",
+
+
+  "investor_capital_additions": "முதலீட்டாளர் மூலதன சேர்க்கை",
+  "investor_withdrawals_lbl": "முதலீட்டாளர் திரும்பப் பெறல்",
+  "bank_refinance_inflow_lbl": "வங்கி மறுநிதியளிப்பு வரவு",
+  "in_gross_customer": "உள் வரவு (Gross)",
+  "in_net_customer": "உள் வரவு (Net)",
+  "out_gross_released": "வெளிச் செலவு (Gross)",
+  "out_net_released": "வெளிச் செலவு (Net)",
+  "store_to_bank_gross": "கடை ➔ வங்கி (Gross)",
+  "store_to_bank_net": "கடை ➔ வங்கி (Net)",
+  "bank_to_store_gross": "வங்கி ➔ கடை (Gross)",
+  "bank_to_store_net": "வங்கி ➔ கடை (Net)",
+
+  "type_added_success": "நகை வகை வெற்றிகரமாகச் சேர்க்கப்பட்டது!",
+  "type_enabled": "நகை வகை வெற்றிகரமாக இயக்கப்பட்டது!",
+  "type_disabled": "நகை வகை வெற்றிகரமாக முடக்கப்பட்டது!",
+
+  "scheme_created_success": "திட்டம் வெற்றிகரமாக உருவாக்கப்பட்டது!",
+  "scheme_updated_success": "திட்டம் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது!",
+  "scheme_enabled": "திட்டம் வெற்றிகரமாக இயக்கப்பட்டது!",
+  "scheme_disabled": "திட்டம் வெற்றிகரமாக முடக்கப்பட்டது!",
+
+  "bank_add_success": "வங்கி கணக்கு வெற்றிகரமாகச் சேர்க்கப்பட்டது!",
+  "bank_updated_success": "வங்கி கணக்கு வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது!",
+  "bank_enabled": "வங்கி கணக்கு வெற்றிகரமாக இயக்கப்பட்டது!",
+  "bank_disabled": "வங்கி கணக்கு வெற்றிகரமாக முடக்கப்பட்டது!",
+
+  "pledge_confirmed_hint": "அடமான வங்கி ஒதுக்கீடு வெற்றிகரமாக உறுதிசெய்யப்பட்டது!",
+  "pledge_unmapped_success": "அடமான வங்கி ஒதுக்கீடு வெற்றிகரமாக நீக்கப்பட்டது!",
+
+  "failed_load_banks": "வங்கி கணக்குகள் பட்டியலை ஏற்ற முடியவில்லை.",
+  "pledge_not_found_err": "அடமான எண் கண்டறியப்படவில்லை. தயவுசெய்து உள்ளீட்டைச் சரிபார்க்கவும்.",
+  "reference_required_for_method": "பரிவர்த்தனை குறிப்பு எண் தேவை",
+  "denom_mismatch_received": "ரொக்க நோட்டுகளின் மதிப்பு பெற்ற தொகையுடன் ஒத்துப்போக வேண்டும்.",
+  "denom_mismatch_payout": "ரொக்க நோட்டுகளின் மதிப்பு செலுத்த வேண்டிய தொகையுடன் ஒத்துப்போக வேண்டும்.",
+  "mapping_success": "வங்கி ஒதுக்கீடு வெற்றிகரமாக உறுதிசெய்யப்பட்டது!",
+  "unmapping_success": "வங்கி இணைப்பு நீக்கம் மற்றும் அடமான மூடல் வெற்றிகரமாக முடிந்தது!",
+  "unmapping_failed_alert": "வங்கி இணைப்பு நீக்கம் தோல்வியடைந்தது."
+
+
 }

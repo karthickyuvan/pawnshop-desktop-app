@@ -3,7 +3,6 @@
 use crate::db::connection::Db;
 use rusqlite::{params, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
-use crate::fund_management::service::add_fund;
 use chrono::{Datelike, Local, NaiveDate};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -14,7 +13,7 @@ pub struct Investor {
     pub mobile: Option<String>,
     pub address: Option<String>,
     pub notes: Option<String>,
-    pub investor_type: String,
+    pub investor_type: String, 
     pub is_active: bool,
     pub created_at: String,
     pub fixed_interest_percentage: f64,
@@ -31,6 +30,7 @@ pub struct CreateInvestorRequest {
     pub mobile: Option<String>,
     pub address: Option<String>,
     pub notes: Option<String>,
+    pub investor_type: Option<String>, 
     pub fixed_interest_percentage: Option<f64>,
     pub created_by: i64,
 }
@@ -42,6 +42,7 @@ pub struct UpdateInvestorRequest {
     pub mobile: Option<String>,
     pub address: Option<String>,
     pub notes: Option<String>,
+    pub investor_type: String, 
     pub fixed_interest_percentage: f64,
 }
 
@@ -93,6 +94,7 @@ pub struct WithdrawInvestmentRequest {
     pub amount: f64,
     pub payment_method: String,
     pub remarks: Option<String>,
+    pub transaction_ref: Option<String>, // ── ADDED: To support transaction references in withdrawals ──
     pub transaction_date: Option<String>,
     pub denominations: Vec<(i32, i32)>,
     pub created_by: i64,
@@ -128,7 +130,7 @@ pub struct InvestorInterestPreview {
 }
 
 /* ============================================================
-   INTERNAL AUTOMATED EXPENSE HOOKS
+   INTERNAL AUTOMATED EXPENSE HOOKS & HELPER UTILITIES
 ============================================================ */
 
 fn get_or_create_expense_category(tx: &rusqlite::Transaction, category_name: &str) -> rusqlite::Result<i64> {
@@ -179,9 +181,7 @@ fn generate_automated_expense_code(tx: &rusqlite::Transaction) -> rusqlite::Resu
     Ok(format!("EXP-{}-{:04}", current_year, next_number))
 }
 
-fn generate_investor_code(
-    conn: &rusqlite::Connection,
-) -> Result<String> {
+fn generate_investor_code(conn: &rusqlite::Connection) -> Result<String> {
     let last_id: Option<i64> = conn
         .query_row(
             "SELECT id FROM investors ORDER BY id DESC LIMIT 1",
@@ -191,23 +191,24 @@ fn generate_investor_code(
         .ok();
 
     let next_id = last_id.unwrap_or(0) + 1;
-
     Ok(format!("INV{:04}", next_id))
 }
 
-pub fn create_investor(
-    db: &Db,
-    request: CreateInvestorRequest,
-) -> Result<()> {
+fn safely_extract_date(date_str: &str) -> NaiveDate {
+    let cleaned = if date_str.len() >= 10 { &date_str[..10] } else { date_str };
+    NaiveDate::parse_from_str(cleaned, "%Y-%m-%d")
+        .unwrap_or_else(|_| Local::now().date_naive())
+}
+
+/* ============================================================
+   PUBLIC SERVICE METHODS
+============================================================ */
+
+pub fn create_investor(db: &Db, request: CreateInvestorRequest) -> Result<()> {
     let conn = db.0.lock().unwrap();
 
-    // Duplicate Name Check
     let count: i64 = conn.query_row(
-        "
-        SELECT COUNT(*)
-        FROM investors
-        WHERE LOWER(investor_name) = LOWER(?1)
-        ",
+        "SELECT COUNT(*) FROM investors WHERE LOWER(investor_name) = LOWER(?1)",
         params![request.investor_name],
         |row| row.get(0),
     )?;
@@ -217,23 +218,20 @@ pub fn create_investor(
     }
 
     let investor_code = generate_investor_code(&conn)?;
+    let type_assignment = request.investor_type.unwrap_or_else(|| "FIXED_INTEREST".to_string());
 
     conn.execute(
         "
         INSERT INTO investors (
-            investor_code,
-            investor_name,
-            mobile,
-            address,
-            notes,
-            fixed_interest_percentage,
-            created_by
+            investor_code, investor_name, investor_type, mobile, 
+            address, notes, fixed_interest_percentage, created_by
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
         ",
         params![
             investor_code,
             request.investor_name,
+            type_assignment, 
             request.mobile,
             request.address,
             request.notes,
@@ -245,9 +243,9 @@ pub fn create_investor(
     Ok(())
 }
 
-pub fn get_investors(
-    db: &Db,
-) -> Result<Vec<Investor>> {
+pub fn get_images() {} 
+
+pub fn get_investors(db: &Db) -> Result<Vec<Investor>> {
     let conn = db.0.lock().unwrap();
 
     let mut stmt = conn.prepare(
@@ -259,7 +257,7 @@ pub fn get_investors(
             i.mobile,
             i.address,
             i.notes,
-            'FIXED_INTEREST' AS investor_type,
+            i.investor_type, 
             i.fixed_interest_percentage,
             i.is_active,
             i.created_at,
@@ -289,6 +287,7 @@ pub fn get_investors(
             WHERE it.transaction_type = 'PROFIT_PAYMENT'
             GROUP BY investor_id
         ) prf ON prf.investor_id = i.id
+        WHERE i.is_active = 1
         ORDER BY i.investor_name
         "
     )?;
@@ -300,7 +299,7 @@ pub fn get_investors(
         let mobile: Option<String> = row.get(3)?;
         let address: Option<String> = row.get(4)?;
         let notes: Option<String> = row.get(5)?;
-        let investor_type: String = row.get(6)?;
+        let investor_type: String = row.get(6)?; 
         let fixed_interest_percentage: f64 = row.get(7)?;
         let is_active: bool = row.get::<_, i32>(8)? == 1;
         let created_at: String = row.get(9)?;
@@ -337,23 +336,12 @@ pub fn get_investors(
     Ok(investors)
 }
 
-pub fn update_investor(
-    db: &Db,
-    request: UpdateInvestorRequest,
-) -> Result<()> {
+pub fn update_investor(db: &Db, request: UpdateInvestorRequest) -> Result<()> {
     let conn = db.0.lock().unwrap();
 
     let duplicate_count: i64 = conn.query_row(
-        "
-        SELECT COUNT(*)
-        FROM investors
-        WHERE LOWER(investor_name) = LOWER(?1)
-          AND id != ?2
-        ",
-        params![
-            request.investor_name,
-            request.id
-        ],
+        "SELECT COUNT(*) FROM investors WHERE LOWER(investor_name) = LOWER(?1) AND id != ?2",
+        params![request.investor_name, request.id],
         |row| row.get(0),
     )?;
 
@@ -370,8 +358,9 @@ pub fn update_investor(
             address = ?3,
             notes = ?4,
             fixed_interest_percentage = ?5,
+            investor_type = ?6, 
             updated_at = datetime('now','localtime')
-        WHERE id = ?6
+        WHERE id = ?7
         ",
         params![
             request.investor_name,
@@ -379,6 +368,7 @@ pub fn update_investor(
             request.address,
             request.notes,
             request.fixed_interest_percentage,
+            request.investor_type,
             request.id
         ],
     )?;
@@ -386,10 +376,7 @@ pub fn update_investor(
     Ok(())
 }
 
-pub fn get_investor_by_id(
-    db: &Db,
-    investor_id: i64,
-) -> Result<Investor> {
+pub fn get_investor_by_id(db: &Db, investor_id: i64) -> Result<Investor> {
     let conn = db.0.lock().unwrap();
 
     conn.query_row(
@@ -401,7 +388,7 @@ pub fn get_investor_by_id(
             i.mobile,
             i.address,
             i.notes,
-            'FIXED_INTEREST' AS investor_type,
+            i.investor_type, 
             i.fixed_interest_percentage,
             i.is_active,
             i.created_at,
@@ -441,7 +428,7 @@ pub fn get_investor_by_id(
             let mobile: Option<String> = row.get(3)?;
             let address: Option<String> = row.get(4)?;
             let notes: Option<String> = row.get(5)?;
-            let investor_type: String = row.get(6)?;
+            let investor_type: String = row.get(6)?; 
             let fixed_interest_percentage: f64 = row.get(7)?;
             let is_active: bool = row.get::<_, i32>(8)? == 1;
             let created_at: String = row.get(9)?;
@@ -472,140 +459,81 @@ pub fn get_investor_by_id(
     )
 }
 
-pub fn create_investment(
-    db: &Db,
-    request: CreateInvestmentRequest,
-) -> Result<()> {
+pub fn create_investment(db: &Db, request: CreateInvestmentRequest) -> Result<()> {
     let conn = db.0.lock().unwrap();
 
     let is_active: bool = conn.query_row(
-        "
-        SELECT is_active
-        FROM investors
-        WHERE id = ?1
-        ",
+        "SELECT is_active FROM investors WHERE id = ?1",
         params![request.investor_id],
         |row| row.get(0),
     )?;
 
     if !is_active {
-        return Err(
-            rusqlite::Error::InvalidParameterName(
-                "Investor is inactive".to_string()
-            )
-        );
+        return Err(rusqlite::Error::InvalidParameterName("Investor is inactive".to_string()));
     }
 
-    let (investor_code, investor_name): (String, String) =
-        conn.query_row(
-            "
-            SELECT
-                investor_code,
-                investor_name
-            FROM investors
-            WHERE id = ?1
-            ",
-            params![request.investor_id],
-            |row| {
-                Ok((
-                    row.get(0)?,
-                    row.get(1)?,
-                ))
-            },
-        )?;
+    let (investor_code, investor_name): (String, String) = conn.query_row(
+        "SELECT investor_code, investor_name FROM investors WHERE id = ?1",
+        params![request.investor_id],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )?;
 
     drop(conn);
 
-    let fund_tx_id = add_fund(
+    // 🟢 FIXED: மல்டி-டிஸ்கிரிப்ஷன் ஏபிஐ-ஐப் பயன்படுத்தி அசல் UPI/BANK Reference ஐச் சேமிக்கிறோம்
+    let fund_tx_id = crate::fund_management::service::add_fund_with_desc(
         db,
         request.created_by,
-        format!("Investor Investment - {}", investor_name),
+        Some(investor_code.clone()),                                 // reference Column (INV0001)
+        Some(format!("Investor Investment - {}", investor_name)),    // description Column
         request.payment_method.clone(),
-        Some(investor_code.clone()),
+        request.transaction_ref.clone(),                             // transaction_ref Column (அசல் UTR/UPI Ref!)
         request.amount,
         request.transaction_date.clone(),
         request.denominations.clone(),
     )?;
 
     let conn = db.0.lock().unwrap();
-
     conn.execute(
         "
-        INSERT INTO investor_transactions (
-            investor_id,
-            fund_transaction_id,
-            transaction_type,
-            remarks,
-            created_by
-        )
+        INSERT INTO investor_transactions (investor_id, fund_transaction_id, transaction_type, remarks, created_by)
         VALUES (?1, ?2, 'INVESTMENT', ?3, ?4)
         ",
-        params![
-            request.investor_id,
-            fund_tx_id,
-            request.remarks,
-            request.created_by,
-        ],
+        params![request.investor_id, fund_tx_id, request.remarks, request.created_by],
     )?;
 
     Ok(())
 }
 
-pub fn get_investor_ledger(
-    db: &Db,
-    investor_id: i64,
-) -> Result<InvestorLedgerResponse> {
+pub fn get_investor_ledger(db: &Db, investor_id: i64) -> Result<InvestorLedgerResponse> {
     let conn = db.0.lock().unwrap();
 
     let (investor_name, investor_code, investor_type): (String, String, String) = conn.query_row(
-        "
-        SELECT
-            investor_name,
-            investor_code,
-            'FIXED_INTEREST' AS investor_type
-        FROM investors
-        WHERE id = ?1
-        ",
+        "SELECT investor_name, investor_code, investor_type FROM investors WHERE id = ?1", 
         params![investor_id],
-        |row| {
-            Ok((
-                row.get(0)?,
-                row.get(1)?,
-                row.get(2)?,
-            ))
-        },
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
     )?;
 
     let mut stmt = conn.prepare(
         "
-        SELECT
-            it.id,
-            ft.created_at,
-            it.transaction_type,
-            ft.total_amount,
-            ft.payment_method,
-            it.remarks
+        SELECT it.id, ft.created_at, it.transaction_type, ft.total_amount, ft.payment_method, it.remarks
         FROM investor_transactions it
-        INNER JOIN fund_transactions ft
-            ON ft.id = it.fund_transaction_id
+        INNER JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
         WHERE it.investor_id = ?1
         ORDER BY ft.created_at DESC
         "
     )?;
 
-    let rows = stmt.query_map(
-        params![investor_id],
-        |row| {
-            Ok(InvestorLedgerRow {
-                id: row.get(0)?,
-                transaction_date: row.get(1)?,
-                transaction_type: row.get(2)?,
-                amount: row.get(3)?,
-                payment_method: row.get(4)?,
-                remarks: row.get(5)?,
-            })
-        },
-    )?;
+    let rows = stmt.query_map(params![investor_id], |row| {
+        Ok(InvestorLedgerRow {
+            id: row.get(0)?,
+            transaction_date: row.get(1)?,
+            transaction_type: row.get(2)?,
+            amount: row.get(3)?,
+            payment_method: row.get(4)?,
+            remarks: row.get(5)?,
+        })
+    })?;
 
     let mut transactions = Vec::new();
     for row in rows {
@@ -616,10 +544,8 @@ pub fn get_investor_ledger(
         "
         SELECT COALESCE(SUM(ft.total_amount), 0)
         FROM investor_transactions it
-        INNER JOIN fund_transactions ft
-            ON ft.id = it.fund_transaction_id
-        WHERE it.investor_id = ?1
-          AND it.transaction_type = 'INVESTMENT'
+        INNER JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+        WHERE it.investor_id = ?1 AND it.transaction_type = 'INVESTMENT'
         ",
         params![investor_id],
         |row| row.get(0),
@@ -629,10 +555,8 @@ pub fn get_investor_ledger(
         "
         SELECT COALESCE(SUM(ft.total_amount), 0)
         FROM investor_transactions it
-        INNER JOIN fund_transactions ft
-            ON ft.id = it.fund_transaction_id
-        WHERE it.investor_id = ?1
-          AND it.transaction_type = 'PROFIT_PAYMENT'
+        INNER JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+        WHERE it.investor_id = ?1 AND it.transaction_type = 'PROFIT_PAYMENT'
         ",
         params![investor_id],
         |row| row.get(0),
@@ -642,10 +566,8 @@ pub fn get_investor_ledger(
         "
         SELECT COALESCE(SUM(ft.total_amount), 0)
         FROM investor_transactions it
-        INNER JOIN fund_transactions ft
-            ON ft.id = it.fund_transaction_id
-        WHERE it.investor_id = ?1
-          AND it.transaction_type = 'WITHDRAWAL'
+        INNER JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+        WHERE it.investor_id = ?1 AND it.transaction_type ='WITHDRAWAL'
         ",
         params![investor_id],
         |row| row.get(0),
@@ -656,7 +578,6 @@ pub fn get_investor_ledger(
     drop(stmt);
     drop(conn);
 
-    // Calculate real-time accrued interest values dynamically for the ledger modal cards
     let preview = get_investor_interest_preview(db, investor_id)?;
     let accrued_interest = preview.accrued_interest;
     let total_account_value = current_balance + accrued_interest;
@@ -679,32 +600,20 @@ pub fn get_investor_ledger(
     })
 }
 
-pub fn withdraw_investment(
-    db: &Db,
-    request: WithdrawInvestmentRequest,
-) -> Result<()> {
+pub fn withdraw_investment(db: &Db, request: WithdrawInvestmentRequest) -> Result<()> {
     if request.amount <= 0.0 {
         return Err(rusqlite::Error::InvalidQuery);
     }
 
     let conn = db.0.lock().unwrap();
-
     let is_active: bool = conn.query_row(
-        "
-        SELECT is_active
-        FROM investors
-        WHERE id = ?1
-        ",
+        "SELECT is_active FROM investors WHERE id = ?1",
         params![request.investor_id],
         |row| row.get(0),
     )?;
 
     if !is_active {
-        return Err(
-            rusqlite::Error::InvalidParameterName(
-                "Investor is inactive".to_string()
-            )
-        );
+        return Err(rusqlite::Error::InvalidParameterName("Investor is inactive".to_string()));
     }
 
     drop(conn);
@@ -754,7 +663,6 @@ pub fn withdraw_investment(
         )?;
 
         let current_balance = total_invested - total_withdrawn;
-
         (investor_code, investor_name, current_balance)
     };
 
@@ -762,66 +670,38 @@ pub fn withdraw_investment(
         return Err(rusqlite::Error::InvalidQuery);
     }
 
-    let fund_tx_id = crate::fund_management::service::withdraw_fund(
+    // 🟢 FIXED: மல்டி-டிஸ்கிரிப்ஷன் ஏபிஐ-ஐப் பயன்படுத்தி அசல் UPI/BANK Withdrawal Reference ஐச் சேமிக்கிறோம்
+    let fund_tx_id = crate::fund_management::service::withdraw_fund_with_desc(
         db,
         request.created_by,
-        format!("Investor Withdrawal - {}", investor_name),
+        Some(investor_code.clone()),                               // reference Column (INV0001)
+        Some(format!("Investor Withdrawal - {}", investor_name)),  // description Column
         request.payment_method.clone(),
-        Some(investor_code.clone()),
+        request.transaction_ref.clone(),                           // transaction_ref Column (அசல் UTR/UPI Ref!)
         request.amount,
         request.transaction_date.clone(),
         request.denominations.clone(),
     )?;
 
     let conn = db.0.lock().unwrap();
-
     conn.execute(
         "
-        INSERT INTO investor_transactions (
-            investor_id,
-            fund_transaction_id,
-            transaction_type,
-            remarks,
-            created_by
-        )
+        INSERT INTO investor_transactions (investor_id, fund_transaction_id, transaction_type, remarks, created_by)
         VALUES (?1, ?2, 'WITHDRAWAL', ?3, ?4)
         ",
-        params![
-            request.investor_id,
-            fund_tx_id,
-            request.remarks,
-            request.created_by,
-        ],
+        params![request.investor_id, fund_tx_id, request.remarks, request.created_by],
     )?;
 
     Ok(())
 }
 
-pub fn toggle_investor_status(
-    db: &Db,
-    request: ToggleInvestorStatusRequest,
-) -> Result<()> {
+pub fn toggle_investor_status(db: &Db, request: ToggleInvestorStatusRequest) -> Result<()> {
     let conn = db.0.lock().unwrap();
-
-    conn.execute(
-        "
-        UPDATE investors
-        SET is_active = ?1
-        WHERE id = ?2
-        ",
-        params![
-            request.is_active,
-            request.id
-        ],
-    )?;
-
+    conn.execute("UPDATE investors SET is_active = ?1 WHERE id = ?2", params![request.is_active, request.id])?;
     Ok(())
 }
 
-pub fn pay_profit(
-    db: &Db,
-    request: PayProfitRequest,
-) -> Result<()> {
+pub fn pay_profit(db: &Db, request: PayProfitRequest) -> Result<()> {
     if request.profit_amount <= 0.0 {
         return Err(rusqlite::Error::InvalidQuery);
     }
@@ -831,82 +711,43 @@ pub fn pay_profit(
             return Err(rusqlite::Error::InvalidQuery);
         }
 
-        let calc_total: f64 = request
-            .denominations
-            .iter()
-            .map(|(d, q)| (*d as f64) * (*q as f64))
-            .sum();
-
+        let calc_total: f64 = request.denominations.iter().map(|(d, q)| (*d as f64) * (*q as f64)).sum();
         if (calc_total - request.profit_amount).abs() > 0.01 {
             return Err(rusqlite::Error::InvalidQuery);
         }
     }
 
     let conn = db.0.lock().unwrap();
-
     let is_active: bool = conn.query_row(
-        "
-        SELECT is_active
-        FROM investors
-        WHERE id = ?1
-        ",
+        "SELECT is_active FROM investors WHERE id = ?1",
         params![request.investor_id],
         |row| row.get(0),
     )?;
 
     if !is_active {
-        return Err(
-            rusqlite::Error::InvalidParameterName(
-                "Investor is inactive".to_string(),
-            ),
-        );
+        return Err(rusqlite::Error::InvalidParameterName("Investor is inactive".to_string()));
     }
-
     drop(conn);
 
-    // ===================================
-    // Get Investor details & Calculate exact paid range dates
-    // ===================================
     let (investor_code, investor_name, interest_paid_upto, created_at) = {
         let conn = db.0.lock().unwrap();
-
         conn.query_row(
-            "
-            SELECT
-                investor_code,
-                investor_name,
-                interest_paid_upto,
-                created_at
-            FROM investors
-            WHERE id = ?1
-            ",
+            "SELECT investor_code, investor_name, interest_paid_upto, created_at FROM investors WHERE id = ?1",
             params![request.investor_id],
-            |row| {
-                Ok((
-                    row.get::<usize, String>(0)?,
-                    row.get::<usize, String>(1)?,
-                    row.get::<usize, Option<String>>(2)?,
-                    row.get::<usize, String>(3)?,
-                ))
-            },
+            |row| Ok((row.get::<usize, String>(0)?, row.get::<usize, String>(1)?, row.get::<usize, Option<String>>(2)?, row.get::<usize, String>(3)?)),
         )?
     };
 
     let (final_remarks, paid_upto) = {
         let conn = db.0.lock().unwrap();
-
         let start_date_str: String = match interest_paid_upto.clone() {
             Some(date) if !date.trim().is_empty() => date,
             _ => {
                 let first_invest: Option<String> = match conn.query_row(
                     "
-                    SELECT MIN(ft.created_at)
-                    FROM investor_transactions it
-                    INNER JOIN fund_transactions ft
-                        ON ft.id = it.fund_transaction_id
-                    WHERE
-                        it.investor_id = ?1
-                        AND it.transaction_type = 'INVESTMENT'
+                    SELECT MIN(ft.created_at) FROM investor_transactions it
+                    INNER JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+                    WHERE it.investor_id = ?1 AND it.transaction_type = 'INVESTMENT'
                     ",
                     params![request.investor_id],
                     |row| row.get::<usize, Option<String>>(0),
@@ -915,16 +756,11 @@ pub fn pay_profit(
                     Err(_) => None,
                 };
 
-                match first_invest {
-                    Some(date) if !date.trim().is_empty() => date,
-                    _ => created_at,
-                }
+                first_invest.filter(|date| !date.trim().is_empty()).unwrap_or(created_at)
             }
         };
 
-        // Determine paid-upto calculation boundary date
-        let start_naive = NaiveDate::parse_from_str(&start_date_str[..10], "%Y-%m-%d")
-            .unwrap_or_else(|_| Local::now().date_naive());
+        let start_naive = safely_extract_date(&start_date_str);
 
         let paid_upto = if let Some(m) = request.months_paid {
             if m > 0 {
@@ -933,42 +769,20 @@ pub fn pay_profit(
                     .format("%Y-%m-%d")
                     .to_string()
             } else {
-                request.transaction_date.clone().unwrap_or_else(|| {
-                    Local::now().format("%Y-%m-%d").to_string()
-                })
+                request.transaction_date.clone().unwrap_or_else(|| Local::now().format("%Y-%m-%d").to_string())
             }
         } else {
-            request.transaction_date.clone().unwrap_or_else(|| {
-                Local::now().format("%Y-%m-%d").to_string()
-            })
+            request.transaction_date.clone().unwrap_or_else(|| Local::now().format("%Y-%m-%d").to_string())
         };
 
-        // Format Period Start notes
-        let start_formatted = if start_date_str.len() >= 10 {
-            if let Ok(d) = NaiveDate::parse_from_str(&start_date_str[..10], "%Y-%m-%d") {
-                d.format("%b %Y").to_string()
-            } else {
-                start_date_str.clone()
-            }
-        } else {
-            start_date_str.clone()
-        };
-
-        // Format Period End notes based on newly adjusted paid_upto date
-        let end_formatted = if paid_upto.len() >= 10 {
-            if let Ok(d) = NaiveDate::parse_from_str(&paid_upto[..10], "%Y-%m-%d") {
-                // Subtract exactly 1 day so that we display the last fully covered calendar month (e.g. "Mar 2026" instead of "Apr 2026")
-                let display_end = d.pred_opt().unwrap_or(d);
-                display_end.format("%b %Y").to_string()
-            } else {
-                paid_upto.clone()
-            }
-        } else {
-            paid_upto.clone()
+        let start_formatted = safely_extract_date(&start_date_str).format("%b %Y").to_string();
+        
+        let end_formatted = {
+            let d = safely_extract_date(&paid_upto);
+            d.pred_opt().unwrap_or(d).format("%b %Y").to_string()
         };
 
         let period_text = format!("🗓️ Period: {} ➔ {}", start_formatted, end_formatted);
-
         let final_remarks = match &request.remarks {
             Some(rem) if !rem.trim().is_empty() => format!("{} | {}", period_text, rem),
             _ => period_text,
@@ -977,248 +791,103 @@ pub fn pay_profit(
         (final_remarks, paid_upto)
     };
 
-    println!(
-        "PAY PROFIT -> Investor: {}, Amount: {}",
-        investor_name,
-        request.profit_amount
-    );
+    // 🟢 FIXED: மல்டி-டிஸ்கிரிப்ஷன் ஏபிஐ-ஐப் பயன்படுத்தி ஏல மீட்பு அல்லாத வட்டி பட்டுவாடாவைச் சேமிக்கிறோம்
+    let fund_tx_id = crate::fund_management::service::withdraw_fund_with_desc(
+        db,
+        request.created_by,
+        Some(investor_code.clone()), // reference Column (INV0001)
+        Some(format!("Investor Profit Payment - {}", investor_name)), // description Column
+        request.payment_method.clone(),
+        None, // Profit payment-க்கு UTR தேவையில்லை எனில் None ஆக அனுப்பலாம்
+        request.profit_amount,
+        request.transaction_date.clone(),
+        request.denominations.clone(),
+    )?;
 
-    // ===================================
-    // 5️⃣ Withdraw From Fund Drawer
-    // ===================================
-    let fund_tx_id =
-        crate::fund_management::service::withdraw_fund(
-            db,
-            request.created_by,
-            format!("Investor Profit Payment - {}", investor_name),
-            request.payment_method.clone(),
-            Some(investor_code.clone()),
-            request.profit_amount,
-            request.transaction_date.clone(),
-            request.denominations.clone(),
-        )?;
-
-    println!(
-        "PROFIT FUND TX CREATED -> {}",
-        fund_tx_id
-    );
-
-    // ===================================
-    // 6️⃣ Save Profit Payment Record, Auto-Log Expense, and Update Payout check points
-    // ===================================
     {
         let mut conn = db.0.lock().unwrap();
-        let tx = conn.transaction()?; // ✅ Created Transaction `tx` inside the block
+        let tx = conn.transaction()?;
 
-        // Register the payment as a business expense under a dedicated category
-        let category_id = get_or_create_expense_category(&tx, "Investor Interest Payout")?; // ✅ FIXED parameter to &tx
-
-        let expense_code = generate_automated_expense_code(&tx)?; // ✅ FIXED parameter to &tx
-
+        let category_id = get_or_create_expense_category(&tx, "Investor Interest Payout")?;
+        let expense_code = generate_automated_expense_code(&tx)?;
         let expense_desc = format!(
             "Interest payout of ₹{:.2} made to investor {} ({}). Remarks: {}",
             request.profit_amount, investor_name, investor_code, final_remarks
         );
 
-        let expense_payment_mode = if request.payment_method == "BANK" {
-            "BANK_TRANSFER"
-        } else {
-            &request.payment_method
-        };
+        let expense_payment_mode = if request.payment_method == "BANK" { "BANK_TRANSFER" } else { &request.payment_method };
 
-        // Auto-insert payout into the expenses table so it appears in general expense reports
         tx.execute(
-            "INSERT INTO expenses (
-                expense_code, category_id, description,
-                payment_mode, amount, expense_date,
-                created_by
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-            params![
-                expense_code,
-                category_id,
-                expense_desc,
-                expense_payment_mode,
-                request.profit_amount,
-                request.transaction_date,
-                request.created_by
-            ],
+            "INSERT INTO expenses (expense_code, category_id, description, payment_mode, amount, expense_date, created_by)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![expense_code, category_id, expense_desc, expense_payment_mode, request.profit_amount, request.transaction_date, request.created_by],
         )?;
 
         let expense_id = tx.last_insert_rowid();
 
-        // Update the fund_transactions log so it links directly to this expense
         tx.execute(
-            "UPDATE fund_transactions 
-             SET module_type = 'EXPENSE', 
-                 module_id = ?1,
-                 reference = ?2 
-             WHERE id = ?3",
-            params![
-                expense_id,
-                format!("{} - {} - Interest Payout", expense_code, investor_name),
-                fund_tx_id
-            ],
-        )?;
-
-        // Save Profit Payment Record
-        tx.execute(
-            "
-            INSERT INTO investor_profit_payments (
-                investor_id,
-                fund_transaction_id,
-                profit_amount,
-                payment_date,
-                remarks,
-                created_by
-            )
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-            ",
-            params![
-                request.investor_id,
-                fund_tx_id,
-                request.profit_amount,
-                request.transaction_date,
-                final_remarks,
-                request.created_by,
-            ],
-        )?;
-
-        // Save Investor Ledger Entry
-        tx.execute(
-            "
-            INSERT INTO investor_transactions (
-                investor_id,
-                fund_transaction_id,
-                transaction_type,
-                remarks,
-                created_by
-            )
-            VALUES (?1, ?2, 'PROFIT_PAYMENT', ?3, ?4)
-            ",
-            params![
-                request.investor_id,
-                fund_tx_id,
-                final_remarks,
-                request.created_by,
-            ],
+            "UPDATE fund_transactions SET module_type = 'EXPENSE', module_id = ?1, reference = ?2 WHERE id = ?3",
+            params![expense_id, format!("{} - {} - Interest Payout", expense_code, investor_name), fund_tx_id],
         )?;
 
         tx.execute(
-            "UPDATE investors SET interest_paid_upto = ?1 WHERE id = ?2",
-            params![paid_upto, request.investor_id],
+            "INSERT INTO investor_profit_payments (investor_id, fund_transaction_id, profit_amount, payment_date, remarks, created_by)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![request.investor_id, fund_tx_id, request.profit_amount, request.transaction_date, final_remarks, request.created_by],
         )?;
 
+        tx.execute(
+            "INSERT INTO investor_transactions (investor_id, fund_transaction_id, transaction_type, remarks, created_by)
+             VALUES (?1, ?2, 'PROFIT_PAYMENT', ?3, ?4)",
+            params![request.investor_id, fund_tx_id, final_remarks, request.created_by],
+        )?;
+
+        tx.execute("UPDATE investors SET interest_paid_upto = ?1 WHERE id = ?2", params![paid_upto, request.investor_id])?;
         tx.commit()?;
     }
 
     Ok(())
 }
 
-pub fn get_investor_interest_preview(
-    db: &Db,
-    investor_id: i64,
-) -> Result<InvestorInterestPreview> {
+pub fn get_investor_interest_preview(db: &Db, investor_id: i64) -> Result<InvestorInterestPreview> {
     let conn = db.0.lock().unwrap();
 
-    // ===================================
-    // Investor Details
-    // ===================================
-    let (
-        investor_name,
-        fixed_interest_percentage,
-        interest_paid_upto,
-        created_at,
-    ): (
-        String,
-        f64,
-        Option<String>,
-        String,
-    ) = conn.query_row(
-        "
-        SELECT
-            investor_name,
-            fixed_interest_percentage,
-            interest_paid_upto,
-            created_at
-        FROM investors
-        WHERE id = ?1
-        ",
+    let (investor_name, fixed_interest_percentage, interest_paid_upto, created_at): (String, f64, Option<String>, String) = conn.query_row(
+        "SELECT investor_name, fixed_interest_percentage, interest_paid_upto, created_at FROM investors WHERE id = ?1",
         params![investor_id],
-        |row| {
-            Ok((
-                row.get::<usize, String>(0)?,
-                row.get::<usize, f64>(1)?,
-                row.get::<usize, Option<String>>(2)?,
-                row.get::<usize, String>(3)?,
-            ))
-        },
+        |row| Ok((row.get::<usize, String>(0)?, row.get::<usize, f64>(1)?, row.get::<usize, Option<String>>(2)?, row.get::<usize, String>(3)?)),
     )?;
 
-    // ===================================
-    // Total Investment
-    // ===================================
-    let total_investment: f64 =
-        conn.query_row(
-            "
-            SELECT
-                COALESCE(
-                    SUM(ft.total_amount),
-                    0
-                )
-            FROM investor_transactions it
-            INNER JOIN fund_transactions ft
-                ON ft.id = it.fund_transaction_id
-            WHERE
-                it.investor_id = ?1
-                AND it.transaction_type = 'INVESTMENT'
-            ",
-            params![investor_id],
-            |row| row.get(0),
-        )?;
+    let total_investment: f64 = conn.query_row(
+        "
+        SELECT COALESCE(SUM(ft.total_amount), 0) FROM investor_transactions it
+        INNER JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+        WHERE it.investor_id = ?1 AND it.transaction_type = 'INVESTMENT'
+        ",
+        params![investor_id],
+        |row| row.get(0),
+    )?;
 
-    // ===================================
-    // Total Withdrawn
-    // ===================================
-    let total_withdrawn: f64 =
-        conn.query_row(
-            "
-            SELECT
-                COALESCE(
-                    SUM(ft.total_amount),
-                    0
-                )
-            FROM investor_transactions it
-            INNER JOIN fund_transactions ft
-                ON ft.id = it.fund_transaction_id
-            WHERE
-                it.investor_id = ?1
-                AND it.transaction_type = 'WITHDRAWAL'
-            ",
-            params![investor_id],
-            |row| row.get(0),
-        )?;
+    let total_withdrawn: f64 = conn.query_row(
+        "
+        SELECT COALESCE(SUM(ft.total_amount), 0) FROM investor_transactions it
+        INNER JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+        WHERE it.investor_id = ?1 AND it.transaction_type = 'WITHDRAWAL'
+        ",
+        params![investor_id],
+        |row| row.get(0),
+    )?;
 
-    // ===================================
-    // Current Principal
-    // ===================================
-    let principal_amount =
-        total_investment - total_withdrawn;
+    let principal_amount = total_investment - total_withdrawn;
 
-    // ===================================
-    // Start Date Calculation for Interest (Dynamic fallback chain)
-    // ===================================
     let start_date_str: String = match interest_paid_upto.clone() {
         Some(date) if !date.trim().is_empty() => date,
         _ => {
             let first_invest: Option<String> = match conn.query_row(
                 "
-                SELECT MIN(ft.created_at)
-                FROM investor_transactions it
-                INNER JOIN fund_transactions ft
-                    ON ft.id = it.fund_transaction_id
-                WHERE
-                    it.investor_id = ?1
-                    AND it.transaction_type = 'INVESTMENT'
+                SELECT MIN(ft.created_at) FROM investor_transactions it
+                INNER JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
+                WHERE it.investor_id = ?1 AND it.transaction_type = 'INVESTMENT'
                 ",
                 params![investor_id],
                 |row| row.get::<usize, Option<String>>(0),
@@ -1227,52 +896,25 @@ pub fn get_investor_interest_preview(
                 Err(_) => None,
             };
 
-            match first_invest {
-                Some(date) if !date.trim().is_empty() => date,
-                _ => created_at,
-            }
+            first_invest.filter(|date| !date.trim().is_empty()).unwrap_or(created_at)
         }
     };
 
-    let invest_date =
-        NaiveDate::parse_from_str(
-            &start_date_str[..10],
-            "%Y-%m-%d",
-        )
-        .map_err(|_| rusqlite::Error::InvalidQuery)?;
-
+    let invest_date = safely_extract_date(&start_date_str);
     let today = Local::now().date_naive();
 
-    let months_elapsed =
-        ((today.year() - invest_date.year()) * 12)
-        + (
-            today.month() as i32
-            - invest_date.month() as i32
-        );
-
-    // Prevent negative months if interest was prepaid into future dates
+    let months_elapsed = ((today.year() - invest_date.year()) * 12) + (today.month() as i32 - invest_date.month() as i32);
     let months_elapsed = std::cmp::max(0, months_elapsed);
 
-    // ===================================
-    // Interest Calculation
-    // ===================================
-    let accrued_interest =
-        principal_amount
-        * (fixed_interest_percentage / 100.0)
-        * months_elapsed as f64;
+    let accrued_interest = principal_amount * (fixed_interest_percentage / 100.0) * months_elapsed as f64;
 
-    // ===================================
-    // Response
-    // ===================================
-    Ok(
-        InvestorInterestPreview {
-            investor_id,
-            investor_name,
-            principal_amount,
-            interest_percentage: fixed_interest_percentage,
-            total_months: months_elapsed,
-            accrued_interest,
-            total_payable: accrued_interest,
-        }
-    )
+    Ok(InvestorInterestPreview {
+        investor_id,
+        investor_name,
+        principal_amount,
+        interest_percentage: fixed_interest_percentage,
+        total_months: months_elapsed,
+        accrued_interest,
+        total_payable: accrued_interest,
+    })
 }

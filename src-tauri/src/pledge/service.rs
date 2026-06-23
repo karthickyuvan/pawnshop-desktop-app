@@ -7,10 +7,7 @@
 // use rusqlite::{params, Result};
 // use serde::{Deserialize, Serialize};
 // use std::fs;
-// // use std::path::Path;
 // use tauri::Manager;
-// // use crate::receipt::generator::generate_next_receipt_no;
-
 
 // #[derive(Deserialize, Serialize, Debug)]
 // pub struct PledgeItemRequest {
@@ -39,7 +36,6 @@
 //     pub customer_name: String,
 //     pub customer_code: String,
 //     pub loan_amount: f64,
-//     // pub pledge_date: String, 
 //     pub created_at: String,
 //     pub due_date: String,
 //     pub days_remaining: i64,
@@ -92,9 +88,8 @@
 //     pub pocket_number: Option<i64>, 
 //     pub status: String,
 //     pub created_at: String,
-//      pub pledge_date: String,
+//     pub pledge_date: String,
 //     pub duration_months: i32,
-//     // Customer
 //     pub customer_code: String,
 //     pub customer_name: String,
 //     pub relation_type: Option<String>,
@@ -102,7 +97,6 @@
 //     pub phone: String,
 //     pub address: String,
 //     pub photo_path: Option<String>,
-//     // Loan
 //     pub loan_type: String,
 //     pub scheme_name: String,
 //     pub interest_rate: f64,
@@ -111,8 +105,7 @@
 //     pub total_gross_weight: f64,
 //     pub total_net_weight: f64,
 //     pub total_value: f64,
-
-//     pub is_bank_mapped:bool,
+//     pub is_bank_mapped: bool,
 //     pub parked_interest: f64,
 //     pub last_interest_date: String,
 // }
@@ -149,39 +142,38 @@
 //     pub is_principal_only: Option<bool>, 
 // }
 
+// // 🛡️ Internal safe date extraction tool to avoid slicing panics
+// fn safely_parse_pledge_date(date_str: &str) -> NaiveDate {
+//     let cleaned = if date_str.len() >= 10 { &date_str[..10] } else { date_str };
+//     NaiveDate::parse_from_str(cleaned, "%Y-%m-%d").unwrap_or_else(|_| Local::now().date_naive())
+// }
+
 // pub fn create_pledge(
 //     db: &Db,
 //     app_handle: &tauri::AppHandle,
 //     req: CreatePledgeRequest,
 // ) -> Result<String, String> {
 
-
-//     // ===============================
-//     // 1️⃣ Generate Pledge Number
-//     // ===============================
-
 //     let pledge_no = generate_next_pledge_no(&db).map_err(|e| e.to_string())?;
 //     let pocket_number = generate_next_pocket_number(&db)?; 
+
+//     let today = Local::now().format("%Y-%m-%d").to_string();
+//     let pledge_date = req.pledge_date.clone().unwrap_or(today);
+
+//     let target_year: i32 = pledge_date[..4]
+//         .parse()
+//         .map_err(|e| format!("Failed to parse year from date {}: {}", pledge_date, e))?;
+
 //     let mut conn = db.0.lock().unwrap();
 //     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-//     // ✅ Generate unified receipt number , ✅ Generate ONE receipt number for the entire transaction
+//     let receipt_number = crate::receipt::generator::generate_next_receipt_no(&tx, Some(target_year))?;
 
-//     let receipt_number = crate::receipt::generator::generate_next_receipt_no(&tx)?;
-
-        
-
-//     // ===============================
-//     // 2️⃣ Calculate Totals
-//     // ===============================
 //     let total_gross: f64 = req.items.iter().map(|i| i.gross_weight).sum();
 //     let total_net: f64 = req.items.iter().map(|i| i.net_weight).sum();
 //     let total_value: f64 = req.items.iter().map(|i| i.item_value).sum();
 
-
-
-//      // ✅ Calculate loan percentage and check if overlimit
-//      let actual_loan_percentage = if total_value > 0.0 {
+//     let actual_loan_percentage = if total_value > 0.0 {
 //         (req.loan_amount / total_value) * 100.0
 //     } else {
 //         0.0
@@ -189,9 +181,6 @@
 
 //     let is_overlimit = actual_loan_percentage > 80.0;
 
-//     // ===============================
-//     // 3️⃣ CASH VALIDATION
-//     // ===============================
 //     if req.payment_method == "CASH" {
 //         let balance: f64 = tx
 //             .query_row(
@@ -234,50 +223,41 @@
 //         }
 //     }
 
-//     // ===============================
-// // OWNER ONLY - Backdated Pledge Validation
-// // ===============================
+//     let user_role: String = tx
+//         .query_row(
+//             "SELECT role FROM users WHERE id = ?1",
+//             params![req.created_by],
+//             |row| row.get(0),
+//         )
+//         .map_err(|e| e.to_string())?;
 
-// let today = Local::now().format("%Y-%m-%d").to_string();
-
-// // Get current user's role
-// let user_role: String = tx
-//     .query_row(
-//         "SELECT role FROM users WHERE id = ?1",
-//         params![req.created_by],
-//         |row| row.get(0),
-//     )
-//     .map_err(|e| e.to_string())?;
-
-// // STAFF cannot create backdated pledges
-// if user_role != "OWNER" {
-//     if let Some(date) = &req.pledge_date {
-//         if date != &today {
+//     if user_role != "OWNER" {
+//         let current_today = Local::now().format("%Y-%m-%d").to_string();
+//         if pledge_date != current_today {
 //             return Err(
 //                 "Only OWNER can create pledges with a different date".to_string()
 //             );
 //         }
 //     }
-// }
 
-// // Final pledge date
-// let pledge_date = req
-//     .pledge_date
-//     .clone()
-//     .unwrap_or(today);
-
-//     // ===============================
-//     // 4️⃣ Insert Pledge
-//     // ===============================
-
+//     let trimmed_date = pledge_date.trim();
+//     let transaction_timestamp = if trimmed_date.contains('T') {
+//         trimmed_date.to_string()
+//     } else {
+//         format!(
+//             "{}T{}Z",
+//             trimmed_date,
+//             chrono::Utc::now().format("%H:%M:%S")
+//         )
+//     };
 
 //     tx.execute(
 //         "INSERT INTO pledges (
-//             pledge_no,receipt_number,pocket_number, customer_id, scheme_name, loan_type, interest_rate,
+//             pledge_no, receipt_number, pocket_number, customer_id, scheme_name, loan_type, interest_rate,
 //             loan_duration_months, price_per_gram,
 //             total_gross_weight, total_net_weight,
-//             total_estimated_value, loan_amount,is_overlimit, actual_loan_percentage, pledge_date, created_by
-//         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14 ,?15,?16,?17)",
+//             total_estimated_value, loan_amount, is_overlimit, actual_loan_percentage, pledge_date, created_by
+//         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
 //         params![
 //             pledge_no,
 //             receipt_number, 
@@ -301,37 +281,28 @@
 //     .map_err(|e| e.to_string())?;
 
 //     let pledge_id = tx.last_insert_rowid();
-//     // Keep interest calculations aligned with the selected pledge date
-// tx.execute(
-//     "
-//     UPDATE pledges
-//     SET last_interest_date = ?1
-//     WHERE id = ?2
-//     ",
-//     params![pledge_date, pledge_id],
-// )
-// .map_err(|e| e.to_string())?;
 
-//     // ===============================
-//     // 5️⃣ DISBURSEMENT ENTRY (CASH or DIGITAL)
-//     // ===============================
-
-// if req.payment_method == "CASH" {
 //     tx.execute(
-//         "INSERT INTO fund_transactions
-//         (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_at, created_by)
-//         VALUES ('WITHDRAW', ?1, 'PLEDGE', ?2, ?3, ?4, 'CASH', ?5, ?6, ?7)",
-//         params![
-//             req.loan_amount,
-//             pledge_id,
-//             pledge_no,
-//             format!("Loan Disbursement - {}", receipt_number), 
-//             req.transaction_ref,
-//             pledge_date, // This now maps correctly to 'created_at'
-//             req.created_by
-//         ],
+//         "UPDATE pledges SET last_interest_date = ?1 WHERE id = ?2",
+//         params![pledge_date, pledge_id],
 //     )
+//     .map_err(|e| e.to_string())?;
 
+//     if req.payment_method == "CASH" {
+//         tx.execute(
+//             "INSERT INTO fund_transactions
+//             (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_at, created_by)
+//             VALUES ('WITHDRAW', ?1, 'PLEDGE', ?2, ?3, ?4, 'CASH', ?5, ?6, ?7)",
+//             params![
+//                 req.loan_amount,
+//                 pledge_id,
+//                 pledge_no,
+//                 format!("Loan Disbursement - {}", receipt_number), 
+//                 req.transaction_ref,
+//                 transaction_timestamp,
+//                 req.created_by
+//             ],
+//         )
 //         .map_err(|e| e.to_string())?;
 
 //         let fund_tx_id = tx.last_insert_rowid();
@@ -348,28 +319,24 @@
 //             }
 //         }
 //     } else {
-//     // UPI / BANK disbursement
-//     tx.execute(
-//         "INSERT INTO fund_transactions
-//         (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_at, created_by)
-//         VALUES ('WITHDRAW', ?1, 'PLEDGE', ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-//         params![
-//             req.loan_amount,
-//             pledge_id,
-//             pledge_no,
-//             format!("Loan Disbursement - {}", receipt_number),
-//             req.payment_method,
-//             req.transaction_ref, 
-//             pledge_date, // This saves the backdate to 'created_at'
-//             req.created_by
-//         ],
-//     )
-//     .map_err(|e| e.to_string())?;
-// }
+//         tx.execute(
+//             "INSERT INTO fund_transactions
+//             (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_at, created_by)
+//             VALUES ('WITHDRAW', ?1, 'PLEDGE', ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+//             params![
+//                 req.loan_amount,
+//                 pledge_id,
+//                 pledge_no,
+//                 format!("Loan Disbursement - {}", receipt_number),
+//                 req.payment_method,
+//                 req.transaction_ref, 
+//                 transaction_timestamp,
+//                 req.created_by
+//             ],
+//         )
+//         .map_err(|e| e.to_string())?;
+//     }
        
-//     // ===============================
-//     // 6️⃣ Processing Fee (Income)
-//     // ===============================
 //     if req.processing_fee_amount > 0.0 {
 //         tx.execute(
 //             "INSERT INTO fund_transactions
@@ -382,36 +349,24 @@
 //                 format!("Processing Fee - {}", receipt_number),
 //                 req.payment_method,
 //                 req.transaction_ref,
-//                 pledge_date,
+//                 transaction_timestamp,
 //                 req.created_by
 //             ],
 //         )
 //         .map_err(|e| e.to_string())?;
 //     }
 
-//     // ===============================
-//     // 7️⃣ First Interest Record
-//     // ===============================
 //     if req.first_interest_amount > 0.0 {
-//         // let interest_receipt_no = generate_next_receipt_no(&tx)?;
-
-
 //         tx.execute(
 //             "INSERT INTO pledge_payments
-//             (pledge_id,
-//             payment_type,
-//             payment_mode,
-//             receipt_no,
-//             amount,
-//             paid_at,
-//             created_by)
+//             (pledge_id, payment_type, payment_mode, receipt_no, amount, paid_at, created_by)
 //             VALUES (?1,'INTEREST',?2,?3,?4,?5,?6)",
 //             params![
 //                 pledge_id,
 //                 req.payment_method,
 //                 receipt_number,
 //                 req.first_interest_amount,
-//                 pledge_date,
+//                 transaction_timestamp,
 //                 req.created_by
 //             ],
 //         )
@@ -428,16 +383,13 @@
 //                 format!("First Month Interest - {}", receipt_number),
 //                 req.payment_method,
 //                 req.transaction_ref,
-//                 pledge_date,
+//                 transaction_timestamp,
 //                 req.created_by
 //             ],
 //         )
 //         .map_err(|e| e.to_string())?;
 //     }
 
-//     // ===============================
-//     // 8️⃣ Insert Items + Images
-//     // ===============================
 //     let app_data_dir = app_handle
 //         .path()
 //         .app_data_dir()
@@ -484,145 +436,8 @@
 //     }
 
 //     tx.commit().map_err(|e| e.to_string())?;
-
 //     Ok(pledge_no)
 // }
-
-// // pub fn get_all_pledges(db: &Db, search: Option<String>) -> Result<PledgeListResponse, String> {
-// //     let conn = db.0.lock().unwrap();
-
-// //     let mut query = "
-// //         SELECT 
-// //             p.id,
-// //             p.pledge_no,
-// //             c.name,
-// //             c.customer_code,
-// //             p.loan_amount,
-// //                COALESCE(p.pledge_date, substr(p.created_at,1,10)),
-// //             p.loan_duration_months,
-// //             p.status
-// //         FROM pledges p
-// //         JOIN customers c ON p.customer_id = c.id
-// //         WHERE 1=1
-// //     "
-// //     .to_string();
-
-// //     let mut params_vec: Vec<String> = vec![];
-
-// //     if let Some(search_term) = search {
-// //         query.push_str(
-// //             " AND (
-// //                 p.pledge_no LIKE ?1 OR
-// //                 c.name LIKE ?1 OR
-// //                 c.customer_code LIKE ?1
-// //             )",
-// //         );
-
-// //         params_vec.push(format!("%{}%", search_term));
-// //     }
-
-// //     query.push_str(" ORDER BY p.created_at DESC");
-
-// //     let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
-
-// //     let rows = stmt
-// //         .query_map(params_from_iter(params_vec.iter()), |row| {
-// //             Ok((
-// //                 row.get::<_, i64>(0)?,
-// //                 row.get::<_, String>(1)?,
-// //                 row.get::<_, String>(2)?,
-// //                 row.get::<_, String>(3)?,
-// //                 row.get::<_, f64>(4)?,
-// //                 row.get::<_, String>(5)?,
-// //                 row.get::<_, i32>(6)?,
-// //                 row.get::<_, String>(7)?,
-// //             ))
-// //         })
-// //         .map_err(|e| e.to_string())?;
-
-// //     let today = Local::now().naive_local().date();
-// //     // let pledge_date = req
-// //     // .pledge_date
-// //     // .clone()
-// //     // .unwrap_or_else(|| {
-// //     //     Local::now().format("%Y-%m-%d").to_string()
-// //     // });
-
-// //     let mut pledges = vec![];
-// //     let mut total_amount = 0.0;
-// //     let mut active_count = 0;
-// //     let mut overdue_count = 0;
-
-// //     for pledge in rows {
-// //         let (
-// //             id,
-// //             pledge_no,
-// //             customer_name,
-// //             customer_code,
-// //             loan_amount,
-// //               pledge_date,
-// //             duration,
-// //             db_status,
-// //         ) = pledge.map_err(|e| e.to_string())?;
-
-// //        let pledge_start_date =
-// //     NaiveDate::parse_from_str(&pledge_date[..10], "%Y-%m-%d")
-// //         .unwrap_or(today);
-
-// //        let due_date = pledge_start_date
-// //     .checked_add_months(chrono::Months::new(duration as u32))
-// //     .unwrap_or(pledge_start_date);
-
-// //         let days_remaining = (due_date - today).num_days();
-
-// //         let status = if db_status == "CLOSED" {
-// //             "CLOSED"
-// //         } else if days_remaining < 0 {
-// //             overdue_count += 1;
-// //             "OVERDUE"
-// //         } else if days_remaining <= 30 {
-// //             active_count += 1;
-// //             "DUE_SOON"
-// //         } else {
-// //             active_count += 1;
-// //             "ACTIVE"
-// //         };
-
-// //         if db_status != "CLOSED" {
-// //             total_amount += loan_amount;
-// //         }
-
-// //         pledges.push(PledgeListItem {
-// //             id,
-// //             pledge_no,
-// //             customer_name,
-// //             customer_code,
-// //             loan_amount,
-// //            created_at: pledge_date,
-// //             due_date: due_date.to_string(),
-// //             days_remaining,
-// //             status: status.to_string(),
-// //         });
-// //     }
-
-// //     let closed_count: i64 = conn
-// //     .query_row(
-// //         "SELECT COUNT(*) FROM pledges WHERE status = 'CLOSED'",
-// //         [],
-// //         |row| row.get(0),
-// //     )
-// //     .unwrap_or(0);
-    
-// //     let summary = PledgeSummary {
-// //         total_pledges: pledges.len() as i64,
-// //         total_amount,
-// //         active_count,
-// //         overdue_count,
-// //         closed_count,
-// //     };
-
-// //     Ok(PledgeListResponse { summary, pledges })
-// // }
 
 // pub fn get_all_pledges(db: &Db, search: Option<String>) -> Result<PledgeListResponse, String> {
 //     let conn = db.0.lock().unwrap();
@@ -653,7 +468,6 @@
 //                 c.customer_code LIKE ?1
 //             )",
 //         );
-
 //         params_vec.push(format!("%{}%", search_term));
 //     }
 
@@ -695,9 +509,8 @@
 //             db_status,
 //         ) = pledge.map_err(|e| e.to_string())?;
 
-//         let pledge_start_date =
-//             NaiveDate::parse_from_str(&pledge_date[..10], "%Y-%m-%d")
-//                 .unwrap_or(today);
+//         // 🛡️ Fixed Slicing Panic Risk: Using helper safely to avoid crashing thread
+//         let pledge_start_date = safely_parse_pledge_date(&pledge_date);
 
 //         let due_date = pledge_start_date
 //             .checked_add_months(chrono::Months::new(duration as u32))
@@ -705,7 +518,6 @@
 
 //         let days_remaining = (due_date - today).num_days();
 
-//         // ✅ FIX: Respect the database state if it is already CLOSED or AUCTIONED
 //         let status = if db_status == "CLOSED" {
 //             "CLOSED"
 //         } else if db_status == "AUCTIONED" {
@@ -721,7 +533,6 @@
 //             "ACTIVE"
 //         };
 
-//         // ✅ FIX: Omit AUCTIONED entries from the Active Capital Outlay metric counters
 //         if db_status != "CLOSED" && db_status != "AUCTIONED" {
 //             total_amount += loan_amount;
 //         }
@@ -767,7 +578,7 @@
 //                 "
 //             SELECT 
 //                 p.pledge_no,
-//                  p.receipt_number, 
+//                 p.receipt_number, 
 //                 p.pocket_number,
 //                 p.status,
 //                 p.created_at,
@@ -824,7 +635,6 @@
 //                         total_net_weight: row.get(20)?,
 //                         total_value: row.get(21)?,
 //                         is_bank_mapped: row.get::<_, i64>(22)? == 1,
-
 //                         parked_interest: row.get(23)?,
 //                         last_interest_date: row.get(24)?,
 //                     })
@@ -832,7 +642,7 @@
 //             )
 //             .map_err(|e| e.to_string())?;
 
-//             let mut stmt = conn
+//         let mut stmt = conn
 //             .prepare(
 //                 "
 //                 SELECT 
@@ -853,11 +663,11 @@
 //             .query_map(params![pledge_id], |row| {
 //                 Ok(PledgeItemDetails {
 //                     jewellery_type: row.get(0)?,
-//     description: row.get(1)?,
-//     purity: row.get(2)?,
-//     gross_weight: row.get(3)?,
-//     net_weight: row.get(4)?,
-//     value: row.get(5)?,
+//                     description: row.get(1)?,
+//                     purity: row.get(2)?,
+//                     gross_weight: row.get(3)?,
+//                     net_weight: row.get(4)?,
+//                     value: row.get(5)?,
 //                 })
 //             })
 //             .map_err(|e| e.to_string())?;
@@ -870,9 +680,9 @@
 //         let mut stmt = conn
 //             .prepare(
 //                 "SELECT paid_at, payment_type, payment_mode, receipt_no, amount, status
-//              FROM pledge_payments
-//              WHERE pledge_id = ?1
-//              ORDER BY paid_at DESC",
+//                  FROM pledge_payments
+//                  WHERE pledge_id = ?1
+//                  ORDER BY paid_at DESC",
 //             )
 //             .map_err(|e| e.to_string())?;
 
@@ -899,13 +709,11 @@
 
 //     let settings = crate::settings::service::get_system_settings(db)?;
 
-//     // 🚀 NEW: Only sum interest payments made in the CURRENT cycle
 //     let interest_paid_in_current_cycle: f64 = payments
 //         .iter()
 //         .filter(|p| {
 //             p.payment_type == "INTEREST" 
 //             && p.status == "COMPLETED" 
-//             // Only count payments made on or after the last_interest_date
 //             && p.date >= pledge.last_interest_date 
 //         })
 //         .map(|p| p.amount)
@@ -937,7 +745,6 @@
 
 // pub fn calculate_payment(db: &Db, pledge_id: i64) -> Result<serde_json::Value, String> {
 //     let pledge_data = get_single_pledge(db, pledge_id)?;
-
 //     let settings = crate::settings::service::get_system_settings(db)?;
 
 //     let interest_paid: f64 = pledge_data
@@ -963,7 +770,6 @@
 //     println!("🚀 [RUST] Processing payment for pledge_id: {}", req.pledge_id);
 
 //     let pledge_data = get_single_pledge(db, req.pledge_id)?;
-//     // let settings = crate::settings::service::get_system_settings(db)?;
 
 //     if req.payment_type == "CLOSURE" {
 //         let conn_check = db.0.lock().unwrap();
@@ -979,19 +785,15 @@
 //         }
 //     }
 
-//     // Get current cycle pending + old parked interest
-//     let interest_pending = pledge_data.interest_pending - pledge_data.parked_interest; // Current cycle
-//     let parked_interest = pledge_data.parked_interest; // Old parked
+//     let interest_pending = pledge_data.interest_pending - pledge_data.parked_interest; 
+//     let parked_interest = pledge_data.parked_interest; 
 //     let total_interest_owed = interest_pending + parked_interest;
-
 //     let total_payable = pledge_data.pledge.principal_amount + total_interest_owed;
 
 //     let interest_portion: f64;
 //     let principal_portion: f64;
-    
 //     let is_principal_only = req.is_principal_only.unwrap_or(false);
 
-//     // 👇 SPLIT THE MONEY 👇
 //     if is_principal_only {
 //         principal_portion = req.amount;
 //         interest_portion = 0.0;
@@ -1000,7 +802,7 @@
 //             return Err(format!("Interest overpayment. Pending: ₹{}", total_interest_owed));
 //         }
 //         interest_portion = req.amount;
-//         principal_portion = 0.0; // This is the line that fixes the error
+//         principal_portion = 0.0;
 //     } else {
 //         if req.amount >= total_interest_owed {
 //             interest_portion = total_interest_owed;
@@ -1018,7 +820,6 @@
 //     let mut conn = db.0.lock().unwrap();
 //     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-//     // ✅ CASH / FUND INSERTIONS
 //     if req.payment_mode == "CASH" {
 //         let module_type = if req.payment_type == "CLOSURE" || (total_payable - req.amount) <= 0.0 { "CLOSURE" } else { "PAYMENT" };
 //         let reference_text = format!("Payment for Pledge {}", pledge_data.pledge.pledge_no);
@@ -1042,21 +843,17 @@
 //         ).map_err(|e| e.to_string())?;
 //     }
 
-//     // ✅ RECORD RECEIPTS
 //     if interest_portion > 0.0 {
-//         let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+//         let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx, None)?; 
 //         tx.execute("INSERT INTO pledge_payments (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by) VALUES (?1, 'INTEREST', ?2, ?3, ?4, ?5)", params![req.pledge_id, req.payment_mode, receipt_no, interest_portion, req.created_by]).map_err(|e| e.to_string())?;
 //     }
 //     if principal_portion > 0.0 {
-//         let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx)?;
+//         let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx, None)?; 
 //         tx.execute("INSERT INTO pledge_payments (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by) VALUES (?1, 'PRINCIPAL', ?2, ?3, ?4, ?5)", params![req.pledge_id, req.payment_mode, receipt_no, principal_portion, req.created_by]).map_err(|e| e.to_string())?;
 //     }
 
-//     // 🚀 THE GOLDEN RULE OF PAWNSHOP MATH 🚀
 //     if principal_portion > 0.0 || is_principal_only {
-//         // Principal changed! Close the cycle, park the unpaid interest, reset the date.
 //         let new_parked_interest = parked_interest + interest_pending - interest_portion;
-        
 //         tx.execute(
 //             "UPDATE pledges 
 //              SET loan_amount = loan_amount - ?1, 
@@ -1066,8 +863,6 @@
 //             params![principal_portion, new_parked_interest, req.pledge_id],
 //         ).map_err(|e| e.to_string())?;
 //     } else {
-//         // Pure Interest Payment. Principal is untouched. DO NOT reset the date!
-//         // We only update parked interest if they paid off some of the old parked debt.
 //         if interest_portion > interest_pending {
 //             let paid_towards_parked = interest_portion - interest_pending;
 //             let remaining_parked = (parked_interest - paid_towards_parked).max(0.0);
@@ -1078,26 +873,18 @@
 //         }
 //     }
 
-//     // if req.payment_type == "CLOSURE" || (total_payable - req.amount) <= 0.0 {
-//     //     tx.execute("UPDATE pledges SET status = 'CLOSED' WHERE id = ?1", params![req.pledge_id]).map_err(|e| e.to_string())?;
-//     // }
-// tx.execute(
-//     "
-//     UPDATE pledges
-//     SET
-//         status = 'CLOSED',
-//         closed_at = CURRENT_TIMESTAMP
-//     WHERE id = ?1
-//     ",
-//     params![req.pledge_id],
-// )
-// .map_err(|e| e.to_string())?;
+//     // 🛡️ CRITICAL FIX: Only change status to CLOSED if requested or loan amount is fully cleared!
+//     if req.payment_type == "CLOSURE" || (pledge_data.pledge.principal_amount - principal_portion) <= 0.01 {
+//         tx.execute(
+//             "UPDATE pledges SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP WHERE id = ?1",
+//             params![req.pledge_id],
+//         ).map_err(|e| e.to_string())?;
+//     }
 
 //     tx.commit().map_err(|e| e.to_string())?;
 //     Ok(())
 // }
 
-// // ✅ Get all overlimit pledges (for both regular pledges and repledges)
 // pub fn get_overlimit_pledges(db: &Db) -> Result<Vec<serde_json::Value>, String> {
 //     let conn = db.0.lock().unwrap();
 
@@ -1105,22 +892,11 @@
 //         .prepare(
 //             "
 //             SELECT 
-//                 p.id,
-//                 p.pledge_no,
-//                 p.receipt_number,
-//                 c.name as customer_name,
-//                 c.customer_code,
-//                 c.phone,
-//                 p.scheme_name,
-//                 p.loan_amount,
-//                 p.total_estimated_value,
-//                 p.actual_loan_percentage,
-//                 p.status,
-//                 p.created_at
+//                 p.id, p.pledge_no, p.receipt_number, c.name as customer_name, c.customer_code, c.phone,
+//                 p.scheme_name, p.loan_amount, p.total_estimated_value, p.actual_loan_percentage, p.status, p.created_at
 //             FROM pledges p
 //             JOIN customers c ON c.id = p.customer_id
-//             WHERE p.is_overlimit = 1
-//             AND p.status = 'ACTIVE'
+//             WHERE p.is_overlimit = 1 AND p.status = 'ACTIVE'
 //             ORDER BY p.created_at DESC
 //             ",
 //         )
@@ -1132,7 +908,6 @@
 //             let total_value: f64 = row.get(8)?;
 //             let actual_percentage: f64 = row.get(9)?;
             
-//             // Calculate 80% threshold
 //             let threshold_80 = total_value * 0.80;
 //             let overlimit_amount = loan_amount - threshold_80;
 
@@ -1159,7 +934,6 @@
 //     for r in rows {
 //         list.push(r.map_err(|e| e.to_string())?);
 //     }
-
 //     Ok(list)
 // }
 
@@ -1218,6 +992,14 @@ pub struct PledgeListResponse {
     pub pledges: Vec<PledgeListItem>,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct PledgePaymentMode {
+    pub method: String,
+    pub amount: f64,
+    pub reference: Option<String>,
+    pub denominations: Option<std::collections::HashMap<i32, i32>>,
+}
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct CreatePledgeRequest {
     pub customer_id: i64,
@@ -1228,9 +1010,7 @@ pub struct CreatePledgeRequest {
     pub price_per_gram: f64,
     pub loan_amount: f64,
     pub created_by: i64,
-    pub payment_method: String,
-    pub transaction_ref: Option<String>,
-    pub denominations: Option<std::collections::HashMap<i32, i32>>,
+    pub payments: Vec<PledgePaymentMode>, // ← Updated to support multi-mode split payments
     pub processing_fee_amount: f64,
     pub first_interest_amount: f64,
     pub items: Vec<PledgeItemRequest>,
@@ -1312,22 +1092,24 @@ pub struct AddPaymentRequest {
     pub is_principal_only: Option<bool>, 
 }
 
+// 🛡️ Internal safe date extraction tool to avoid slicing panics
+fn safely_parse_pledge_date(date_str: &str) -> NaiveDate {
+    let cleaned = if date_str.len() >= 10 { &date_str[..10] } else { date_str };
+    NaiveDate::parse_from_str(cleaned, "%Y-%m-%d").unwrap_or_else(|_| Local::now().date_naive())
+}
+
 pub fn create_pledge(
     db: &Db,
     app_handle: &tauri::AppHandle,
     req: CreatePledgeRequest,
 ) -> Result<String, String> {
 
-    // ===============================
-    // 1️⃣ Generate Pledge Number & Setup Dates
-    // ===============================
     let pledge_no = generate_next_pledge_no(&db).map_err(|e| e.to_string())?;
     let pocket_number = generate_next_pocket_number(&db)?; 
 
     let today = Local::now().format("%Y-%m-%d").to_string();
     let pledge_date = req.pledge_date.clone().unwrap_or(today);
 
-    // Extract year from selected pledge_date for receipt numbering logic
     let target_year: i32 = pledge_date[..4]
         .parse()
         .map_err(|e| format!("Failed to parse year from date {}: {}", pledge_date, e))?;
@@ -1335,12 +1117,8 @@ pub fn create_pledge(
     let mut conn = db.0.lock().unwrap();
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-    // ✅ Generate unified receipt number matching the targeted pledge year
     let receipt_number = crate::receipt::generator::generate_next_receipt_no(&tx, Some(target_year))?;
 
-    // ===============================
-    // 2️⃣ Calculate Totals
-    // ===============================
     let total_gross: f64 = req.items.iter().map(|i| i.gross_weight).sum();
     let total_net: f64 = req.items.iter().map(|i| i.net_weight).sum();
     let total_value: f64 = req.items.iter().map(|i| i.item_value).sum();
@@ -1353,10 +1131,18 @@ pub fn create_pledge(
 
     let is_overlimit = actual_loan_percentage > 80.0;
 
-    // ===============================
-    // 3️⃣ CASH VALIDATION
-    // ===============================
-    if req.payment_method == "CASH" {
+    // Validate cash ledger and stock reserves for split disbursements
+    let mut total_cash_amount = 0.0;
+    let mut cash_payment: Option<&PledgePaymentMode> = None;
+
+    for payment in &req.payments {
+        if payment.method == "CASH" {
+            total_cash_amount += payment.amount;
+            cash_payment = Some(payment);
+        }
+    }
+
+    if total_cash_amount > 0.0 {
         let balance: f64 = tx
             .query_row(
                 "SELECT COALESCE(SUM(
@@ -1369,38 +1155,37 @@ pub fn create_pledge(
             )
             .unwrap_or(0.0);
 
-        if balance < req.loan_amount {
+        if balance < total_cash_amount {
             return Err(format!("Insufficient fund balance. Available ₹{}", balance));
         }
 
-        if let Some(ref denoms) = req.denominations {
-            for (note, qty) in denoms {
-                let stock: i32 = tx
-                    .query_row(
-                        "SELECT COALESCE(SUM(
-                        CASE WHEN ft.type='ADD' THEN fd.quantity
-                             WHEN ft.type='WITHDRAW' THEN -fd.quantity
-                        END
-                    ),0)
-                    FROM fund_denominations fd
-                    JOIN fund_transactions ft 
-                    ON fd.fund_transaction_id = ft.id
-                    WHERE fd.denomination = ?1",
-                        params![note],
-                        |row| row.get(0),
-                    )
-                    .unwrap_or(0);
+        if let Some(payment) = cash_payment {
+            if let Some(ref denoms) = payment.denominations {
+                for (note, qty) in denoms {
+                    let stock: i32 = tx
+                        .query_row(
+                            "SELECT COALESCE(SUM(
+                            CASE WHEN ft.type='ADD' THEN fd.quantity
+                                 WHEN ft.type='WITHDRAW' THEN -fd.quantity
+                            END
+                        ),0)
+                        FROM fund_denominations fd
+                        JOIN fund_transactions ft 
+                        ON fd.fund_transaction_id = ft.id
+                        WHERE fd.denomination = ?1",
+                            params![note],
+                            |row| row.get(0),
+                        )
+                        .unwrap_or(0);
 
-                if stock < *qty {
-                    return Err(format!("Not enough ₹{} notes. Available: {}", note, stock));
+                    if stock < *qty {
+                        return Err(format!("Not enough ₹{} notes. Available: {}", note, stock));
+                    }
                 }
             }
         }
     }
 
-    // ===============================
-    // OWNER ONLY - Backdated Pledge Validation
-    // ===============================
     let user_role: String = tx
         .query_row(
             "SELECT role FROM users WHERE id = ?1",
@@ -1418,7 +1203,6 @@ pub fn create_pledge(
         }
     }
 
-    // Standardize timestamp: append current UTC time to prevent timezone parsing errors
     let trimmed_date = pledge_date.trim();
     let transaction_timestamp = if trimmed_date.contains('T') {
         trimmed_date.to_string()
@@ -1430,9 +1214,6 @@ pub fn create_pledge(
         )
     };
 
-    // ===============================
-    // 4️⃣ Insert Pledge
-    // ===============================
     tx.execute(
         "INSERT INTO pledges (
             pledge_no, receipt_number, pocket_number, customer_id, scheme_name, loan_type, interest_rate,
@@ -1465,70 +1246,69 @@ pub fn create_pledge(
     let pledge_id = tx.last_insert_rowid();
 
     tx.execute(
-        "
-        UPDATE pledges
-        SET last_interest_date = ?1
-        WHERE id = ?2
-        ",
+        "UPDATE pledges SET last_interest_date = ?1 WHERE id = ?2",
         params![pledge_date, pledge_id],
     )
     .map_err(|e| e.to_string())?;
 
-    // ===============================
-    // 5️⃣ DISBURSEMENT ENTRY (CASH or DIGITAL)
-    // ===============================
-    if req.payment_method == "CASH" {
-        tx.execute(
-            "INSERT INTO fund_transactions
-            (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_at, created_by)
-            VALUES ('WITHDRAW', ?1, 'PLEDGE', ?2, ?3, ?4, 'CASH', ?5, ?6, ?7)",
-            params![
-                req.loan_amount,
-                pledge_id,
-                pledge_no,
-                format!("Loan Disbursement - {}", receipt_number), 
-                req.transaction_ref,
-                transaction_timestamp,
-                req.created_by
-            ],
-        )
-        .map_err(|e| e.to_string())?;
-
-        let fund_tx_id = tx.last_insert_rowid();
-
-        if let Some(ref denoms) = req.denominations {
-            for (note, qty) in denoms {
-                tx.execute(
-                    "INSERT INTO fund_denominations
-                    (fund_transaction_id,denomination,quantity,amount)
-                    VALUES (?1,?2,?3,?4)",
-                    params![fund_tx_id, note, qty, (*note as f64) * (*qty as f64)],
-                )
-                .map_err(|e| e.to_string())?;
-            }
+    // Create split disbursement entries in the fund ledger
+    for payment in &req.payments {
+        if payment.amount <= 0.0 {
+            continue;
         }
-    } else {
-        tx.execute(
-            "INSERT INTO fund_transactions
-            (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_at, created_by)
-            VALUES ('WITHDRAW', ?1, 'PLEDGE', ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                req.loan_amount,
-                pledge_id,
-                pledge_no,
-                format!("Loan Disbursement - {}", receipt_number),
-                req.payment_method,
-                req.transaction_ref, 
-                transaction_timestamp,
-                req.created_by
-            ],
-        )
-        .map_err(|e| e.to_string())?;
+        if payment.method == "CASH" {
+            tx.execute(
+                "INSERT INTO fund_transactions
+                (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_at, created_by)
+                VALUES ('WITHDRAW', ?1, 'PLEDGE', ?2, ?3, ?4, 'CASH', ?5, ?6, ?7)",
+                params![
+                    payment.amount,
+                    pledge_id,
+                    pledge_no,
+                    format!("Loan Disbursement (CASH) - {}", receipt_number), 
+                    payment.reference,
+                    transaction_timestamp,
+                    req.created_by
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+
+            let fund_tx_id = tx.last_insert_rowid();
+
+            if let Some(ref denoms) = payment.denominations {
+                for (note, qty) in denoms {
+                    tx.execute(
+                        "INSERT INTO fund_denominations
+                        (fund_transaction_id,denomination,quantity,amount)
+                        VALUES (?1,?2,?3,?4)",
+                        params![fund_tx_id, note, qty, (*note as f64) * (*qty as f64)],
+                    )
+                    .map_err(|e| e.to_string())?;
+                }
+            }
+        } else {
+            tx.execute(
+                "INSERT INTO fund_transactions
+                (type, total_amount, module_type, module_id, reference, description, payment_method, transaction_ref, created_at, created_by)
+                VALUES ('WITHDRAW', ?1, 'PLEDGE', ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                params![
+                    payment.amount,
+                    pledge_id,
+                    pledge_no,
+                    format!("Loan Disbursement ({}) - {}", payment.method, receipt_number),
+                    payment.method,
+                    payment.reference, 
+                    transaction_timestamp,
+                    req.created_by
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+        }
     }
+
+    let first_payment_method = req.payments.first().map(|p| p.method.clone()).unwrap_or_else(|| "CASH".to_string());
+    let first_payment_ref = req.payments.first().and_then(|p| p.reference.clone());
        
-    // ===============================
-    // 6️⃣ Processing Fee (Income)
-    // ===============================
     if req.processing_fee_amount > 0.0 {
         tx.execute(
             "INSERT INTO fund_transactions
@@ -1539,8 +1319,8 @@ pub fn create_pledge(
                 pledge_id,
                 pledge_no,
                 format!("Processing Fee - {}", receipt_number),
-                req.payment_method,
-                req.transaction_ref,
+                first_payment_method,
+                first_payment_ref,
                 transaction_timestamp,
                 req.created_by
             ],
@@ -1548,9 +1328,6 @@ pub fn create_pledge(
         .map_err(|e| e.to_string())?;
     }
 
-    // ===============================
-    // 7️⃣ First Interest Record
-    // ===============================
     if req.first_interest_amount > 0.0 {
         tx.execute(
             "INSERT INTO pledge_payments
@@ -1558,7 +1335,7 @@ pub fn create_pledge(
             VALUES (?1,'INTEREST',?2,?3,?4,?5,?6)",
             params![
                 pledge_id,
-                req.payment_method,
+                first_payment_method,
                 receipt_number,
                 req.first_interest_amount,
                 transaction_timestamp,
@@ -1576,8 +1353,8 @@ pub fn create_pledge(
                 pledge_id,
                 pledge_no,
                 format!("First Month Interest - {}", receipt_number),
-                req.payment_method,
-                req.transaction_ref,
+                first_payment_method,
+                first_payment_ref,
                 transaction_timestamp,
                 req.created_by
             ],
@@ -1585,9 +1362,6 @@ pub fn create_pledge(
         .map_err(|e| e.to_string())?;
     }
 
-    // ===============================
-    // 8️⃣ Insert Items + Images
-    // ===============================
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
@@ -1634,7 +1408,6 @@ pub fn create_pledge(
     }
 
     tx.commit().map_err(|e| e.to_string())?;
-
     Ok(pledge_no)
 }
 
@@ -1667,7 +1440,6 @@ pub fn get_all_pledges(db: &Db, search: Option<String>) -> Result<PledgeListResp
                 c.customer_code LIKE ?1
             )",
         );
-
         params_vec.push(format!("%{}%", search_term));
     }
 
@@ -1709,9 +1481,7 @@ pub fn get_all_pledges(db: &Db, search: Option<String>) -> Result<PledgeListResp
             db_status,
         ) = pledge.map_err(|e| e.to_string())?;
 
-        let pledge_start_date =
-            NaiveDate::parse_from_str(&pledge_date[..10], "%Y-%m-%d")
-                .unwrap_or(today);
+        let pledge_start_date = safely_parse_pledge_date(&pledge_date);
 
         let due_date = pledge_start_date
             .checked_add_months(chrono::Months::new(duration as u32))
@@ -1989,12 +1759,10 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
     let interest_pending = pledge_data.interest_pending - pledge_data.parked_interest; 
     let parked_interest = pledge_data.parked_interest; 
     let total_interest_owed = interest_pending + parked_interest;
-
     let total_payable = pledge_data.pledge.principal_amount + total_interest_owed;
 
     let interest_portion: f64;
     let principal_portion: f64;
-    
     let is_principal_only = req.is_principal_only.unwrap_or(false);
 
     if is_principal_only {
@@ -2023,7 +1791,6 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
     let mut conn = db.0.lock().unwrap();
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-    // Standard payment receipts can default to the current system year
     if req.payment_mode == "CASH" {
         let module_type = if req.payment_type == "CLOSURE" || (total_payable - req.amount) <= 0.0 { "CLOSURE" } else { "PAYMENT" };
         let reference_text = format!("Payment for Pledge {}", pledge_data.pledge.pledge_no);
@@ -2048,11 +1815,11 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
     }
 
     if interest_portion > 0.0 {
-        let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx, None)?; // ← Pass None
+        let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx, None)?; 
         tx.execute("INSERT INTO pledge_payments (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by) VALUES (?1, 'INTEREST', ?2, ?3, ?4, ?5)", params![req.pledge_id, req.payment_mode, receipt_no, interest_portion, req.created_by]).map_err(|e| e.to_string())?;
     }
     if principal_portion > 0.0 {
-        let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx, None)?; // ← Pass None
+        let receipt_no = crate::receipt::generator::generate_next_receipt_no(&tx, None)?; 
         tx.execute("INSERT INTO pledge_payments (pledge_id, payment_type, payment_mode, receipt_no, amount, created_by) VALUES (?1, 'PRINCIPAL', ?2, ?3, ?4, ?5)", params![req.pledge_id, req.payment_mode, receipt_no, principal_portion, req.created_by]).map_err(|e| e.to_string())?;
     }
 
@@ -2077,17 +1844,12 @@ pub fn add_pledge_payment(db: &Db, req: AddPaymentRequest) -> Result<(), String>
         }
     }
 
-    tx.execute(
-        "
-        UPDATE pledges
-        SET
-            status = 'CLOSED',
-            closed_at = CURRENT_TIMESTAMP
-        WHERE id = ?1
-        ",
-        params![req.pledge_id],
-    )
-    .map_err(|e| e.to_string())?;
+    if req.payment_type == "CLOSURE" || (pledge_data.pledge.principal_amount - principal_portion) <= 0.01 {
+        tx.execute(
+            "UPDATE pledges SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP WHERE id = ?1",
+            params![req.pledge_id],
+        ).map_err(|e| e.to_string())?;
+    }
 
     tx.commit().map_err(|e| e.to_string())?;
     Ok(())
@@ -2100,22 +1862,11 @@ pub fn get_overlimit_pledges(db: &Db) -> Result<Vec<serde_json::Value>, String> 
         .prepare(
             "
             SELECT 
-                p.id,
-                p.pledge_no,
-                p.receipt_number,
-                c.name as customer_name,
-                c.customer_code,
-                c.phone,
-                p.scheme_name,
-                p.loan_amount,
-                p.total_estimated_value,
-                p.actual_loan_percentage,
-                p.status,
-                p.created_at
+                p.id, p.pledge_no, p.receipt_number, c.name as customer_name, c.customer_code, c.phone,
+                p.scheme_name, p.loan_amount, p.total_estimated_value, p.actual_loan_percentage, p.status, p.created_at
             FROM pledges p
             JOIN customers c ON c.id = p.customer_id
-            WHERE p.is_overlimit = 1
-            AND p.status = 'ACTIVE'
+            WHERE p.is_overlimit = 1 AND p.status = 'ACTIVE'
             ORDER BY p.created_at DESC
             ",
         )
@@ -2153,6 +1904,5 @@ pub fn get_overlimit_pledges(db: &Db) -> Result<Vec<serde_json::Value>, String> 
     for r in rows {
         list.push(r.map_err(|e| e.to_string())?);
     }
-
     Ok(list)
 }

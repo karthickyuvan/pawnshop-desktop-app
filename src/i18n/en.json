@@ -1040,5 +1040,54 @@
   "CUT HERE": "CUT HERE",
   "Duplicate Receipt": "Duplicate Receipt",
   "Print": "Print",
-  "Close": "Close"
+  "Close": "Close",
+
+  "database_connected": "Database connected successfully!",
+  "secure_db_handshake_failed": " Secure Database Handshake Failed",
+  "db_error_description": "Please check local AppData folder access writes or restart the app.",
+  "pawnshop_system_connecting": "Pawnshop System Connecting...",
+  "configuring_buffers": "Configuring localized single-file environment buffers...",
+  "verifying_credentials": "Verifying Credentials System...",
+  "🔨 [AUCTION RECOVERY]": "AUCTION RECOVERY",
+
+
+  "investor_capital_additions": "Investor Capital Additions",
+  "investor_withdrawals_lbl": "Investor Withdrawals",
+  "bank_refinance_inflow_lbl": "Bank Refinance Inflow",
+  "in_gross_customer": "In Gross (Customer)",
+  "in_net_customer": "In Net (Customer)",
+  "out_gross_released": "Out Gross (Released)",
+  "out_net_released": "Out Net (Released)",
+  "store_to_bank_gross": "Store ➔ Bank (Gross)",
+  "store_to_bank_net": "Store ➔ Bank (Net)",
+  "bank_to_store_gross": "Bank ➔ Store (Gross)",
+  "bank_to_store_net": "Bank ➔ Store (Net)",
+
+  "type_added_success": "Jewellery type added successfully!",
+  "type_enabled": "Jewellery type enabled successfully!",
+  "type_disabled": "Jewellery type disabled successfully!",
+
+  "scheme_created_success": "Scheme created successfully!",
+  "scheme_updated_success": "Scheme updated successfully!",
+  "scheme_enabled": "Scheme enabled successfully!",
+  "scheme_disabled": "Scheme disabled successfully!",
+
+  "bank_add_success": "Bank account added successfully!",
+  "bank_updated_success": "Bank account updated successfully!",
+  "bank_enabled": "Bank account enabled successfully!",
+  "bank_disabled": "Bank account disabled successfully!",
+
+  "pledge_confirmed_hint": "Pledge mapping confirmed successfully!",
+  "pledge_unmapped_success": "Pledge unmapped successfully!",
+
+  "failed_load_banks": "Failed to load bank accounts registries.",
+  "pledge_not_found_err": "Pledge not found. Please verify query input.",
+  "reference_required_for_method": "Please enter a transaction reference",
+  "denom_mismatch_received": "Denomination total must match the received amount.",
+  "denom_mismatch_payout": "Denomination total must match the payout amount.",
+  "mapping_success": "Bank Mapping Successful!",
+  "unmapping_success": "Bank Unmapping & Closure Successful!",
+  "unmapping_failed_alert": "Unmapping operation failed."
+
+  
 }

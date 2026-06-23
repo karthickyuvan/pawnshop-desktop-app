@@ -570,52 +570,58 @@ fn get_available_cash_cmd(db: State<Db>) -> Result<f64, String> {
     fund_management::service::get_available_cash(&db).map_err(|e| e.to_string())
 }
 
+
+
+// src-tauri/src/lib.rs - இந்த இரண்டு கமாண்டுகள் மட்டும் ஒரு முறை மட்டுமே இருக்க வேண்டும்!
+
 #[tauri::command]
 fn add_fund_cmd(
-    db: State<Db>,
+    db: tauri::State<'_, Db>,
     created_by: i64,
-    reason: String,
+    reference: Option<String>,
+    description: Option<String>,
     payment_method: String,
     transaction_ref: Option<String>,
     amount: f64,
     transaction_date: Option<String>,
     denominations: Vec<(i32, i32)>,
 ) -> Result<i64, String> {
-    fund_management::service::add_fund(
+    crate::fund_management::service::add_fund_with_desc(
         &db,
         created_by,
-        reason,
+        reference,
+        description,
         payment_method,
         transaction_ref,
         amount,
         transaction_date,
         denominations,
-    )
-    .map_err(|e| e.to_string())
+    ).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 fn withdraw_fund_cmd(
-    db: State<Db>,
+    db: tauri::State<'_, Db>,
     created_by: i64,
-    reason: String,
+    reference: Option<String>,
+    description: Option<String>,
     payment_method: String,
     transaction_ref: Option<String>,
     amount: f64,
     transaction_date: Option<String>,
     denominations: Vec<(i32, i32)>,
 ) -> Result<i64, String> {
-    fund_management::service::withdraw_fund(
+    crate::fund_management::service::withdraw_fund_with_desc(
         &db,
         created_by,
-        reason,
+        reference,
+        description,
         payment_method,
         transaction_ref,
         amount,
         transaction_date,
         denominations,
-    )
-    .map_err(|e| e.to_string())
+    ).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -991,7 +997,7 @@ fn get_auctioned_list_cmd(
 fn mark_pledge_auctioned_cmd(
     db: State<Db>,
     pledge_id: i64,
-    // actor_user_id: i64,
+    actor_user_id: i64, 
     auction_amount: f64,
     auction_notes: Option<String>,
 ) -> Result<(), String> {
@@ -1001,8 +1007,8 @@ fn mark_pledge_auctioned_cmd(
         pledge_id,
         auction_amount,
         auction_notes,
+        actor_user_id,
     )?;
-
 
     Ok(())
 }
@@ -1131,6 +1137,9 @@ pub fn run() {
             expense::service::get_expense_categories,
             expense::service::create_expense_category,
             expense::service::get_expense_stats,
+            expense::service::update_expense_category, 
+            expense::service::toggle_expense_category_status,
+
             // Payment
             get_today_payment_history,
             search_pledges,
@@ -1174,12 +1183,13 @@ pub fn run() {
             get_yearly_report_cmd,
             get_fund_ledger_report_cmd,
             get_metal_movement_report_cmd,
-           get_auction_report_cmd,
+            get_auction_report_cmd,
             //overlimit 
             get_overlimit_pledges_cmd,
             reports::investor_report::get_global_investor_transactions_cmd,
             get_staff_salary_report_cmd,
-             process_drawer_exchange_cmd,
+            process_drawer_exchange_cmd,
+            get_investors_interest_due_report_cmd,
 
         ])
         .run(tauri::generate_context!())

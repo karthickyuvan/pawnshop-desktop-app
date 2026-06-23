@@ -1,3 +1,4 @@
+// src/pages/FundLedgerReportPage.jsx
 import { useEffect, useState } from "react";
 import { useLanguage } from "../context/LanguageContext"; // ✅ Imported custom language hook
 import { getFundLedgerReport } from "../services/fundLedgerApi";
@@ -38,6 +39,92 @@ export default function FundLedgerReportPage() {
       console.error(err);
     }
   }
+
+  // ── DYNAMIC CELL TRANSLATORS ──
+  
+  // Translates modules (CAPITAL, EXPENSE, PLEDGE, FEE, etc.)
+  const translateModuleType = (mod) => {
+    if (!mod) return "—";
+    const normalized = String(mod).toUpperCase();
+    if (normalized === "CAPITAL") return t("owner_fund", "Capital");
+    if (normalized === "EXPENSE") return t("expenses", "Expenses");
+    if (normalized === "PLEDGE") return t("pledge", "Pledge");
+    if (normalized === "FEE") return t("processing_fee", "Fee");
+    if (normalized === "INTEREST") return t("interest", "Interest");
+    if (normalized === "CLOSURE") return t("closures", "Closure");
+    if (normalized === "BANK_MAPPING") return t("bank_mapping", "Bank Mapping");
+    return t(mod);
+  };
+
+  // Translates transaction types (ADD, WITHDRAW)
+  const translateTxType = (tx) => {
+    if (!tx) return "—";
+    const normalized = String(tx).toUpperCase();
+    if (normalized === "ADD") return t("credit", "Credit");
+    if (normalized === "WITHDRAW") return t("debit", "Debit");
+    return t(tx);
+  };
+
+  // Translates dynamic narrations while keeping reference codes intact
+// ── UPDATED DYNAMIC NARRATION TRANSLATOR ──
+  const translateDescription = (desc) => {
+    if (!desc) return "—";
+    let translated = desc;
+
+    if (desc.includes("Loan Disbursement")) {
+      translated = desc.replace("Loan Disbursement", t("Loan Disbursement"));
+    }
+    if (desc.includes("Processing Fee")) {
+      translated = translated.replace("Processing Fee", t("Processing Fee"));
+    }
+    if (desc.includes("First Month Interest")) {
+      translated = translated.replace("First Month Interest", t("First Month Interest"));
+    }
+    if (desc.includes("Denomination Exchange (Inward)")) {
+      translated = translated.replace("Denomination Exchange (Inward)", t("Denomination Exchange (Inward)"));
+    }
+    if (desc.includes("Denomination Exchange (Outward)")) {
+      translated = translated.replace("Denomination Exchange (Outward)", t("Denomination Exchange (Outward)"));
+    }
+    if (desc.includes("🔨 [AUCTION RECOVERY]")) {
+      translated = translated.replace("🔨 [AUCTION RECOVERY]", t("🔨 [AUCTION RECOVERY]"));
+    }
+    if (desc.includes("Opening Balance")) {
+      translated = translated.replace("Opening Balance", t("opening_balance", "Opening Balance"));
+    }
+    if (desc.includes("Fund Added")) {
+      translated = translated.replace("Fund Added", t("add_funds", "Fund Added"));
+    }
+    if (desc.includes("Fund Withdrawn")) {
+      translated = translated.replace("Fund Withdrawn", t("withdraw_funds", "Fund Withdrawn"));
+    }
+    
+    // ── Added Investor & Pledge Payment Translation Keys ──
+    if (desc.includes("Investor Investment")) {
+      translated = translated.replace("Investor Investment", t("Investor Investment"));
+    }
+    if (desc.includes("Investor Withdrawal")) {
+      translated = translated.replace("Investor Withdrawal", t("Investor Withdrawal"));
+    }
+    if (desc.includes("Investor Profit Payment")) {
+      translated = translated.replace("Investor Profit Payment", t("Investor Profit Payment"));
+    }
+    if (desc.includes("Payment for Pledge")) {
+      translated = translated.replace("Payment for Pledge", t("Payment for Pledge"));
+    }
+
+    if (translated.includes("(CASH)")) {
+      translated = translated.replace("(CASH)", `(${t("CASH")})`);
+    }
+    if (translated.includes("(UPI)")) {
+      translated = translated.replace("(UPI)", `(${t("UPI")})`);
+    }
+    if (translated.includes("(BANK)")) {
+      translated = translated.replace("(BANK)", `(${t("BANK")})`);
+    }
+
+    return translated;
+  };
 
   if (!data) return <div className="loader">{t("updating_ledger", "Loading Ledger...")}</div>;
 
@@ -142,11 +229,14 @@ export default function FundLedgerReportPage() {
               data.rows.map(r => (
                 <tr key={r.id}>
                   <td>{formatTransactionTimestamp(r.date)}</td>
-                  <td>{r.module_type}</td>
-                  <td>{r.tx_type}</td>
+                  
+                  {/* Dynamic translation layers added below */}
+                  <td>{translateModuleType(r.module_type)}</td>
+                  <td>{translateTxType(r.tx_type)}</td>
                   <td>{r.reference || "—"}</td>
-                  <td>{r.description || "—"}</td>
-                  <td>{r.payment_method}</td>
+                  <td>{translateDescription(r.description)}</td>
+                  <td>{t(r.payment_method)}</td>
+                  
                   <td className="debit">{r.debit  > 0 ? `₹ ${r.debit.toLocaleString("en-IN")}`  : "—"}</td>
                   <td className="credit">{r.credit > 0 ? `₹ ${r.credit.toLocaleString("en-IN")}` : "—"}</td>
                   <td><strong>₹ {r.balance.toLocaleString("en-IN")}</strong></td>
