@@ -456,8 +456,6 @@
 
 
 
-
-
 // src-tauri/src/reports/monthly_report.rs
 
 use crate::db::connection::Db;
@@ -549,7 +547,7 @@ pub fn get_monthly_report(
     let month_end = format!("{}-31", target_month); 
 
     /* -------------------------------------------------------------------------
-       OPENING BALANCE QUERY
+       OPENING BALANCE QUERY (CASH, UPI, BANK)
     --------------------------------------------------------------------------*/
     let opening_balance: f64 = conn
         .query_row(
@@ -562,7 +560,7 @@ pub fn get_monthly_report(
                 END
             ), 0.0)
             FROM fund_transactions
-            WHERE DATE(created_at) < ?1
+            WHERE payment_method IN ('CASH', 'UPI', 'BANK') AND DATE(created_at) < ?1
             ",
             params![month_start], 
             |row| row.get(0),
@@ -620,14 +618,12 @@ pub fn get_monthly_report(
             params![target_month], |row| row.get(0),
         ).unwrap_or(0.0);
 
-    /* -------------------------------------------------------------------------
-       BANK REFINANCING CASH FLOW QUERIES
-    --------------------------------------------------------------------------*/
-    let bank_refinance_inflow: f64 = conn
+    // ── Owner Capital Additions Inflows ──
+    let owner_capital_additions: f64 = conn
         .query_row(
             "SELECT COALESCE(SUM(total_amount), 0.0) 
              FROM fund_transactions 
-             WHERE module_type = 'BANK_MAPPING' 
+             WHERE module_type = 'CAPITAL' 
                AND type = 'ADD' 
                AND strftime('%Y-%m', created_at) = ?1",
             params![target_month],
@@ -635,17 +631,33 @@ pub fn get_monthly_report(
         )
         .unwrap_or(0.0);
 
-    let bank_refinance_outflow: f64 = conn
+    // ── Owner Capital Outflows ──
+    let owner_capital_withdrawals: f64 = conn
         .query_row(
             "SELECT COALESCE(SUM(total_amount), 0.0) 
              FROM fund_transactions 
-             WHERE module_type = 'BANK_MAPPING' 
+             WHERE module_type = 'CAPITAL' 
                AND type = 'WITHDRAW' 
                AND strftime('%Y-%m', created_at) = ?1",
             params![target_month],
             |row| row.get(0),
         )
         .unwrap_or(0.0);
+
+    /* -------------------------------------------------------------------------
+       BANK REFINANCING CASH FLOW QUERIES
+    --------------------------------------------------------------------------*/
+    let bank_refinance_inflow: f64 = conn
+        .query_row(
+            "SELECT COALESCE(SUM(total_amount), 0.0) FROM fund_transactions WHERE module_type = 'BANK_MAPPING' AND type = 'ADD' AND strftime('%Y-%m', created_at) = ?1",
+            params![target_month], |row| row.get(0),
+        ).unwrap_or(0.0);
+
+    let bank_refinance_outflow: f64 = conn
+        .query_row(
+            "SELECT COALESCE(SUM(total_amount), 0.0) FROM fund_transactions WHERE module_type = 'BANK_MAPPING' AND type = 'WITHDRAW' AND strftime('%Y-%m', created_at) = ?1",
+            params![target_month], |row| row.get(0),
+        ).unwrap_or(0.0);
 
     let bank_refinance_surplus = bank_refinance_inflow - bank_refinance_outflow;
 
@@ -657,36 +669,27 @@ pub fn get_monthly_report(
             "SELECT COALESCE(SUM(ft.total_amount), 0.0)
              FROM investor_transactions it
              JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
-             WHERE it.transaction_type = 'INVESTMENT'
-               AND strftime('%Y-%m', ft.created_at) = ?1",
-            params![target_month],
-            |row| row.get(0),
-        )
-        .unwrap_or(0.0);
+             WHERE it.transaction_type = 'INVESTMENT' AND DATE(ft.created_at) = ?1",
+            params![target_month], |row| row.get(0),
+        ).unwrap_or(0.0);
 
     let investor_withdrawals: f64 = conn
         .query_row(
             "SELECT COALESCE(SUM(ft.total_amount), 0.0)
              FROM investor_transactions it
              JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
-             WHERE it.transaction_type = 'WITHDRAWAL'
-               AND strftime('%Y-%m', ft.created_at) = ?1",
-            params![target_month],
-            |row| row.get(0),
-        )
-        .unwrap_or(0.0);
+             WHERE it.transaction_type = 'WITHDRAWAL' AND DATE(ft.created_at) = ?1",
+            params![target_month], |row| row.get(0),
+        ).unwrap_or(0.0);
 
     let investor_interest_paid: f64 = conn
         .query_row(
             "SELECT COALESCE(SUM(ft.total_amount), 0.0)
              FROM investor_transactions it
              JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
-             WHERE it.transaction_type = 'PROFIT_PAYMENT'
-               AND strftime('%Y-%m', ft.created_at) = ?1",
-            params![target_month],
-            |row| row.get(0),
-        )
-        .unwrap_or(0.0);
+             WHERE it.transaction_type = 'PROFIT_PAYMENT' AND DATE(ft.created_at) = ?1",
+            params![target_month], |row| row.get(0),
+        ).unwrap_or(0.0);
 
     /* -------------------------------------------------------------------------
        MONTHLY AUCTION RECORDS RETRIEVAL
@@ -769,28 +772,37 @@ pub fn get_monthly_report(
     ).unwrap_or(0);
 
     /* -------------------------------------------------------------------------
-       UNIFIED CALCULATION AGGREGATES (INFLOWS AND OUTFLOWS)
+       UNIFIED CALCULATION AGGREGATES (INFLOWS AND OUTFLOWS ACCURATE REMAINING FUNDS)
     --------------------------------------------------------------------------*/
-    let total_in = loan_repayments 
-        + closure_collections 
-        + interest_collected 
-        + processing_fees 
-        + other_income 
-        + total_auction_sales_received
-        + bank_refinance_inflow 
-        + investor_investments; 
+    let total_in: f64 = conn
+        .query_row(
+            "SELECT COALESCE(SUM(total_amount), 0.0) 
+             FROM fund_transactions 
+             WHERE type = 'ADD' 
+               AND payment_method IN ('CASH', 'UPI', 'BANK')
+               AND strftime('%Y-%m', created_at) = ?1",
+            params![target_month],
+            |row| row.get(0),
+        )
+        .unwrap_or(0.0);
 
-    let total_out = loans_issued 
-        + expenses 
-        + bank_refinance_outflow 
-        + investor_withdrawals 
-        + investor_interest_paid; 
+    let total_out: f64 = conn
+        .query_row(
+            "SELECT COALESCE(SUM(total_amount), 0.0) 
+             FROM fund_transactions 
+             WHERE type = 'WITHDRAW' 
+               AND payment_method IN ('CASH', 'UPI', 'BANK')
+               AND strftime('%Y-%m', created_at) = ?1",
+            params![target_month],
+            |row| row.get(0),
+        )
+        .unwrap_or(0.0);
 
     let net_cash_flow = total_in - total_out;
     let closing_balance = opening_balance + net_cash_flow;
 
     /* -------------------------------------------------------------------------
-       METAL COMMODITY WEIGHTS CALCULATIONS WITH DYNAMIC COUNTS
+       METAL COMMODITY WEIGHTS CALCULATIONS
     --------------------------------------------------------------------------*/
     let metal_in_gross: f64 = conn.query_row(
         "SELECT COALESCE(SUM(pi.gross_weight), 0.0) FROM pledges p JOIN pledge_items pi ON pi.pledge_id = p.id WHERE strftime('%Y-%m', COALESCE(p.pledge_date, p.created_at)) = ?1",
@@ -853,10 +865,14 @@ pub fn get_monthly_report(
         metal_movements.push(row.map_err(|e| e.to_string())?);
     }
 
+    /* -------------------------------------------------------------------------
+       STRUCT MAPPING & OUTPUT
+    --------------------------------------------------------------------------*/
     Ok(MonthlyReport {
         month: target_month,
         opening_balance,
 
+        // Inflows
         loan_repayments,
         closure_collections,
         interest_collected,
@@ -864,22 +880,27 @@ pub fn get_monthly_report(
         other_income,
         total_auction_sales_received,
 
+        // Refinancing Metrics
         bank_refinance_inflow,
         bank_refinance_outflow,
         bank_refinance_surplus,
 
+        // Investor Metrics
         investor_investments,
         investor_withdrawals,
         investor_interest_paid,
 
+        // Outflows
         loans_issued,
         expenses,
 
+        // Financial Reconciliations
         total_inflow: total_in,     
         total_outflow: total_out,   
         net_cash_flow,
         closing_balance,
 
+        // Metal & Pocket Stats
         metal_in_gross,
         metal_in_net,
         metal_out_gross,
@@ -901,7 +922,7 @@ pub fn get_monthly_report_cmd(
     month: Option<String>,
 ) -> Result<MonthlyReport, String> {
     let target_month = month.unwrap_or_else(|| {
-        chrono::Local::now().format("%Y-%m").to_string()
+        chrono::Local::now().format("%Y-%m-%d").to_string()
     });
     get_monthly_report(db.inner(), target_month)
 }

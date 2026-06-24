@@ -942,6 +942,8 @@
 
 
 
+// src-tauri/src/pledge/service.rs
+
 use super::pledge_number::generate_next_pledge_no;
 use crate::pledge::pocket::generate_next_pocket_number;
 use crate::db::connection::Db;
@@ -1319,7 +1321,7 @@ pub fn create_pledge(
                 pledge_id,
                 pledge_no,
                 format!("Processing Fee - {}", receipt_number),
-                first_payment_method,
+                "DEDUCTION", // ── 🟢 Changed to DEDUCTION to prevent inflating Expected Cash ──
                 first_payment_ref,
                 transaction_timestamp,
                 req.created_by
@@ -1329,13 +1331,14 @@ pub fn create_pledge(
     }
 
     if req.first_interest_amount > 0.0 {
+        // ── 🟢 Keep CASH/BANK/UPI here to satisfy the database 'CHECK' constraint! ──
         tx.execute(
             "INSERT INTO pledge_payments
             (pledge_id, payment_type, payment_mode, receipt_no, amount, paid_at, created_by)
             VALUES (?1,'INTEREST',?2,?3,?4,?5,?6)",
             params![
                 pledge_id,
-                first_payment_method,
+                first_payment_method, 
                 receipt_number,
                 req.first_interest_amount,
                 transaction_timestamp,
@@ -1353,7 +1356,7 @@ pub fn create_pledge(
                 pledge_id,
                 pledge_no,
                 format!("First Month Interest - {}", receipt_number),
-                first_payment_method,
+                "DEDUCTION", // ── 🟢 Changed to DEDUCTION to prevent inflating Expected Cash ──
                 first_payment_ref,
                 transaction_timestamp,
                 req.created_by
@@ -1872,6 +1875,8 @@ pub fn get_overlimit_pledges(db: &Db) -> Result<Vec<serde_json::Value>, String> 
         )
         .map_err(|e| e.to_string())?;
 
+// src-tauri/src/pledge/service.rs -> inside get_overlimit_pledges
+
     let rows = stmt
         .query_map([], |row| {
             let loan_amount: f64 = row.get(7)?;
@@ -1884,7 +1889,7 @@ pub fn get_overlimit_pledges(db: &Db) -> Result<Vec<serde_json::Value>, String> 
             Ok(serde_json::json!({
                 "id": row.get::<_, i64>(0)?,
                 "pledge_no": row.get::<_, String>(1)?,
-                "receipt_number": row.get::<_, Option<String>>(2)?,
+                "receipt_number": row.get::<usize, Option<String>>(2)?, // ── 🟢 Fixed here ──
                 "customer_name": row.get::<_, String>(3)?,
                 "customer_code": row.get::<_, String>(4)?,
                 "phone": row.get::<_, String>(5)?,

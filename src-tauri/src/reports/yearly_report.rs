@@ -1,3 +1,8 @@
+
+
+
+
+
 // // src-tauri/src/reports/yearly_report.rs
 
 // use crate::db::connection::Db;
@@ -12,6 +17,8 @@
 //     pub pledged_gross_weight: f64,
 //     pub closed_net_weight: f64,
 //     pub closed_gross_weight: f64,
+//     pub pledged_count: i64, 
+//     pub closed_count: i64,  
 // }
 
 // #[derive(serde::Serialize)]
@@ -42,7 +49,7 @@
 //     pub bank_refinance_outflow: f64,
 //     pub bank_refinance_surplus: f64,
 
-//     // --- Investor Metrics (NEW) ---
+//     // --- Investor Metrics ---
 //     pub investor_investments: f64,
 //     pub investor_withdrawals: f64,
 //     pub investor_interest_paid: f64,
@@ -240,7 +247,7 @@
 //     }
 
 //     /* -------------------------------------------------------------------------
-//        COMMODITY WEIGHT BALANCES
+//        COMMODITY WEIGHT & COUNT BALANCES
 //     --------------------------------------------------------------------------*/
 //     let mut stmt = conn.prepare(
 //         "
@@ -249,7 +256,9 @@
 //             SUM(CASE WHEN LOWER(p.status)='active' THEN pi.net_weight ELSE 0 END),
 //             SUM(CASE WHEN LOWER(p.status)='active' THEN pi.gross_weight ELSE 0 END),
 //             SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN pi.net_weight ELSE 0 END),
-//             SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN pi.gross_weight ELSE 0 END)
+//             SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN pi.gross_weight ELSE 0 END),
+//             SUM(CASE WHEN LOWER(p.status)='active' THEN 1 ELSE 0 END) as pledged_count,             
+//             SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN 1 ELSE 0 END) as closed_count 
 //         FROM pledge_items pi
 //         JOIN pledges p ON p.id = pi.pledge_id
 //         JOIN jewellery_types jt ON jt.id = pi.jewellery_type_id
@@ -266,6 +275,8 @@
 //             pledged_gross_weight: row.get::<_, Option<f64>>(2)?.unwrap_or(0.0),
 //             closed_net_weight: row.get::<_, Option<f64>>(3)?.unwrap_or(0.0),
 //             closed_gross_weight: row.get::<_, Option<f64>>(4)?.unwrap_or(0.0),
+//             pledged_count: row.get(5)?, 
+//             closed_count: row.get(6)?,  
 //         })
 //     }).map_err(|e| e.to_string())?;
 
@@ -291,17 +302,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-// src-tauri/src/reports/yearly_report.rs
+// final // src-tauri/src/reports/yearly_report.rs
 
 use crate::db::connection::Db;
 use rusqlite::params;
@@ -334,7 +335,7 @@ pub struct YearlyAuctionSummaryRow {
 pub struct YearlyReportRow {
     pub year: String,
     pub total_pledges: i64,
-    pub total_loan_amount: f64,
+    pub total_loan_amount: f64, // (Full Principal: 1,80,000)
     pub interest_income: f64,
     pub processing_fees: f64,      
     pub other_income: f64,         
@@ -351,6 +352,16 @@ pub struct YearlyReportRow {
     pub investor_investments: f64,
     pub investor_withdrawals: f64,
     pub investor_interest_paid: f64,
+
+    // --- 🟢 NEW: Cash Flow Reconciliation Metrics ──
+    pub opening_balance: f64,
+    pub closing_balance: f64,
+    pub total_inflow: f64,
+    pub total_outflow: f64,
+    pub net_cash_flow: f64,
+    pub loans_issued: f64,          // Actual Cash disbursed
+    pub loan_repayments: f64,       // Actual Cash principal repayments
+    pub closure_collections: f64,   // Actual Cash closure collections
 }
 
 #[derive(serde::Serialize)]
@@ -459,7 +470,67 @@ pub fn get_corporate_yearly_report(db: &Db) -> Result<CorporateYearlyReport, Str
                 JOIN fund_transactions ft ON ft.id = it.fund_transaction_id
                 WHERE it.transaction_type = 'PROFIT_PAYMENT'
                 AND strftime('%Y', ft.created_at) = y.year
+            ),
+
+            -- 4. ── 🟢 NEW: Expected Opening Cash Balance ──
+            (
+                SELECT COALESCE(SUM(
+                    CASE 
+                        WHEN ft.type='ADD' THEN ft.total_amount
+                        WHEN ft.type='WITHDRAW' THEN -ft.total_amount
+                        ELSE 0
+                    END
+                ), 0.0)
+                FROM fund_transactions ft
+                WHERE ft.payment_method IN ('CASH', 'UPI', 'BANK')
+                  AND DATE(ft.created_at) < (y.year || '-01-01')
+            ),
+
+            -- 5. ── 🟢 NEW: Expected Inflow ──
+            (
+                SELECT COALESCE(SUM(ft.total_amount), 0.0)
+                FROM fund_transactions ft
+                WHERE ft.type = 'ADD'
+                  AND ft.payment_method IN ('CASH', 'UPI', 'BANK')
+                  AND strftime('%Y', ft.created_at) = y.year
+            ),
+
+            -- 6. ── 🟢 NEW: Expected Outflow ──
+            (
+                SELECT COALESCE(SUM(ft.total_amount), 0.0)
+                FROM fund_transactions ft
+                WHERE ft.type = 'WITHDRAW'
+                  AND ft.payment_method IN ('CASH', 'UPI', 'BANK')
+                  AND strftime('%Y', ft.created_at) = y.year
+            ),
+
+            -- 7. ── 🟢 NEW: Loans Issued (Actual Disbursed Cash) ──
+            (
+                SELECT COALESCE(SUM(ft.total_amount), 0.0)
+                FROM fund_transactions ft
+                WHERE ft.module_type = 'PLEDGE'
+                  AND ft.type = 'WITHDRAW'
+                  AND strftime('%Y', ft.created_at) = y.year
+            ),
+
+            -- 8. ── 🟢 NEW: Loan Repayments ──
+            (
+                SELECT COALESCE(SUM(ft.total_amount), 0.0)
+                FROM fund_transactions ft
+                WHERE ft.module_type = 'PLEDGE'
+                  AND ft.type = 'ADD'
+                  AND strftime('%Y', ft.created_at) = y.year
+            ),
+
+            -- 9. ── 🟢 NEW: Closure Collections ──
+            (
+                SELECT COALESCE(SUM(ft.total_amount), 0.0)
+                FROM fund_transactions ft
+                WHERE ft.module_type = 'CLOSURE'
+                  AND ft.type = 'ADD'
+                  AND strftime('%Y', ft.created_at) = y.year
             )
+
         FROM AllYears y
         WHERE y.year IS NOT NULL
         ORDER BY y.year DESC
@@ -479,6 +550,13 @@ pub fn get_corporate_yearly_report(db: &Db) -> Result<CorporateYearlyReport, Str
         let investor_outflow: f64 = row.get(11)?;
         let investor_interest: f64 = row.get(12)?;
 
+        let opening_balance: f64 = row.get(13)?;
+        let total_inflow: f64 = row.get(14)?;
+        let total_outflow: f64 = row.get(15)?;
+
+        let net_cash_flow = total_inflow - total_outflow;
+        let closing_balance = opening_balance + net_cash_flow;
+
         let total_revenue = interest + fees + other + auction_margin;
 
         Ok(YearlyReportRow {
@@ -497,6 +575,16 @@ pub fn get_corporate_yearly_report(db: &Db) -> Result<CorporateYearlyReport, Str
             investor_investments: investor_inflow,
             investor_withdrawals: investor_outflow,
             investor_interest_paid: investor_interest,
+            
+            // --- 🟢 NEW: Mapped values ──
+            opening_balance,
+            closing_balance,
+            total_inflow,
+            total_outflow,
+            net_cash_flow,
+            loans_issued: row.get(16)?,
+            loan_repayments: row.get(17)?,
+            closure_collections: row.get(18)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -555,8 +643,8 @@ pub fn get_corporate_yearly_report(db: &Db) -> Result<CorporateYearlyReport, Str
             SUM(CASE WHEN LOWER(p.status)='active' THEN pi.gross_weight ELSE 0 END),
             SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN pi.net_weight ELSE 0 END),
             SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN pi.gross_weight ELSE 0 END),
-            SUM(CASE WHEN LOWER(p.status)='active' THEN 1 ELSE 0 END) as pledged_count,             
-            SUM(CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN 1 ELSE 0 END) as closed_count 
+            COUNT(DISTINCT CASE WHEN LOWER(p.status)='active' THEN p.id ELSE NULL END) as pledged_count,             
+            COUNT(DISTINCT CASE WHEN LOWER(p.status) IN ('closed', 'auctioned') THEN p.id ELSE NULL END) as closed_count 
         FROM pledge_items pi
         JOIN pledges p ON p.id = pi.pledge_id
         JOIN jewellery_types jt ON jt.id = pi.jewellery_type_id

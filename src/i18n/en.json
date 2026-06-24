@@ -1087,7 +1087,12 @@
   "denom_mismatch_payout": "Denomination total must match the payout amount.",
   "mapping_success": "Bank Mapping Successful!",
   "unmapping_success": "Bank Unmapping & Closure Successful!",
-  "unmapping_failed_alert": "Unmapping operation failed."
+  "unmapping_failed_alert": "Unmapping operation failed.",
+
+  "combined_balances": "Combined Balances",
+  "cash_total_lbl": "Cash Total",
+  "digital_total_lbl": "Digital Total",
+  "combined_total": "Total Balance"
 
   
 }
