@@ -53,6 +53,8 @@
   "opening_balance": "ஆரம்ப இருப்பு",
   "start_of_day": "நாளின் தொடக்கம்",
   "todays_interest": "இன்றைய வட்டி",
+  "total_interest_collected":"மொத்த வட்டி வசூல்",
+  "total_processing_fee":"மொத்த நடைமுறை கட்டணம்",
   "collected": "வசூலிக்கப்பட்டது",
   "total_expense": "மொத்த செலவு",
   "all_time": "மொத்தம்",
@@ -1073,7 +1075,15 @@
   "combined_balances": "கூட்டு இருப்பு",
   "cash_total_lbl": "மொத்த ரொக்கம்",
   "digital_total_lbl": "மொத்த டிஜிட்டல்",
-  "combined_total": "ஒட்டுமொத்த இருப்பு"
+  "combined_total": "ஒட்டுமொத்த இருப்பு",
+
+
+  "INTEREST": "வட்டி",
+  "INTEREST_DEDUCTION": "வட்டி",
+  "PROCESSING_FEE": "நடைமுறை கட்டணம்",
+  "FEE_DEDUCTION": "நடைமுறை கட்டணம்",
+  "DEDUCTION": "பிடித்தம்"
+
 
 
 

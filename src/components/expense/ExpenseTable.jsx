@@ -373,3 +373,10 @@ export default function ExpenseTable({ expenses, user, reload, onFilter }) {
     </div>
   );
 }
+
+
+
+
+
+
+

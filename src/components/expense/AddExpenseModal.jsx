@@ -1,11 +1,8 @@
-
-// version 3
 // src/components/expense/AddExpenseModal.jsx
 import { useState, useEffect, useMemo } from "react";
-import toast from "react-hot-toast"; // 🚀 Imported toast
+import toast from "react-hot-toast"; 
 import { createExpense, getExpenseCategories } from "../../services/expenseApi";
 import DenominationTable from "../fund/DenominationTable";
-// import "./AddExpenseModal.css"; 
 import "../../pages/expense.css";
 
 export default function AddExpenseModal({ user, onClose, onSuccess }) {
@@ -64,11 +61,10 @@ export default function AddExpenseModal({ user, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // ── 🟢 DYNAMICALLY APPEND THE CURRENT SYSTEM TIME PATTERN TO THE SELECTED BUSINESS DATE ──
     const now = new Date();
-    const todayStr = now.toISOString().split("T")[0];
-    const finalDate = form.expense_date === todayStr
-      ? now.toISOString()
-      : `${form.expense_date}T00:00:00`;
+    const timeSegment = now.toTimeString().split(" ")[0]; // e.g. "18:02:15"
+    const finalDate = `${form.expense_date}T${timeSegment}`; // e.g. "2025-04-21T18:02:15"
 
     if (!user?.user_id) { 
       toast.error("User session expired. Please log in again."); 
@@ -120,7 +116,7 @@ export default function AddExpenseModal({ user, onClose, onSuccess }) {
     setIsSubmitting(true);
     try {
       await createExpense(payload);
-      toast.success("Expense added successfully!"); // 🚀 Success Feedback
+      toast.success("Expense added successfully!"); 
       onSuccess?.();
       onClose?.();
     } catch (err) {

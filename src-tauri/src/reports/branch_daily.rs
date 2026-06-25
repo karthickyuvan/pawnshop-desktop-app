@@ -1,5 +1,4 @@
 
-
 // // src-tauri/src/reports/branch_daily.rs
 
 // use crate::db::connection::Db;
@@ -53,10 +52,12 @@
 //     pub in_net: f64,
 //     pub out_gross: f64,
 //     pub out_net: f64,
-//     pub to_bank_gross: f64,     // ✅ Itemized Store -> Bank Locker Gross
-//     pub to_bank_net: f64,       // ✅ Itemized Store -> Bank Locker Net
-//     pub from_bank_gross: f64,   // ✅ Itemized Bank -> Store Locker Gross
-//     pub from_bank_net: f64,     // ✅ Itemized Bank -> Store Locker Net
+//     pub to_bank_gross: f64,     
+//     pub to_bank_net: f64,       
+//     pub from_bank_gross: f64,   
+//     pub from_bank_net: f64,     
+//     pub in_count: i64,          // ── ADDED: Inward items piece count ──
+//     pub out_count: i64,         // ── ADDED: Outward items piece count ──
 // }
 
 // pub fn get_branch_daily_report(
@@ -65,7 +66,7 @@
 // ) -> Result<BranchDailyReport, String> {
 //     let conn = db.0.lock().map_err(|e| format!("Database lock error: {}", e))?;
 
-//     // 1. Opening Balance - Sum of all transactions BEFORE report date
+//     // 1. Opening Balance
 //     let opening_balance: f64 = conn
 //         .query_row(
 //             "
@@ -84,7 +85,7 @@
 //         )
 //         .map_err(|e| format!("Error fetching opening balance: {}", e))?;
 
-//     // 2. Loans Issued (Cash Out)
+//     // 2. Loans Issued
 //     let loans_issued: f64 = conn
 //         .query_row(
 //             "
@@ -99,7 +100,7 @@
 //         )
 //         .map_err(|e| format!("Error fetching loans issued: {}", e))?;
 
-//     // 3. Loan Repayments (Principal returned - Cash In)
+//     // 3. Loan Repayments
 //     let loan_repayments: f64 = conn
 //         .query_row(
 //             "
@@ -114,7 +115,7 @@
 //         )
 //         .map_err(|e| format!("Error fetching loan repayments: {}", e))?;
 
-//     // 4. Interest Collected (Cash In)
+//     // 4. Interest Collected
 //     let interest_collected: f64 = conn
 //         .query_row(
 //             "
@@ -138,7 +139,7 @@
 //             params![target_date], |row| row.get(0),
 //         ).unwrap_or(0.0);
 
-//     // 6. Other Income (Penalties, etc.)
+//     // 6. Other Income
 //     let other_income: f64 = conn
 //         .query_row(
 //             "SELECT COALESCE(SUM(total_amount), 0.0) FROM fund_transactions WHERE module_type IN ('PENALTY', 'OTHER_INCOME') AND type = 'ADD' AND date(created_at) = ?1",
@@ -173,8 +174,6 @@
 //             "SELECT COALESCE(SUM(total_amount), 0.0) FROM fund_transactions WHERE module_type = 'BANK_MAPPING' AND type = 'WITHDRAW' AND date(created_at) = ?1",
 //             params![target_date], |row| row.get(0),
 //         ).unwrap_or(0.0);
-
-//     let bank_refinance_surplus = bank_refinance_inflow - bank_refinance_outflow;
 
 //     /* -------------------------------------------------------------------------
 //        INVESTOR CAPITAL FLOWS
@@ -247,7 +246,7 @@
 //     let closing_balance = opening_balance + net_cash_flow;
 
 //     /* -------------------------------------------------------------------------
-//        VAULT METALS REPORT (Categorized dynamically per metal)
+//        VAULT METALS REPORT WITH DYNAMIC COUNTS
 //     --------------------------------------------------------------------------*/
 //     let mut metal_stmt = conn.prepare(
 //         "
@@ -328,7 +327,28 @@
 //                 JOIN jewellery_types jt ON jt.id = pi.jewellery_type_id
 //                 WHERE jt.metal_type_id = mt.id
 //                   AND DATE(ft.created_at) = ?1
-//             ), 0.0)
+//             ), 0.0),
+
+//             -- 5. Inward Count of items (pieces) ── ADDED ──
+//             COALESCE((
+//                 SELECT COUNT(pi.id)
+//                 FROM pledge_items pi
+//                 JOIN pledges p ON p.id = pi.pledge_id
+//                 JOIN jewellery_types jt ON jt.id = pi.jewellery_type_id
+//                 WHERE jt.metal_type_id = mt.id
+//                   AND DATE(COALESCE(p.pledge_date, p.created_at)) = ?1
+//             ), 0),
+
+//             -- 6. Outward Count of items (pieces) ── ADDED ──
+//             COALESCE((
+//                 SELECT COUNT(pi.id)
+//                 FROM pledge_items pi
+//                 JOIN pledges p ON p.id = pi.pledge_id
+//                 JOIN jewellery_types jt ON jt.id = pi.jewellery_type_id
+//                 WHERE jt.metal_type_id = mt.id
+//                   AND p.status = 'CLOSED'
+//                   AND DATE(p.closed_at) = ?1
+//             ), 0)
 
 //         FROM metal_types mt
 //         WHERE mt.is_active = 1
@@ -348,6 +368,8 @@
 //                 to_bank_net: row.get(6)?,
 //                 from_bank_gross: row.get(7)?,
 //                 from_bank_net: row.get(8)?,
+//                 in_count: row.get(9)?,  // ── Mapped Count In
+//                 out_count: row.get(10)?, // ── Mapped Count Out
 //             })
 //         })
 //         .map_err(|e| e.to_string())?;
@@ -435,17 +457,7 @@
 // }
 
 
-
-
-
-
-
-
-
-
-
-
-
+// final by studio ai
 
 // src-tauri/src/reports/branch_daily.rs
 
@@ -504,8 +516,8 @@ pub struct MetalMovement {
     pub to_bank_net: f64,       
     pub from_bank_gross: f64,   
     pub from_bank_net: f64,     
-    pub in_count: i64,          // ── ADDED: Inward items piece count ──
-    pub out_count: i64,         // ── ADDED: Outward items piece count ──
+    pub in_count: i64,          
+    pub out_count: i64,         
 }
 
 pub fn get_branch_daily_report(
@@ -514,7 +526,7 @@ pub fn get_branch_daily_report(
 ) -> Result<BranchDailyReport, String> {
     let conn = db.0.lock().map_err(|e| format!("Database lock error: {}", e))?;
 
-    // 1. Opening Balance
+    // 1. Opening Balance (Isolated to standard CASH, UPI, BANK payment methods)
     let opening_balance: f64 = conn
         .query_row(
             "
@@ -526,14 +538,14 @@ pub fn get_branch_daily_report(
                 END
             ), 0.0)
             FROM fund_transactions
-            WHERE DATE(created_at) < ?1
+            WHERE payment_method IN ('CASH', 'UPI', 'BANK') AND DATE(created_at) < ?1
             ",
             params![report_date],
             |row| row.get(0),
         )
         .map_err(|e| format!("Error fetching opening balance: {}", e))?;
 
-    // 2. Loans Issued
+    // 2. Loans Issued (Total gross principal including deduction withdrawals)
     let loans_issued: f64 = conn
         .query_row(
             "
@@ -675,28 +687,37 @@ pub fn get_branch_daily_report(
         ).unwrap_or(0);
 
     /* -------------------------------------------------------------------------
-       RECONCILIATION MATH
+       RECONCILIATION MATH (EXCLUDES INTERNAL DEDUCTIONS FOR PHYSICAL BALANCE)
     --------------------------------------------------------------------------*/
-    let total_inflow = loan_repayments 
-        + closure_collections 
-        + interest_collected 
-        + processing_fees 
-        + other_income
-        + bank_refinance_inflow
-        + investor_investments; 
+    let total_inflow: f64 = conn
+        .query_row(
+            "SELECT COALESCE(SUM(total_amount), 0.0) 
+             FROM fund_transactions 
+             WHERE type = 'ADD' 
+               AND payment_method IN ('CASH', 'UPI', 'BANK')
+               AND DATE(created_at) = ?1",
+            params![target_date],
+            |row| row.get(0)
+        ).unwrap_or(0.0);
 
-    let total_outflow = loans_issued 
-        + expenses
-        + bank_refinance_outflow
-        + investor_withdrawals; 
+    let total_outflow: f64 = conn
+        .query_row(
+            "SELECT COALESCE(SUM(total_amount), 0.0) 
+             FROM fund_transactions 
+             WHERE type = 'WITHDRAW' 
+               AND payment_method IN ('CASH', 'UPI', 'BANK')
+               AND DATE(created_at) = ?1",
+            params![target_date],
+            |row| row.get(0)
+        ).unwrap_or(0.0);
 
     let net_cash_flow = total_inflow - total_outflow;
     let closing_balance = opening_balance + net_cash_flow;
 
     /* -------------------------------------------------------------------------
-       VAULT METALS REPORT WITH DYNAMIC COUNTS
+       VAULT METALS REPORT
     --------------------------------------------------------------------------*/
-    let mut metal_stmt = conn.prepare(
+let mut metal_stmt = conn.prepare(
         "
         SELECT
             mt.name,
@@ -777,9 +798,9 @@ pub fn get_branch_daily_report(
                   AND DATE(ft.created_at) = ?1
             ), 0.0),
 
-            -- 5. Inward Count of items (pieces) ── ADDED ──
+            -- 5. Inward Count of pockets (Distinct unique p.id instances)
             COALESCE((
-                SELECT COUNT(pi.id)
+                SELECT COUNT(DISTINCT p.id)
                 FROM pledge_items pi
                 JOIN pledges p ON p.id = pi.pledge_id
                 JOIN jewellery_types jt ON jt.id = pi.jewellery_type_id
@@ -787,9 +808,9 @@ pub fn get_branch_daily_report(
                   AND DATE(COALESCE(p.pledge_date, p.created_at)) = ?1
             ), 0),
 
-            -- 6. Outward Count of items (pieces) ── ADDED ──
+            -- 6. Outward Count of pockets (Distinct unique p.id instances)
             COALESCE((
-                SELECT COUNT(pi.id)
+                SELECT COUNT(DISTINCT p.id)
                 FROM pledge_items pi
                 JOIN pledges p ON p.id = pi.pledge_id
                 JOIN jewellery_types jt ON jt.id = pi.jewellery_type_id
@@ -816,8 +837,8 @@ pub fn get_branch_daily_report(
                 to_bank_net: row.get(6)?,
                 from_bank_gross: row.get(7)?,
                 from_bank_net: row.get(8)?,
-                in_count: row.get(9)?,  // ── Mapped Count In
-                out_count: row.get(10)?, // ── Mapped Count Out
+                in_count: row.get(9)?,  
+                out_count: row.get(10)?, 
             })
         })
         .map_err(|e| e.to_string())?;
@@ -866,7 +887,6 @@ pub fn get_branch_daily_report_cmd(
     get_branch_daily_report(db.inner(), date)
 }
 
-// Get detailed transactions for audit trail
 #[tauri::command]
 pub fn get_transaction_details_cmd(
     db: tauri::State<Db>,

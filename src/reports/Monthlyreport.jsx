@@ -1,5 +1,5 @@
-
 // src/pages/MonthlyReportPage.jsx
+
 import React, { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useLanguage } from "../context/LanguageContext";
@@ -90,18 +90,22 @@ export default function MonthlyReportPage() {
             <StatCard icon="🔨" label={t("auctioned_pockets_lbl", "Auctioned Pockets")} value={report.auctioned_pockets} color="card-orange" />
 
             <StatCard icon="🏦" label={t("opening_balance")} value={formatCurrency(report.opening_balance)} color="card-blue" />
-            <StatCard icon="📤" label={t("loans_issued_lbl", "Loans Issued")} value={formatCurrency(report.loans_issued)} color="card-rose" />
+            
+            {/* ── Gross Principal (Capital Disbursed) vs Net Cash Payout (Loans Issued) ── */}
+            <StatCard icon="💎" label={t("capital_disbursed_lbl", "Capital Disbursed")} value={formatCurrency(report.loans_issued)} color="card-purple" />
+            <StatCard icon="📅" label={t("total_interest_collected", "Interest Collected")} value={formatCurrency(report.interest_collected)} color="card-teal" />
+            <StatCard icon="🏷️" label={t("total_processing_fee", "Processing Fees")} value={formatCurrency(report.processing_fees)} color="card-purple" />
+
+            <StatCard icon="📤" label={t("loans_issued_lbl", "Loans Issued")} value={formatCurrency(report.net_loans_issued)} color="card-rose" />
+            
             <StatCard icon="📥" label={t("loan_repayments_lbl", "Loan Repayments")} value={formatCurrency(report.loan_repayments)} color="card-green" />
-            <StatCard icon="📅" label={t("todays_interest")} value={formatCurrency(report.interest_collected)} color="card-teal" />
-            <StatCard icon="🏷️" label={t("processing_fee")} value={formatCurrency(report.processing_fees)} color="card-purple" />
             <StatCard icon="💹" label={t("other_income_lbl", "Other Income")} value={formatCurrency(report.other_income)} color="card-yellow" />
-            <StatCard icon="🧾" label={t("total_expense")} value={formatCurrency(report.expenses)} color="card-orange" />
-            <StatCard icon="📈" label={t("total_inflow")} value={formatCurrency(report.total_inflow)} color="card-green" />
-            <StatCard icon="📉" label={t("total_outflow")} value={formatCurrency(report.total_outflow)} color="card-rose" />
-            <StatCard icon="💰" label={t("net_cash_flow_lbl", "Net Cash Flow")} value={formatCurrency(report.net_cash_flow)} color={report.net_cash_flow >= 0 ? "card-teal" : "card-orange"} />
+            <StatCard icon="🧾" label={t("total_expense", "Expenses")} value={formatCurrency(report.expenses)} color="card-orange" />
+            <StatCard icon="📈" label={t("total_inflow", "Total Inflow")} value={formatCurrency(report.total_inflow)} color="card-green" />
+            <StatCard icon="📉" label={t("total_outflow", "Total Outflow")} value={formatCurrency(report.total_outflow)} color="card-rose" />
+            {/* <StatCard icon="💰" label={t("net_cash_flow_lbl", "Net Cash Flow")} value={formatCurrency(report.net_cash_flow)} color={report.net_cash_flow >= 0 ? "card-teal" : "card-orange"} /> */}
             <StatCard icon="🏧" label={t("cash_in_hand")} value={formatCurrency(report.closing_balance)} color="card-blue" />
 
-            {/* ── แยกโลஹங்கள் தங்கம் & வெள்ளி தனித்தனியாகக் காட்டப்படுகிறது ── */}
             {report.metal_movements?.map((m) => {
               const metalLabel = m.metal === "Gold" ? t("gold") : m.metal === "Silver" ? t("silver") : m.metal;
               return (
@@ -135,7 +139,6 @@ export default function MonthlyReportPage() {
             })}
           </div>
 
-                    {/* ── Section: Commodity Table Breakdown ── */}
           <div className="metal-movement-section">
             <h3>{t("metal_movement_breakdown_title", "Metal Movement Breakdown (Includes Auction Outflows)")}</h3>
             <table className="metal-movement-table">
@@ -165,7 +168,6 @@ export default function MonthlyReportPage() {
               </tbody>
             </table>
 
-            {/* ── NEW: Dynamic metal summary cards (Match indicators like Daily report) ── */}
             <div className="metal-summary-pills" style={{ display: "flex", gap: "12px", marginTop: "16px", flexWrap: "wrap" }}>
               <div className="stat-pill" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", color: "#334155" }}>
                 📦 {t("total_items")}: {report.total_pockets} {t("pieces_unit_lbl", "items")}
@@ -175,11 +177,9 @@ export default function MonthlyReportPage() {
                 const metalLabel = m.metal === "Gold" ? t("gold") : m.metal === "Silver" ? t("silver") : m.metal;
                 return (
                   <React.Fragment key={m.metal}>
-                    {/* Metal Net weight Pill */}
                     <div className="stat-pill" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", color: "#334155" }}>
                       🪙 {metalLabel} - {t("net_weight")}: <span style={{ color: "#15803d" }}>In {Number(m.in_net).toFixed(2)}g</span> | <span style={{ color: "#b91c1c" }}>Out {Number(m.out_net).toFixed(2)}g</span>
                     </div>
-                    {/* Metal Item count Pill (In and Out Piece count separated) */}
                     <div className="stat-pill" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", color: "#334155" }}>
                       📊 {metalLabel} - {t("count")}: <span style={{ color: "#15803d" }}>In {m.in_count}</span> | <span style={{ color: "#b91c1c" }}>Out {m.out_count}</span>
                     </div>
@@ -189,7 +189,6 @@ export default function MonthlyReportPage() {
             </div>
           </div>
 
-          {/* ── Section: Profit & Loss Statement ── */}
           <div className="pnl-section-card" style={{ marginTop: "30px" }}>
             <div className="pnl-section-header">
               <h3>{t("profit_loss_report")}</h3>
@@ -257,8 +256,6 @@ export default function MonthlyReportPage() {
             </table>
           </div>
 
-          
-          {/* ── Investor Capital Activity Summary ── */}
           <div className="pnl-section-card" style={{ marginTop: "30px", borderLeft: "5px solid #10b981" }}>
             <div className="pnl-section-header">
               <h3 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -315,10 +312,9 @@ export default function MonthlyReportPage() {
             </table>
           </div>
 
-          {/* ── Section: Bank Refinancing & Mapping Summary ── */}
           <div className="pnl-section-card" style={{ marginTop: "30px", borderLeft: "5px solid #2563eb" }}>
             <div className="pnl-section-header">
-              <h3 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <h3>
                 <span>🏛️</span> {t("bank_refinancing_report", "Bank Refinancing & Mapping Summary")}
               </h3>
               <span className="pnl-period-badge" style={{ backgroundColor: "#dbeafe", color: "#1e40af" }}>
@@ -364,9 +360,6 @@ export default function MonthlyReportPage() {
             </table>
           </div>
 
-
-
-          {/* ── SECTION: Monthly Auction Items Breakdown ── */}
           <div className="metal-movement-section" style={{ marginTop: "30px" }}>
             <h3>{t("auctions_realized_this_month_title", "Auctions Realized This Month")} ({report.monthly_auctions?.length || 0})</h3>
             <table className="metal-movement-table">
@@ -415,8 +408,6 @@ export default function MonthlyReportPage() {
               </tbody>
             </table>
           </div>
-
-
         </>
       )}
     </div>

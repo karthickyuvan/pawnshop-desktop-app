@@ -55,6 +55,8 @@
   "opening_balance": "Opening Balance",
   "start_of_day": "Start of Day",
   "todays_interest": "Today's Interest",
+  "total_interest_collected":"Total Interest Collected",
+  "total_processing_fee":"Total Processing Fees",
   "collected": "Collected",
   "total_expense": "Total Expense",
   "all_time": "All Time",
@@ -1092,7 +1094,15 @@
   "combined_balances": "Combined Balances",
   "cash_total_lbl": "Cash Total",
   "digital_total_lbl": "Digital Total",
-  "combined_total": "Total Balance"
+  "combined_total": "Total Balance",
+
+
+  "INTEREST": "Interest",
+  "INTEREST_DEDUCTION": "Interest",
+  "PROCESSING_FEE": "Processing Fee",
+  "FEE_DEDUCTION": "Processing Fee",
+  "DEDUCTION": "Deduction"
+
 
   
 }
