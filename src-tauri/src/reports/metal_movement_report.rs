@@ -348,28 +348,25 @@ pub fn get_metal_movement_report(
     let mut map: HashMap<String, MetalMovementRow> = HashMap::new();
 
     // ── 1. INWARD METRICS SQL ──
-    let in_sql = format!(
-        "
-        SELECT
-            mt.name,
-            COALESCE(SUM(
-                CASE 
-                    WHEN p.status = 'ACTIVE' THEN p.loan_amount 
-                    ELSE p.loan_amount
-                END
-            ), 0),
-            COALESCE(SUM(pi.gross_weight), 0),
-            COALESCE(SUM(pi.net_weight), 0),
-            COALESCE(COUNT(pi.id), 0)
-        FROM metal_types mt
-        JOIN jewellery_types jt ON jt.metal_type_id = mt.id
-        JOIN pledge_items pi ON pi.jewellery_type_id = jt.id
-        JOIN pledges p ON p.id = pi.pledge_id
-        WHERE mt.is_active = 1 {}
-        GROUP BY mt.name
-        ",
-        pledge_date_filter
-    );
+        let in_sql = format!(
+            "
+            SELECT
+                mt.name,
+                COALESCE(SUM(
+                    p.loan_amount / (SELECT COUNT(*) FROM pledge_items pi2 WHERE pi2.pledge_id = p.id)
+                ), 0),
+                COALESCE(SUM(pi.gross_weight), 0),
+                COALESCE(SUM(pi.net_weight), 0),
+                COALESCE(COUNT(DISTINCT p.id), 0)
+            FROM metal_types mt
+            JOIN jewellery_types jt ON jt.metal_type_id = mt.id
+            JOIN pledge_items pi ON pi.jewellery_type_id = jt.id
+            JOIN pledges p ON p.id = pi.pledge_id
+            WHERE mt.is_active = 1 {}
+            GROUP BY mt.name
+            ",
+            pledge_date_filter
+        );
 
     let mut stmt_in = conn.prepare(&in_sql).map_err(|e| e.to_string())?;
     let rows_in = stmt_in.query_map([], |row| {
@@ -404,28 +401,30 @@ pub fn get_metal_movement_report(
     let closed_filter_fragment = build_date_condition(&filter_type, "p.closed_at", &selected_date, &from_date, &to_date, month, year);
     let auction_filter_fragment = build_date_condition(&filter_type, "p.auctioned_at", &selected_date, &from_date, &to_date, month, year);
 
-    let out_sql = format!(
-        "
-        SELECT
-            mt.name,
-            COALESCE(SUM(p.loan_amount), 0) as loan_out,
-            COALESCE(SUM(pi.gross_weight), 0) as gross_out,
-            COALESCE(SUM(pi.net_weight), 0) as net_out,
-            COALESCE(COUNT(pi.id), 0) as items_out
-        FROM metal_types mt
-        JOIN jewellery_types jt ON jt.metal_type_id = mt.id
-        JOIN pledge_items pi ON pi.jewellery_type_id = jt.id
-        JOIN pledges p ON p.id = pi.pledge_id
-        WHERE mt.is_active = 1 
-          AND (
-               (p.status = 'CLOSED' {})
-               OR 
-               (p.status = 'AUCTIONED' {})
-          )
-        GROUP BY mt.name
-        ",
-        closed_filter_fragment, auction_filter_fragment
-    );
+let out_sql = format!(
+    "
+    SELECT
+        mt.name,
+        COALESCE(SUM(
+            p.loan_amount / (SELECT COUNT(*) FROM pledge_items pi2 WHERE pi2.pledge_id = p.id)
+        ), 0) as loan_out,
+        COALESCE(SUM(pi.gross_weight), 0) as gross_out,
+        COALESCE(SUM(pi.net_weight), 0) as net_out,
+        COALESCE(COUNT(DISTINCT p.id), 0) as items_out
+    FROM metal_types mt
+    JOIN jewellery_types jt ON jt.metal_type_id = mt.id
+    JOIN pledge_items pi ON pi.jewellery_type_id = jt.id
+    JOIN pledges p ON p.id = pi.pledge_id
+    WHERE mt.is_active = 1 
+      AND (
+           (p.status = 'CLOSED' {})
+           OR 
+           (p.status = 'AUCTIONED' {})
+      )
+    GROUP BY mt.name
+    ",
+    closed_filter_fragment, auction_filter_fragment
+);
 
     let mut stmt_out = conn.prepare(&out_sql).map_err(|e| e.to_string())?;
     let rows_out = stmt_out.query_map([], |row| {
