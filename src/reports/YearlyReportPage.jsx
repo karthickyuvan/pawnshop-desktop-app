@@ -148,6 +148,8 @@ export default function YearlyReportPage() {
             <StatCard icon="🔨" label={t("auctioned_pockets_lbl", "Auctioned Pockets")} value={activeYearData.auctioned_pockets.toLocaleString()} color="card-orange" />
             
             <StatCard icon="🏦" label={t("opening_balance")} value={formatCurrency(activeYearData.opening_balance)} color="card-blue" />
+            <StatCard icon="📈" label={t("total_annual_revenue_lbl", "Total Inflow")} value={formatCurrency(activeYearData.total_inflow)} color="card-green" />
+
             <StatCard icon="💎" label={t("capital_disbursed_lbl", "Capital Disbursed")} value={formatCurrency(activeYearData.total_loan_amount)} color="card-purple" />
             <StatCard icon="📅" label={t("todays_interest", "Total Interest Collected")} value={formatCurrency(activeYearData.interest_income)} color="card-teal" />
             <StatCard icon="🏷️" label={t("processing_fee", "Total Processing Fees")} value={formatCurrency(activeYearData.processing_fees)} color="card-purple" />
@@ -156,7 +158,6 @@ export default function YearlyReportPage() {
             <StatCard icon="💹" label={t("other_income_lbl", "Other Income")} value={formatCurrency(activeYearData.other_income)} color="card-yellow" />
             <StatCard icon="🧾" label={t("total_expense", "Total Expense")} value={formatCurrency(activeYearData.expenses)} color="card-orange" />
             
-            <StatCard icon="📈" label={t("total_annual_revenue_lbl", "Total Inflow")} value={formatCurrency(activeYearData.total_inflow)} color="card-green" />
             <StatCard icon="📉" label={t("total_annual_outflow_lbl", "Total Outflow")} value={formatCurrency(activeYearData.total_outflow)} color="card-rose" />
             <StatCard icon="🏧" label={t("cash_in_hand")} value={formatCurrency(activeYearData.closing_balance)} color="card-blue" />
             

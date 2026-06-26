@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useLanguage } from "../context/LanguageContext"; // ✅ Imported custom language hook
-import { formatTransactionTimestamp } from "../utils/timeFormatter"; // ✅ Reusing the centralized formatter
+import { useLanguage } from "../context/LanguageContext";
+import { formatTransactionTimestamp } from "../utils/timeFormatter";
 import "./PledgeRegisterReportPage.css";
 
 /* Single unified card — same layout for every stat */
@@ -19,30 +18,43 @@ function StatCard({ icon, label, value, color }) {
 }
 
 export default function PledgeRegisterReportPage({ setActiveMenu }) {
-  const { t } = useLanguage(); // ✅ Initialized translation hook
+  const { t } = useLanguage();
 
   const STATUS_META = {
-    ACTIVE:    { label: t("active"),    cls: "status-active"    },
-    CLOSED:    { label: t("closed"),    cls: "status-closed"    },
-    OVERDUE:   { label: t("overdue"),   cls: "status-overdue"   },
-    DUE_SOON:  { label: t("due_soon", "Due Soon"),  cls: "status-due-soon"  },
+    ACTIVE: { label: t("active"), cls: "status-active" },
+    CLOSED: { label: t("closed"), cls: "status-closed" },
+    OVERDUE: { label: t("overdue"), cls: "status-overdue" },
+    DUE_SOON: { label: t("due_soon", "Due Soon"), cls: "status-due-soon" },
     AUCTIONED: { label: t("auction_status_tag"), cls: "status-auctioned" },
   };
 
   const today = new Date().toISOString().split("T")[0];
 
   const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate]     = useState(today);
-  const [rows, setRows]           = useState([]);
-  const [loading, setLoading]     = useState(false);
+  const [endDate, setEndDate] = useState(today);
+  const [rows, setRows] = useState([]);
+  const [summary, setSummary] = useState({
+    total_interest: 0,
+    total_processing_fee: 0,
+  });
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => { loadReport(); }, []);
+  useEffect(() => {
+    loadReport();
+  }, []);
 
   async function loadReport() {
     setLoading(true);
     try {
-      const result = await invoke("get_pledge_register_report_cmd", { startDate, endDate });
+      const result = await invoke("get_pledge_register_report_cmd", {
+        startDate,
+        endDate,
+      });
       setRows(result?.pledges || []);
+      setSummary({
+        total_interest: result?.total_interest || 0,
+        total_processing_fee: result?.total_processing_fee || 0,
+      });
     } catch (err) {
       console.error("Pledge Register Error:", err);
     }
@@ -54,14 +66,21 @@ export default function PledgeRegisterReportPage({ setActiveMenu }) {
     if (!metal) return acc;
     if (!acc[metal]) acc[metal] = { gross: 0, net: 0 };
     acc[metal].gross += Number(row?.gross_weight || 0);
-    acc[metal].net   += Number(row?.net_weight   || 0);
+    acc[metal].net += Number(row?.net_weight || 0);
     return acc;
   }, {});
 
-  const totalLoan     = rows.reduce((sum, r) => sum + Number(r?.loan_amount || 0), 0);
-  const activePockets = rows.filter(r => r.pocket_number != null && r.status !== "CLOSED").length;
-  const closedPockets = rows.filter(r => r.pocket_number != null && r.status === "CLOSED").length;
-  const totalPockets  = rows.filter(r => r.pocket_number != null).length;
+  const totalLoan = rows.reduce(
+    (sum, r) => sum + Number(r?.loan_amount || 0),
+    0,
+  );
+  const activePockets = rows.filter(
+    (r) => r.pocket_number != null && r.status !== "CLOSED",
+  ).length;
+  const closedPockets = rows.filter(
+    (r) => r.pocket_number != null && r.status === "CLOSED",
+  ).length;
+  const totalPockets = rows.filter((r) => r.pocket_number != null).length;
 
   return (
     <div className="pledge-register-page">
@@ -72,21 +91,71 @@ export default function PledgeRegisterReportPage({ setActiveMenu }) {
           <p>{t("pledge_register_desc")}</p>
         </div>
         <div className="filters">
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-          <input type="date" value={endDate}   onChange={e => setEndDate(e.target.value)} />
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
           <button onClick={loadReport}>{t("search", "Load")}</button>
         </div>
       </div>
 
       {/* ── ALL stat cards — same component, same layout ── */}
       <div className="stats-grid">
-        <StatCard icon="🗂"  label={t("total_pockets_lbl", "Total Pockets")} value={totalPockets} color="card-blue"   />
-        <StatCard icon="🟢" label={t("active_pockets_lbl", "Active Pockets")} value={activePockets} color="card-green"  />
-        <StatCard icon="🔒" label={t("closed_pockets_lbl", "Closed Pockets")} value={closedPockets} color="card-slate"  />
-        <StatCard icon="₹"  label={t("total_loan_amount")} value={`₹${totalLoan.toLocaleString("en-IN")}`} color="card-yellow" />
-        <StatCard icon="📋" label={t("total_pledges")} value={rows.length} color="card-purple" />
+        <StatCard
+          icon="🗂"
+          label={t("total_pockets_lbl", "Total Pockets")}
+          value={totalPockets}
+          color="card-blue"
+        />
+        <StatCard
+          icon="🟢"
+          label={t("active_pockets_lbl", "Active Pockets")}
+          value={activePockets}
+          color="card-green"
+        />
+        {/* <StatCard
+          icon="🔒"
+          label={t("closed_pockets_lbl", "Closed Pockets")}
+          value={closedPockets}
+          color="card-slate"
+        /> */}
+        <StatCard
+          icon="₹"
+          label={t("total_loan_amount")}
+          value={`₹${totalLoan.toLocaleString("en-IN")}`}
+          color="card-yellow"
+        />
+        <StatCard
+          icon="📋"
+          label={t("total_pledges")}
+          value={rows.length}
+          color="card-purple"
+        />
+        <StatCard
+          icon="💰"
+          label={t("interest_collected", "Interest Collected")}
+          value={`₹${summary.total_interest.toLocaleString("en-IN")}`}
+          color="card-teal"
+        />
+        <StatCard
+          icon="🏷️"
+          label={t("processing_fees", "Processing Fees")}
+          value={`₹${summary.total_processing_fee.toLocaleString("en-IN")}`}
+          color="card-orange"
+        />
         {Object.entries(metalTotals).map(([metal, weights]) => {
-          const localizedMetalName = metal === "gold" ? t("gold") : metal === "silver" ? t("silver") : metal;
+          const localizedMetalName =
+            metal === "gold"
+              ? t("gold")
+              : metal === "silver"
+                ? t("silver")
+                : metal;
           return (
             <React.Fragment key={metal}>
               <StatCard
@@ -109,7 +178,9 @@ export default function PledgeRegisterReportPage({ setActiveMenu }) {
       {/* ── Table ── */}
       <div className="table-section">
         {loading ? (
-          <p className="loading-text">{t("loading_pledges", "Loading report...")}</p>
+          <p className="loading-text">
+            {t("loading_pledges", "Loading report...")}
+          </p>
         ) : (
           <table>
             <thead>
@@ -130,36 +201,69 @@ export default function PledgeRegisterReportPage({ setActiveMenu }) {
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="table-empty-state" style={{ textAlign: "center", padding: "20px" }}>
+                  <td
+                    colSpan="11"
+                    className="table-empty-state"
+                    style={{ textAlign: "center", padding: "20px" }}
+                  >
                     {t("no_matching_records")}
                   </td>
                 </tr>
               ) : (
-                rows.map(row => {
-                  const meta = STATUS_META[row.status] || { label: row.status, cls: "" };
+                rows.map((row) => {
+                  const meta = STATUS_META[row.status] || {
+                    label: row.status,
+                    cls: "",
+                  };
                   return (
                     <tr
                       key={row.pledge_id}
                       className="clickable-row"
                       onDoubleClick={() =>
-                        setActiveMenu(`single-pledge-${row.pledge_id}-pledge-register`)
+                        setActiveMenu(
+                          `single-pledge-${row.pledge_id}-pledge-register`,
+                        )
                       }
                     >
                       <td className="pocket-cell">
-                        {row.pocket_number
-                          ? <span className="pocket-badge">#{row.pocket_number}</span>
-                          : <span className="pocket-empty">—</span>}
+                        {row.pocket_number ? (
+                          <span className="pocket-badge">
+                            #{row.pocket_number}
+                          </span>
+                        ) : (
+                          <span className="pocket-empty">—</span>
+                        )}
                       </td>
                       <td>{row.pledge_no}</td>
-                      <td>{formatTransactionTimestamp(row.created_at)}</td>
+                      <td>
+                        {row.pledge_date
+                          ? row.pledge_date
+                              .split("T")[0]
+                              .split("-")
+                              .reverse()
+                              .join("-")
+                          : "—"}
+                      </td>
                       <td>{row.customer_name}</td>
-                      <td>{row.metal_type === "Gold" ? t("gold") : row.metal_type === "Silver" ? t("silver") : row.metal_type}</td>
+                      <td>
+                        {row.metal_type === "Gold"
+                          ? t("gold")
+                          : row.metal_type === "Silver"
+                            ? t("silver")
+                            : row.metal_type}
+                      </td>
                       <td>{row.jewellery_type}</td>
                       <td>{row.gross_weight}</td>
                       <td>{row.net_weight}</td>
-                      <td className="loan">₹ {Number(row.loan_amount || 0).toLocaleString("en-IN")}</td>
+                      <td className="loan">
+                        ₹ {Number(row.loan_amount || 0).toLocaleString("en-IN")}
+                      </td>
                       <td>{row.scheme_name}</td>
-                      <td><span className={`status-badge ${meta.cls}`}>{meta.label}</span></td>
+                      <td>
+                        <span className={`status-badge ${meta.cls}`}>
+                          {meta.label}
+                        </span>
+                      </td>
                     </tr>
                   );
                 })

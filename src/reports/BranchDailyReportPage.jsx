@@ -167,7 +167,7 @@ export default function BranchDailyReportPage() {
 
             <StatCard icon="📈" label={t("total_inflow")} value={`₹${report.total_inflow?.toLocaleString("en-IN")}`} color="card-green" />
             <StatCard icon="📉" label={t("total_outflow")} value={`₹${report.total_outflow?.toLocaleString("en-IN")}`} color="card-rose" />
-            <StatCard icon="💰" label={t("net_cash_flow_lbl", "Net Cash Flow")} value={`₹${report.net_cash_flow?.toLocaleString("en-IN")}`} color={report.net_cash_flow >= 0 ? "card-teal" : "card-orange"} />
+            {/* <StatCard icon="💰" label={t("net_cash_flow_lbl", "Net Cash Flow")} value={`₹${report.net_cash_flow?.toLocaleString("en-IN")}`} color={report.net_cash_flow >= 0 ? "card-teal" : "card-orange"} /> */}
             <StatCard icon="🏧" label={t("cash_in_hand")} value={`₹${report.closing_balance?.toLocaleString("en-IN")}`} color="card-blue" />
           </div>
 

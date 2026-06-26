@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect, useMemo } from "react";
 import { Search, UserPlus, X } from "lucide-react";
 import toast from "react-hot-toast"; // 🚀 Imported toast
@@ -83,7 +81,7 @@ export default function CustomerPage({ setActiveMenu }) {
       setPhotoPath(c.photo_path || "");
       localStorage.removeItem("editCustomer");
       toast.success(t("edit_mode_loaded", "Loaded customer data for editing"));
-      return; 
+      return;
     }
 
     // 🔹 2. Check if coming from pledge new customer
@@ -142,7 +140,7 @@ export default function CustomerPage({ setActiveMenu }) {
     setSelectedCustomer(null);
     setForm({
       name: "",
-      relationType: "",     
+      relationType: "",
       relationName: "",
       address: "",
       phone: "",
@@ -170,13 +168,23 @@ export default function CustomerPage({ setActiveMenu }) {
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.phone.trim()) {
-      toast.error(t("name_phone_required_error", "Name and phone fields are required parameters.")); // 🚀 Upgraded alert
+      toast.error(
+        t(
+          "name_phone_required_error",
+          "Name and phone fields are required parameters.",
+        ),
+      ); // 🚀 Upgraded alert
       return;
     }
 
     const userId = user?.user_id || user?.id;
     if (!userId) {
-      toast.error(t("session_expired", "Session expired. Please log out and login again.")); // 🚀 Upgraded alert
+      toast.error(
+        t(
+          "session_expired",
+          "Session expired. Please log out and login again.",
+        ),
+      ); // 🚀 Upgraded alert
       return;
     }
 
@@ -192,7 +200,7 @@ export default function CustomerPage({ setActiveMenu }) {
         const updatedCustomer = {
           ...selectedCustomer,
           name: form.name.trim(),
-          relation_type: form.relationType,     
+          relation_type: form.relationType,
           relation_name: form.relationName.trim(),
           phone: form.phone.trim(),
           email: form.email.trim(),
@@ -201,7 +209,12 @@ export default function CustomerPage({ setActiveMenu }) {
           id_proof_number: form.idProofNumber.trim(),
         };
 
-        toast.success(t("customer_updated_success", "Customer profiles modified successfully!")); // 🚀 Upgraded alert
+        toast.success(
+          t(
+            "customer_updated_success",
+            "Customer profiles modified successfully!",
+          ),
+        ); // 🚀 Upgraded alert
 
         if (returnPage && setActiveMenu) {
           localStorage.removeItem("returnTo");
@@ -209,7 +222,7 @@ export default function CustomerPage({ setActiveMenu }) {
 
           localStorage.setItem(
             "selectedCustomerForPledge",
-            JSON.stringify(updatedCustomer)
+            JSON.stringify(updatedCustomer),
           );
 
           setActiveMenu(returnPage);
@@ -231,14 +244,16 @@ export default function CustomerPage({ setActiveMenu }) {
           newCustomer.photo_path = path;
         }
 
-        toast.success(t("customer_created_success", "New customer created successfully!")); // 🚀 Upgraded alert
+        toast.success(
+          t("customer_created_success", "New customer created successfully!"),
+        ); // 🚀 Upgraded alert
 
         if (returnPage && setActiveMenu) {
           localStorage.removeItem("returnTo");
 
           localStorage.setItem(
             "selectedCustomerForPledge",
-            JSON.stringify(newCustomer)
+            JSON.stringify(newCustomer),
           );
 
           setActiveMenu(returnPage);
@@ -250,7 +265,10 @@ export default function CustomerPage({ setActiveMenu }) {
       }
     } catch (err) {
       console.error(err);
-      toast.error(t("operation_failed", "Failed to update profile: ") + (err?.message || err)); // 🚀 Upgraded alert
+      toast.error(
+        t("operation_failed", "Failed to update profile: ") +
+          (err?.message || err),
+      ); // 🚀 Upgraded alert
     }
   };
 
@@ -351,7 +369,8 @@ export default function CustomerPage({ setActiveMenu }) {
                 >
                   <div className="result-header">
                     <strong>
-                      {c.customer_code} - {c.name} {c.relation_type} {c.relation_name}
+                      {c.customer_code} - {c.name} {c.relation_type}{" "}
+                      {c.relation_name}
                     </strong>
                   </div>
                   <div className="muted">{c.phone}</div>
@@ -392,9 +411,11 @@ export default function CustomerPage({ setActiveMenu }) {
               className="secondary-btn"
               onClick={() => setShowCamera(true)}
             >
-              📸  {t("capture_photo")}
+              📸 {t("capture_photo")}
             </button>
-            {pendingPhoto && <div className="photo-status">✓ {t("photo_ready")}</div>}
+            {pendingPhoto && (
+              <div className="photo-status">✓ {t("photo_ready")}</div>
+            )}
           </div>
 
           <div className="form-grid">
@@ -449,11 +470,11 @@ export default function CustomerPage({ setActiveMenu }) {
               onChange={handleChange}
             >
               <option value="">{t("select_id_proof")}</option>
-              <option>{t("aadhaar_card")}</option>
-              <option>{t("pan_card")}</option>
-              <option>{t("passport")}</option>
-              <option>{t("voter_id")}</option>
-              <option>{t("driving_license")}</option>
+              <option value="Aadhaar Card">{t("aadhaar_card")}</option>
+              <option value="PAN Card">{t("pan_card")}</option>
+              <option value="Passport">{t("passport")}</option>
+              <option value="Voter ID">{t("voter_id")}</option>
+              <option value="Driving License">{t("driving_license")}</option>
             </select>
             <input
               name="idProofNumber"

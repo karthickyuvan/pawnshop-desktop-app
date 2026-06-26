@@ -843,7 +843,7 @@
   "select_accounting_period_lbl": "கணக்கியல் காலத்தைத் தேர்ந்தெடுக்கவும்",
   "re-evaluating_statement_msg": "வருடாந்திர சொத்து பேரேடுகள் மறுமதிப்பீடு செய்யப்படுகின்றன...",
   "capital_disbursed_lbl": "வழங்கப்பட்ட மொத்த மூலதனம்",
-  "total_annual_revenue_lbl": "மொத்த ஆண்டு வருவாய்",
+  "total_annual_revenue_lbl": "மொத்த ஆண்டு முதலீடு",
   "net_retained_profit_lbl": "நிகர தக்கவைக்கப்பட்ட லாபம்",
   "vault_metal_in_gross_lbl": "காப்பக உத்தேச எடை வரவு",
   "vault_metal_in_net_lbl": "காப்பக நிகர எடை வரவு",

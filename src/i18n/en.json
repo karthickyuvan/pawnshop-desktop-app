@@ -873,7 +873,7 @@
   "select_accounting_period_lbl": "Select Accounting Period",
   "re-evaluating_statement_msg": "Re-evaluating Annual Asset Ledgers...",
   "capital_disbursed_lbl": "Capital Disbursed",
-  "total_annual_revenue_lbl": "Total Annual Revenue",
+  "total_annual_revenue_lbl": "Total Invested Amount",
   "net_retained_profit_lbl": "Net Retained Profit",
   "vault_metal_in_gross_lbl": "Vault Metal In Gross",
   "vault_metal_in_net_lbl": "Vault Metal In Net",
