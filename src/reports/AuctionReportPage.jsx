@@ -1,7 +1,3 @@
-
-
-
-
 import { useEffect, useState } from "react";
 import { useLanguage } from "../context/LanguageContext"; // ✅ Imported custom language hook
 import { getAuctionReport } from "../services/auctionApi";
